@@ -76,6 +76,50 @@ static void stackDump (lua_State *L)
         printf("\n"); /* end the listing */
 }
 
+/**
+ * Loads and runs a file.
+ */
+void load (lua_State *L, const char *fname, int *w, int *h)
+{
+        if (luaL_loadfile (L, fname) || lua_pcall (L, 0, 0, 0)) {
+                error (L, "cannot run config. file: %s", lua_tostring (L, -1));
+        }
+
+        lua_getglobal (L, "width");
+        lua_getglobal (L, "height");
+
+        if (!lua_isnumber (L, -2)) {
+                error (L, "’width’ should be a number\n");
+        }
+
+        if (!lua_isnumber (L, -1)) {
+                error (L, "’height’ should be a number\n");
+        }
+
+        *w = lua_tointeger (L, -2);
+        *h = lua_tointeger (L, -1);
+}
+
+#define MAX_COLOR 255
+
+/* assume that table is on the stack top */
+int getfield (lua_State *L, const char *key) {
+        int result;
+
+        lua_pushstring (L, key);
+        lua_gettable (L, -2); /* get background[key] */
+
+        if (!lua_isnumber (L, -1)) {
+                error (L, "invalid component in background color");
+        }
+
+        result = lua_tonumber (L, -1) * MAX_COLOR;
+        lua_pop (L, 1); /* remove number */
+        return result;
+}
+
+/*--------------------------------------------------------------------------*/
+
 int main ()
 {
         // opens Lua
@@ -87,7 +131,22 @@ int main ()
         simpleInterpretter (L);
 #endif
 
+        int w, h;
+        load (L, "file.lua", &w, &h);
 
+        std::cerr << w << ", " << h << std::endl;
+
+        lua_getglobal (L, "background");
+
+        if (!lua_istable (L, -1)) {
+                error (L, "’background’ is not a table");
+        }
+
+        int red = getfield (L, "r");
+        int green = getfield (L, "g");
+        int blue = getfield (L, "b");
+
+        std::cerr << red << ", " << green << ", " << blue << std::endl;
 
         // Close the lua state.
         lua_close(L);
