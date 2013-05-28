@@ -18,3 +18,8 @@ background = {r=0.30, g=0.10, b=0};
 
 BLUE = {r=0.3, g=1, b=1};
 --background = BLUE;
+
+--Wywołanie mojej funkcji z C
+print (mysin (10));
+
+print (bajka.cos (10));
