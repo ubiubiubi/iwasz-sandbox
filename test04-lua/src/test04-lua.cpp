@@ -9,6 +9,7 @@
 #include <iostream>
 #include <cstring>
 #include <cstdlib>
+#include <cmath>
 #include <lua5.2/lua.hpp>
 
 /**
@@ -120,12 +121,55 @@ int getfield (lua_State *L, const char *key) {
 
 /*--------------------------------------------------------------------------*/
 
+/**
+ * To będzie wywołane z LUA. Prototyp funkcji C wywoływanej z LUA jest zawsze taki jak ten :
+ */
+static int l_sin (lua_State *L)
+{
+        double d = luaL_checknumber(L, 1); /* get argument, and check it */
+        lua_pushnumber(L, sin(d)); /* push result */
+        return 1; /* number of results */
+}
+
+static int l_cos (lua_State *L)
+{
+        double d = luaL_checknumber(L, 1); /* get argument, and check it */
+        lua_pushnumber(L, cos(d)); /* push result */
+        return 1; /* number of results */
+}
+
+/**
+ * Definicja modułu.
+ */
+static const struct luaL_Reg bajka_funcs[] = {
+        { "cos", l_cos },
+        { NULL, NULL } /* sentinel */
+};
+
+/**
+ * To jest taki jakiby deskryptor modułu - jedyna funkcja, która nie będzie statyczna - taki entry point.
+ */
+int luaopen_bajka (lua_State *L)
+{
+        luaL_newlib (L, bajka_funcs);
+        return 1;
+}
+
+/*--------------------------------------------------------------------------*/
+
 int main ()
 {
         // opens Lua
         lua_State *L = luaL_newstate();
         // opens the standard libraries
         luaL_openlibs(L);
+
+        /*
+         * 1. To jest pierwszy sposób dodawania funkcji C do LUA. To jest sposób mało elastyczny.
+         */
+        lua_pushcfunction(L, l_sin);
+        lua_setglobal(L, "mysin");
+        luaL_requiref (L, "bajka", luaopen_bajka, 1);
 
 #if 0
         simpleInterpretter (L);
