@@ -1,0 +1,1 @@
+/home/iwasz/local/share/raspi-gcc/arm-unknown-linux-gnueabi/bin/arm-unknown-linux-gnueabi-gcc  -O3 -march=armv6zk -mtune=arm1176jzf-s    CMakeFiles/spitest.dir/home/iwasz/workspace/raspberry-first/src/main.c.o  -o spitest -rdynamic 

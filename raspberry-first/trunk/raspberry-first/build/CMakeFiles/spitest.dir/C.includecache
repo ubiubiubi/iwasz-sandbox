@@ -1,0 +1,28 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/iwasz/workspace/raspberry-first/src/main.c
+stdint.h
+-
+unistd.h
+-
+stdio.h
+-
+stdlib.h
+-
+getopt.h
+-
+fcntl.h
+-
+sys/ioctl.h
+-
+linux/types.h
+-
+linux/spi/spidev.h
+-
+
