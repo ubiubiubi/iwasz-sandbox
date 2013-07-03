@@ -1,16 +1,15 @@
 CMAKE_MINIMUM_REQUIRED (VERSION 2.4.7 FATAL_ERROR)
-project (fikimiki)
+project (hello-concurrency)
 
 if(COMMAND cmake_policy)
     cmake_policy(SET CMP0003 NEW)
 endif(COMMAND cmake_policy)
 
 add_definitions (-Wl,-z,defs)
-ADD_DEFINITIONS(-std=c++11)
 
-SET (CMAKE_C_FLAGS "-g -fPIC -Wall -O0 -Winvalid-pch -ffunction-sections -fdata-sections")
+SET (CMAKE_C_FLAGS "-g -fPIC -Wall -O0 -Winvalid-pch -ffunction-sections -fdata-sections -pthread -std=c++11")
 SET (CMAKE_CXX_FLAGS ${CMAKE_C_FLAGS})
-SET (CMAKE_C_FLAGS_RELEASE "-g0 -fPIC -Wall -O3 -Winvalid-pch -ffunction-sections -fdata-sections -ffast-math -DNDEBUG")
+SET (CMAKE_C_FLAGS_RELEASE "-g0 -fPIC -Wall -O3 -Winvalid-pch -ffunction-sections -fdata-sections -ffast-math -DNDEBUG -pthread")
 SET (CMAKE_CXX_FLAGS_RELEASE ${CMAKE_C_FLAGS_RELEASE})
  
 SET (CMAKE_VERBOSE_MAKEFILE 0)
