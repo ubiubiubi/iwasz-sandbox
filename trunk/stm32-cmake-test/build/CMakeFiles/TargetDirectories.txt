@@ -1,0 +1,3 @@
+/home/iwasz/workspace/stm32-cmake-test/build/CMakeFiles/stm32-cmake-test.bin.dir
+/home/iwasz/workspace/stm32-cmake-test/build/CMakeFiles/stm32-cmake-test.elf.dir
+/home/iwasz/workspace/stm32-cmake-test/build/CMakeFiles/stm32-cmake-test.hex.dir
