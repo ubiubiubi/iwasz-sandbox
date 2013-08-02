@@ -1,0 +1,3 @@
+# Hashes of file build rules.
+05da6edea6731d70b986a551b55e0894 CMakeFiles/stm32-test2.bin
+1f01303e8e1593c4ca9b85c573ba2654 CMakeFiles/stm32-test2.hex
