@@ -12,6 +12,7 @@ LIST (APPEND APP_SOURCES "${STM_DIR}/Libraries/CMSIS/ST/STM32F4xx/Source/Templat
 LIST (APPEND APP_SOURCES "${STM_DIR}/Libraries/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_rcc.c")
 LIST (APPEND APP_SOURCES "${STM_DIR}/Libraries/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_gpio.c")
 LIST (APPEND APP_SOURCES "${STM_DIR}/Libraries/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_i2c.c")
+LIST (APPEND APP_SOURCES "${STM_DIR}/Libraries/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_usart.c")
 
 ADD_EXECUTABLE(${CMAKE_PROJECT_NAME}.elf ${APP_SOURCES})
 
