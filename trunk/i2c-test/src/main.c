@@ -1,17 +1,8 @@
 #include <stm32f4xx.h>
-#include <stm32f4xx_gpio.h>
-#include <stm32f4xx_rcc.h>
-#include <stm32f4xx_i2c.h>
 #include "mpu6050.h"
+#include <stdio.h>
 
-static void delay (__IO uint32_t nCount)
-{
-        while (nCount--)
-                __asm("nop");
-        // do nothing
-}
-
-void init_I2C1 (void)
+void initI2C1 (void)
 {
         GPIO_InitTypeDef GPIO_InitStruct;
         I2C_InitTypeDef I2C_InitStruct;
@@ -31,7 +22,7 @@ void init_I2C1 (void)
          *
          * We are going to use PB6 and PB7
          */
-        GPIO_InitStruct.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7;
+        GPIO_InitStruct.GPIO_Pin = GPIO_Pin_8 | GPIO_Pin_9;
         // Set pins to alternate function.
         GPIO_InitStruct.GPIO_Mode = GPIO_Mode_AF;
         // set GPIO speed
@@ -44,8 +35,8 @@ void init_I2C1 (void)
         GPIO_Init(GPIOB, &GPIO_InitStruct);
 
         // Connect I2C1 pins to AF
-        GPIO_PinAFConfig(GPIOB, GPIO_PinSource6, GPIO_AF_I2C1); // SCL
-        GPIO_PinAFConfig(GPIOB, GPIO_PinSource7, GPIO_AF_I2C1); // SDA
+        GPIO_PinAFConfig(GPIOB, GPIO_PinSource8, GPIO_AF_I2C1); // SCL
+        GPIO_PinAFConfig(GPIOB, GPIO_PinSource9, GPIO_AF_I2C1); // SDA
 
         // Tu 100kHz. To może być dowolna wartość, mniejsza (równa?) niż 400kHz.
         I2C_InitStruct.I2C_ClockSpeed = 100000;
@@ -66,6 +57,47 @@ void init_I2C1 (void)
 
         // enable I2C1
         I2C_Cmd(I2C1, ENABLE);
+}
+
+/**
+ *
+ */
+void initUsart (void)
+{
+        RCC_APB2PeriphClockCmd (RCC_APB2Periph_USART1, ENABLE);
+        RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
+
+        GPIO_InitTypeDef gpioInitStruct;
+
+        gpioInitStruct.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7;
+        gpioInitStruct.GPIO_Mode = GPIO_Mode_AF;
+        gpioInitStruct.GPIO_Speed = GPIO_Speed_50MHz;
+        gpioInitStruct.GPIO_OType = GPIO_OType_PP;
+        gpioInitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;
+        GPIO_Init(GPIOB, &gpioInitStruct);
+        GPIO_PinAFConfig (GPIOB, GPIO_PinSource6, GPIO_AF_USART1); // TX
+        GPIO_PinAFConfig (GPIOB, GPIO_PinSource7, GPIO_AF_USART1); // RX
+
+        USART_InitTypeDef usartInitStruct;
+        usartInitStruct.USART_BaudRate = 9600;
+        usartInitStruct.USART_WordLength = USART_WordLength_8b;
+        usartInitStruct.USART_StopBits = USART_StopBits_1;
+        usartInitStruct.USART_Parity = USART_Parity_No;
+        usartInitStruct.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
+        usartInitStruct.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
+        USART_Init (USART1, &usartInitStruct);
+        USART_Cmd (USART1, ENABLE);
+}
+
+void usartSendString (USART_TypeDef *USARTx, const char *data)
+{
+        char c;
+        while ((c = *data++)) {
+                USARTx->DR = c;
+
+                while (!(USARTx->SR & USART_SR_TXE))
+                        ;
+        }
 }
 
 /*
@@ -190,21 +222,13 @@ uint8_t I2C_read_nack (I2C_TypeDef* I2Cx)
         return data;
 }
 
-/* This funtion issues a stop condition and therefore
- * releases the bus
- */
-void I2C_stop_old (I2C_TypeDef* I2Cx)
-{
-        // Send I2C1 STOP Condition
-        I2C_GenerateSTOP(I2Cx, ENABLE);
-}
-
 void I2C_stop (I2C_TypeDef* I2Cx)
 {
         /*
          * According to RM : "Stop condition should be programmed during EV8_2 event, when either TxE or BTF is set."
          */
-//        while (!I2C_CheckEvent(I2Cx, I2C_EVENT_MASTER_BYTE_TRANSMITTED))
+//        while (!I2C_CheckEvent(I2Cx, I2C_EVENT_MASTER_BYTE_TRANSMITTED) &&
+//               !I2C_CheckEvent(I2Cx, I2C_EVENT_MASTER_BYTE_RECEIVED))
 //                ;
 
         // Send I2C1 STOP Condition
@@ -215,7 +239,8 @@ void I2C_stop (I2C_TypeDef* I2Cx)
 int main (void)
 {
 
-        init_I2C1 (); // initialize I2C peripheral
+        initI2C1 ();
+        initUsart ();
 
 #if 0
 
@@ -294,7 +319,6 @@ int main (void)
 
 #endif
 
-
         // Configuration:
         I2C_start (I2C1, MPU6050_ADDRESS_AD0_LOW, I2C_Direction_Transmitter); // start a transmission in Master transmitter mode
         I2C_write_slow (I2C1, MPU6050_RA_PWR_MGMT_1); // Register address
@@ -317,11 +341,32 @@ int main (void)
         I2C_write (I2C1, MPU6050_RA_WHO_AM_I);
         I2C_stop (I2C1);
         I2C_start (I2C1, MPU6050_ADDRESS_AD0_LOW, I2C_Direction_Receiver);
-        /*uint8_t whoAmI = */I2C_read_nack (I2C1); // read one byte and don't request another byte
+        uint8_t whoAmI = I2C_read_nack (I2C1); // read one byte and don't request another byte
         I2C_stop (I2C1);
 
-        while (1)
-                ;
+        if (whoAmI == 0x34) {
+                usartSendString (USART1, "Accelerometer has been found!\r\n");
+        }
+        else {
+                usartSendString (USART1, "*NO* Accelerometer has been found!\r\n");
+        }
+
+        while (1) {
+                I2C_start (I2C1, MPU6050_ADDRESS_AD0_LOW, I2C_Direction_Transmitter);
+                I2C_write (I2C1, MPU6050_RA_ACCEL_XOUT_H);
+                I2C_stop (I2C1);
+                I2C_start (I2C1, MPU6050_ADDRESS_AD0_LOW, I2C_Direction_Receiver);
+                uint16_t ax = ((uint16_t)I2C_read_ack (I2C1) << 8) | I2C_read_ack (I2C1);
+                uint16_t ay = ((uint16_t)I2C_read_ack (I2C1) << 8) | I2C_read_ack (I2C1);
+                uint16_t az = ((uint16_t)I2C_read_ack (I2C1) << 8) | I2C_read_ack (I2C1);
+                uint16_t temp = ((uint16_t)I2C_read_ack (I2C1) << 8) | I2C_read_ack (I2C1);
+                uint16_t gx = ((uint16_t)I2C_read_ack (I2C1) << 8) | I2C_read_ack (I2C1);
+                uint16_t gy = ((uint16_t)I2C_read_ack (I2C1) << 8) | I2C_read_ack (I2C1);
+                uint16_t gz = ((uint16_t)I2C_read_ack (I2C1) << 8) | I2C_read_nack (I2C1);
+                I2C_stop (I2C1);
+
+                printf ("Accel : (%d, %d, %d), temperature : %d, gyro : (%d, %d, %d)\r\n", ax, ay, az, temp, gx, gy, gz);
+        }
 }
 
 #ifdef USE_FULL_ASSERT
