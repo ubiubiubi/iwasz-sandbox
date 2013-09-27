@@ -41,7 +41,17 @@ SET(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS "")
 INCLUDE_DIRECTORIES(
     ../3rdparty/CMSIS/Include
     ../3rdparty/CMSIS/ST/STM32F4xx/Include
-    ../3rdparty/STM32F4xx_StdPeriph_Driver/inc    
+    ../3rdparty/STM32F4xx_StdPeriph_Driver/inc
+    ../3rdparty/STM32_USB_OTG_Driver/inc
+    ../3rdparty/STM32_USB_Device_Library/Core/inc
+    ../3rdparty/STM32_USB_Device_Library/Class/audio/inc
+    ../3rdparty/STM32_USB_Device_Library/Class/cdc/inc
+    ../3rdparty/STM32_USB_Device_Library/Class/dfu/inc
+    ../3rdparty/STM32_USB_Device_Library/Class/hid/inc
+    ../3rdparty/STM32_USB_Device_Library/Class/msc/inc        
+    ../3rdparty/STM32_USB_HOST_Library/Core/inc
+    ../3rdparty/STM32_USB_HOST_Library/Class/HID/inc
+    ../3rdparty/STM32_USB_HOST_Library/Class/MSC/inc
 )
 
 enable_language(ASM-ATT)
