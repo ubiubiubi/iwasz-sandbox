@@ -238,7 +238,6 @@ void I2C_stop (I2C_TypeDef* I2Cx)
 
 int main (void)
 {
-
         initI2C1 ();
         initUsart ();
 
