@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 SET (CMAKE_VERBOSE_MAKEFILE OFF) 
 
-PROJECT (i2c-test)
+PROJECT (usb-test-0)
 include (stm32f4.cmake)
 ADD_DEFINITIONS(-DUSE_STDPERIPH_DRIVER)
 
