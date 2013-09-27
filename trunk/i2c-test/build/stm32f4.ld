@@ -1,3 +1,34 @@
+/*
+*****************************************************************************
+**
+**  File        : stm32_flash.ld
+**
+**  Abstract    : Linker script for STM32F407VG Device with
+**                1024KByte FLASH, 192KByte RAM
+**
+**                Set heap size, stack size and stack location according
+**                to application requirements.
+**
+**                Set memory bank area and size if external memory is used.
+**
+**  Target      : STMicroelectronics STM32
+**
+**  Environment : Atollic TrueSTUDIO(R)
+**
+**  Distribution: The file is distributed �as is,� without any warranty
+**                of any kind.
+**
+**  (c)Copyright Atollic AB.
+**  You may use this file as-is or modify it according to the needs of your
+**  project. Distribution of this file (unmodified or modified) is not
+**  permitted. Atollic AB permit registered Atollic TrueSTUDIO(R) users the
+**  rights to distribute the assembled, compiled & linked contents of this
+**  file as part of an application binary file, provided that it is built
+**  using the Atollic TrueSTUDIO(R) toolchain.
+**
+*****************************************************************************
+*/
+
 /* Entry Point */
 ENTRY(Reset_Handler)
 
@@ -37,7 +68,7 @@ SECTIONS
     *(.rodata*)        /* .rodata* sections (constants, strings, etc.) */
     *(.glue_7)         /* glue arm to thumb code */
     *(.glue_7t)        /* glue thumb to arm code */
-	*(.eh_frame)
+    *(.eh_frame)
 
     KEEP (*(.init))
     KEEP (*(.fini))
@@ -61,6 +92,7 @@ SECTIONS
     KEEP (*(.preinit_array*))
     PROVIDE_HIDDEN (__preinit_array_end = .);
   } >FLASH
+  
   .init_array :
   {
     PROVIDE_HIDDEN (__init_array_start = .);
@@ -68,6 +100,7 @@ SECTIONS
     KEEP (*(.init_array*))
     PROVIDE_HIDDEN (__init_array_end = .);
   } >FLASH
+  
   .fini_array :
   {
     PROVIDE_HIDDEN (__fini_array_start = .);
