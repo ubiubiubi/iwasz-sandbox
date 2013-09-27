@@ -1,5 +1,6 @@
 #include <stm32f4xx.h>
 #include <stdio.h>
+#include <usbd_core.h>
 
 /**
  * For printf.
@@ -31,7 +32,20 @@ void initUsart (void)
         USART_Cmd (USART1, ENABLE);
 }
 
+/**
+ * Configure the USB OTG engine. This will be a HID class device.
+ */
+void initUsb (void)
+{
+        USBD_Init(&USB_OTG_dev,
+                  USB_OTG_FS_CORE_ID,
+                  &USR_desc,
+                  &USBD_HID_cb,
+                  &USR_cb);
+}
+
 int main (void)
 {
         initUsart ();
+        initUsb ();
 }
