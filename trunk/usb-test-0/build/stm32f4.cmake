@@ -1,7 +1,6 @@
 # GCC toolchain prefix
 SET(TOOLCHAIN_PREFIX "/home/iwasz/local/share/gcc-arm-none-eabi-4_7-2013q1")
 SET(TARGET_TRIPLET "arm-none-eabi")
-SET(STM_DIR "/home/iwasz/local/share/STM32F4-Discovery_FW_V1.1.0")
 
 SET(TOOLCHAIN_BIN_DIR ${TOOLCHAIN_PREFIX}/bin)
 SET(TOOLCHAIN_INC_DIR ${TOOLCHAIN_PREFIX}/${TARGET_TRIPLET}/include)
@@ -17,7 +16,7 @@ SET(CMAKE_OBJCOPY ${TOOLCHAIN_BIN_DIR}/${TARGET_TRIPLET}-objcopy)
 SET(CMAKE_OBJDUMP ${TOOLCHAIN_BIN_DIR}/${TARGET_TRIPLET}-objdump)
 
 SET(CMAKE_C_FLAGS "-mlittle-endian -mthumb -mcpu=cortex-m4 -mthumb-interwork -mfloat-abi=hard -mfpu=fpv4-sp-d16 -Wall -std=gnu99" CACHE INTERNAL "c compiler flags")
-SET(CMAKE_CXX_FLAGS "-std=c++11 -isystem ${TOOLCHAIN_INC_DIR} -mlittle-endian -mthumb -mcpu=cortex-m4 -mthumb-interwork -mfloat-abi=hard -mfpu=fpv4-sp-d16 -fno-builtin -Wall  -fdata-sections -ffunction-sections" CACHE INTERNAL "cxx compiler flags")
+SET(CMAKE_CXX_FLAGS "-std=c++11 -isystem ${TOOLCHAIN_INC_DIR} -mlittle-endian -mthumb -mcpu=cortex-m4 -mthumb-interwork -mfloat-abi=hard -mfpu=fpv4-sp-d16 -fno-builtin -Wall -fdata-sections -ffunction-sections" CACHE INTERNAL "cxx compiler flags")
 SET(CMAKE_ASM_FLAGS "-mlittle-endian -mthumb -mcpu=cortex-m4 -mthumb-interwork -mfloat-abi=hard -mfpu=fpv4-sp-d16" CACHE INTERNAL "asm compiler flags")
 
 SET(CMAKE_C_FLAGS_DEBUG "-O0 -g -ggdb -gstabs+" CACHE INTERNAL "c debug compiler flags")
@@ -40,10 +39,9 @@ SET(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
 SET(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS "")
 
 INCLUDE_DIRECTORIES(
-    ${STM_DIR}/Utilities/STM32F4-Discovery
-    ${STM_DIR}/Libraries/CMSIS/Include
-    ${STM_DIR}/Libraries/CMSIS/ST/STM32F4xx/Include
-    ${STM_DIR}/Libraries/STM32F4xx_StdPeriph_Driver/inc    
+    ../3rdparty/CMSIS/Include
+    ../3rdparty/CMSIS/ST/STM32F4xx/Include
+    ../3rdparty/STM32F4xx_StdPeriph_Driver/inc    
 )
 
 enable_language(ASM-ATT)

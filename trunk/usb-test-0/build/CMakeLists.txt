@@ -8,11 +8,11 @@ ADD_DEFINITIONS(-DUSE_STDPERIPH_DRIVER)
 INCLUDE_DIRECTORIES("../src/")
 AUX_SOURCE_DIRECTORY (../src/ APP_SOURCES)
 
-LIST (APPEND APP_SOURCES "${STM_DIR}/Libraries/CMSIS/ST/STM32F4xx/Source/Templates/TrueSTUDIO/startup_stm32f4xx.s")
-LIST (APPEND APP_SOURCES "${STM_DIR}/Libraries/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_rcc.c")
-LIST (APPEND APP_SOURCES "${STM_DIR}/Libraries/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_gpio.c")
-LIST (APPEND APP_SOURCES "${STM_DIR}/Libraries/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_i2c.c")
-LIST (APPEND APP_SOURCES "${STM_DIR}/Libraries/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_usart.c")
+LIST (APPEND APP_SOURCES "../3rdparty/CMSIS/ST/STM32F4xx/Source/Templates/TrueSTUDIO/startup_stm32f4xx.s")
+LIST (APPEND APP_SOURCES "../3rdparty/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_rcc.c")
+LIST (APPEND APP_SOURCES "../3rdparty/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_gpio.c")
+LIST (APPEND APP_SOURCES "../3rdparty/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_i2c.c")
+LIST (APPEND APP_SOURCES "../3rdparty/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_usart.c")
 
 ADD_EXECUTABLE(${CMAKE_PROJECT_NAME}.elf ${APP_SOURCES})
 
