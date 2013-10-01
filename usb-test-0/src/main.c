@@ -54,5 +54,10 @@ void initUsb (void)
 int main (void)
 {
         initUsart ();
+        printf ("main function started\r\n");
         initUsb ();
+
+        while (1) {
+
+        }
 }

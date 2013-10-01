@@ -9,10 +9,10 @@ ADD_DEFINITIONS(-DSTM32F40XX)
 INCLUDE_DIRECTORIES("../src/")
 AUX_SOURCE_DIRECTORY ("../src/" APP_SOURCES)
 
+# According to : http://www.atollic.com/index.php/truestudio/building/tsbuildercompiler, TrueSTUDIO uses GCC, so I assume this startup code is OK for any GCC.
 LIST (APPEND APP_SOURCES "../3rdparty/CMSIS/ST/STM32F4xx/Source/Templates/TrueSTUDIO/startup_stm32f4xx.s")
 LIST (APPEND APP_SOURCES "../3rdparty/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_rcc.c")
 LIST (APPEND APP_SOURCES "../3rdparty/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_gpio.c")
-#LIST (APPEND APP_SOURCES "../3rdparty/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_i2c.c")
 LIST (APPEND APP_SOURCES "../3rdparty/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_usart.c")
 LIST (APPEND APP_SOURCES "../3rdparty/STM32F4xx_StdPeriph_Driver/src/misc.c")
 
