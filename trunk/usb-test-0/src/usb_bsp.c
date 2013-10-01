@@ -240,3 +240,4 @@ void USB_OTG_BSP_mDelay (const uint32_t msec)
 */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
+
