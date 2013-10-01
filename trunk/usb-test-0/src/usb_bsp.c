@@ -29,6 +29,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "usb_bsp.h"
 #include "usbd_conf.h"
+#include "misc.h"
 
 /** @addtogroup STM32_USB_OTG_DEVICE_LIBRARY
 * @{
@@ -137,8 +138,8 @@ void USB_OTG_BSP_Init(USB_OTG_CORE_HANDLE *pdev)
   /* enable the PWR clock */
   RCC_APB1PeriphResetCmd(RCC_APB1Periph_PWR, ENABLE);   
   
-  /* Configure the Key button in EXTI mode */
-  STM_EVAL_PBInit(Button_KEY, Mode_EXTI);
+//  /* Configure the Key button in EXTI mode */
+//  STM_EVAL_PBInit(Button_KEY, Mode_EXTI);
 
 #ifdef USB_OTG_FS_LOW_PWR_MGMT_SUPPORT
   EXTI_ClearITPendingBit(EXTI_Line18);
@@ -160,7 +161,7 @@ void USB_OTG_BSP_Init(USB_OTG_CORE_HANDLE *pdev)
   EXTI_ClearITPendingBit(EXTI_Line18);    
 #endif 
   
-  EXTI_ClearITPendingBit(KEY_BUTTON_EXTI_LINE);  
+//  EXTI_ClearITPendingBit(KEY_BUTTON_EXTI_LINE);
 }
 /**
 * @brief  USB_OTG_BSP_EnableInterrupt

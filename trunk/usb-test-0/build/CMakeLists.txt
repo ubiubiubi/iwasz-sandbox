@@ -6,13 +6,21 @@ include (stm32f4.cmake)
 ADD_DEFINITIONS(-DUSE_STDPERIPH_DRIVER)
 
 INCLUDE_DIRECTORIES("../src/")
-AUX_SOURCE_DIRECTORY (../src/ APP_SOURCES)
+AUX_SOURCE_DIRECTORY ("../src/" APP_SOURCES)
 
 LIST (APPEND APP_SOURCES "../3rdparty/CMSIS/ST/STM32F4xx/Source/Templates/TrueSTUDIO/startup_stm32f4xx.s")
 LIST (APPEND APP_SOURCES "../3rdparty/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_rcc.c")
 LIST (APPEND APP_SOURCES "../3rdparty/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_gpio.c")
-LIST (APPEND APP_SOURCES "../3rdparty/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_i2c.c")
+#LIST (APPEND APP_SOURCES "../3rdparty/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_i2c.c")
 LIST (APPEND APP_SOURCES "../3rdparty/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_usart.c")
+LIST (APPEND APP_SOURCES "../3rdparty/STM32F4xx_StdPeriph_Driver/src/misc.c")
+
+LIST (APPEND APP_SOURCES "../3rdparty/STM32_USB_OTG_Driver/src/usb_core.c")
+LIST (APPEND APP_SOURCES "../3rdparty/STM32_USB_OTG_Driver/src/usb_dcd_int.c")
+LIST (APPEND APP_SOURCES "../3rdparty/STM32_USB_OTG_Driver/src/usb_dcd.c")
+
+AUX_SOURCE_DIRECTORY ("../3rdparty/STM32_USB_Device_Library/Core/src/" APP_SOURCES)
+AUX_SOURCE_DIRECTORY ("../3rdparty/STM32_USB_Device_Library/Class/hid/src/" APP_SOURCES)
 
 ADD_EXECUTABLE(${CMAKE_PROJECT_NAME}.elf ${APP_SOURCES})
 
