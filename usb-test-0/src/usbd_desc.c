@@ -4,8 +4,9 @@
 #include "usbd_conf.h"
 #include "usb_regs.h"
 
-#define USBD_VID                     0x20A0
+#define USBD_VID                     0x20a0
 #define USBD_PID                     0x41ff
+#define USBD_PRODUCT_VER             0x0001
 
 #define USBD_LANGID_STRING            0x409
 #define USBD_MANUFACTURER_STRING      "STMicroelectronics"
@@ -33,46 +34,52 @@ USBD_DEVICE USR_desc =
         USBD_USR_InterfaceStrDescriptor,
 };
 
-/*
- * USB Standard Device Descriptor
+/**
+ * USB Device Descriptor
  */
 __ALIGN_BEGIN uint8_t USBD_DeviceDesc[USB_SIZ_DEVICE_DESC] __ALIGN_END =
-  {
-        0x12,                       /*bLength */
-        USB_DEVICE_DESCRIPTOR_TYPE, /*bDescriptorType*/
-        0x00,                       /*bcdUSB */
-        0x02,
-        0x00,                       /*bDeviceClass*/
-        0x00,                       /*bDeviceSubClass*/
-        0x00,                       /*bDeviceProtocol*/
-        USB_OTG_MAX_EP0_SIZE,      /*bMaxPacketSize*/
-        LOBYTE(USBD_VID),           /*idVendor*/
-        HIBYTE(USBD_VID),           /*idVendor*/
-        LOBYTE(USBD_PID),           /*idVendor*/
-        HIBYTE(USBD_PID),           /*idVendor*/
-        0x00,                       /*bcdDevice rel. 2.00*/
-        0x02,
-        USBD_IDX_MFC_STR,           /*Index of manufacturer  string*/
-        USBD_IDX_PRODUCT_STR,       /*Index of product string*/
-        USBD_IDX_SERIAL_STR,        /*Index of serial number string*/
-        USBD_CFG_MAX_NUM            /*bNumConfigurations*/
-  } ; /* USB_DeviceDescriptor */
+{                                   /* Nazwa (rozmiar w bajtach) opis. */
+        0x12,                       /* bLength (1B) Rozmiar deskryptora, ktory jest stały i wynosi 0x12. */
+        USB_DEVICE_DESCRIPTOR_TYPE, /* bDescriptorType (1B) Typ deskryptora (stała, ktora, patrz tabelka wyżej, wynosi 0x01). */
+        0x00,                       /* bcdUSB (2B) USB specification release number (BCD). Dla USB 1.1 : 0x0110, */
+        0x02,                       /* dla USB 2.0 : 0x0200. */
+        0x00,                       /* bDeviceClass (1B) Kod klasy. Ale to pole nie jest obowiązkowe, bo klasę urządzenia można */
+                                    /* zdefiniować w ''interface descriptor'' (tak się zazwyczaj robi). W takim przypadku */
+                                    /* ustawiamy tu 0x00 gdy urządzenie NIE posiada ''association descriptor'', a 0xef gdy */
+                                    /* posiada. */
+        0x00,                       /* bDeviceSubClass (1B) Podklasa. Gdy bDeviceClass jest 0x00, to bDeviceSubClass */
+                                    /* MUSI być 0x00. W innym przypadku, trzeba sprawdzić w tabelkach. */
+        0x00,                       /* bDeviceProtocol (1B) Kolejna specyficzna wartość ustalana dla klas przez USB-IF. */
+        USB_OTG_MAX_EP0_SIZE,       /* bMaxPacketSize0 (1B) Max rozmiar pakietu dla EP0. W USB 2.0 : 8 dla LS, */
+                                    /* 8, 16, 32 lub 64 dla FS, oraz 64 dla HS. */
+        LOBYTE (USBD_VID),          /* idVendor (2B) */
+        HIBYTE (USBD_VID),
+        LOBYTE (USBD_PID),          /* idProduct (2B) */
+        HIBYTE (USBD_PID),
+        LOBYTE (USBD_PRODUCT_VER),  /* bcdDevice (2B) Numer wersji urządzenia. Host może wybrać odpowiedni driver na */
+        HIBYTE (USBD_PRODUCT_VER),  /* podstawie tego pola. */
+        USBD_IDX_MFC_STR,           /* iManufacturer (1B) Index of manufacturer string descriptor, albo 0 jeśli nie ma. */
+        USBD_IDX_PRODUCT_STR,       /* iProduct (1B) Index of product string descriptor, or 0 if not present. */
+        USBD_IDX_SERIAL_STR,        /* iSerialNumber (1B) Index of serial number string descriptor, or 0. */
+        USBD_CFG_MAX_NUM            /* bNumConfigurations (1B) Liczba konfiguracji obsługiwanych przez urządzenie w aktualnej */
+                                    /* prędkości (LS, FS, HS). */
+};
 
-/*
- * USB Standard Device Descriptor
+/**
+ * USB device_qualifier descriptor.
  */
 __ALIGN_BEGIN uint8_t USBD_DeviceQualifierDesc[USB_LEN_DEV_QUALIFIER_DESC] __ALIGN_END =
 {
-        USB_LEN_DEV_QUALIFIER_DESC,
-        USB_DESC_TYPE_DEVICE_QUALIFIER,
-        0x00,
+        USB_LEN_DEV_QUALIFIER_DESC,     /* bLength (1B) Zawsze 0x0a */
+        USB_DESC_TYPE_DEVICE_QUALIFIER, /* bDescriptorType (1B) Zawsze 0x06 */
+        0x00,                           /* bcdUSB (2B) Jak wcześniej i wszystkie następne jak wcześniej. */
         0x02,
-        0x00,
-        0x00,
-        0x00,
-        0x40,
-        0x01,
-        0x00,
+        0x00,                           /* bDeviceClass (1B) */
+        0x00,                           /* bDeviceSubclass (1B) */
+        0x00,                           /* bDeviceProtocol (1B) */
+        USB_OTG_MAX_EP0_SIZE,           /* bMaxPacketSize0 (1B) */
+        USBD_CFG_MAX_NUM,               /* bNumConfigurations (1B) */
+        0x00                            /* Reserved */
 };
 
 /*
