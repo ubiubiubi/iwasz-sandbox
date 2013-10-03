@@ -83,14 +83,14 @@ __ALIGN_BEGIN uint8_t USBD_DeviceQualifierDesc[USB_LEN_DEV_QUALIFIER_DESC] __ALI
 };
 
 /*
- * USB Standard Device Descriptor
+ * USB String descriptor with index 0. Language definiction (English only).
  */
 __ALIGN_BEGIN uint8_t USBD_LangIDDesc[USB_SIZ_STRING_LANGID] __ALIGN_END =
 {
-        USB_SIZ_STRING_LANGID,
-        USB_DESC_TYPE_STRING,
-        LOBYTE(USBD_LANGID_STRING),
-        HIBYTE(USBD_LANGID_STRING),
+        USB_SIZ_STRING_LANGID,      /* bLength : różna długość, trzeba policzyć. */
+        USB_DESC_TYPE_STRING,       /* bDescriptorType : stała 0x03. */
+        LOBYTE(USBD_LANGID_STRING), /* wLANGID : 0x0409 to angielski. 2 bajty */
+        HIBYTE(USBD_LANGID_STRING), /* */
 };
 
 /**
