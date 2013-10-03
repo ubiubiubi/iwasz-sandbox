@@ -158,55 +158,89 @@ __ALIGN_BEGIN static uint32_t  USBD_HID_IdleState __ALIGN_END = 0;
     #pragma data_alignment=4   
   #endif
 #endif /* USB_OTG_HS_INTERNAL_DMA_ENABLED */ 
-/* USB HID device Configuration Descriptor */
+/*
+ * Configuration descriptor.
+ */
 __ALIGN_BEGIN static uint8_t USBD_HID_CfgDesc[USB_HID_CONFIG_DESC_SIZ] __ALIGN_END =
 {
-  0x09, /* bLength: Configuration Descriptor size */
-  USB_CONFIGURATION_DESCRIPTOR_TYPE, /* bDescriptorType: Configuration */
-  USB_HID_CONFIG_DESC_SIZ,
-  /* wTotalLength: Bytes returned */
-  0x00,
-  0x01,         /*bNumInterfaces: 1 interface*/
-  0x01,         /*bConfigurationValue: Configuration value*/
-  0x00,         /*iConfiguration: Index of string descriptor describing
-  the configuration*/
-  0xE0,         /*bmAttributes: bus powered and Support Remote Wake-up */
-  0x32,         /*MaxPower 100 mA: this current is used for detecting Vbus*/
-  
-  /************** Descriptor of Joystick Mouse interface ****************/
-  /* 09 */
-  0x09,         /*bLength: Interface Descriptor size*/
-  USB_INTERFACE_DESCRIPTOR_TYPE,/*bDescriptorType: Interface descriptor type*/
-  0x00,         /*bInterfaceNumber: Number of Interface*/
-  0x00,         /*bAlternateSetting: Alternate setting*/
-  0x01,         /*bNumEndpoints*/
-  0x03,         /*bInterfaceClass: HID*/
-  0x01,         /*bInterfaceSubClass : 1=BOOT, 0=no boot*/
-  0x02,         /*nInterfaceProtocol : 0=none, 1=keyboard, 2=mouse*/
-  0,            /*iInterface: Index of string descriptor*/
-  /******************** Descriptor of Joystick Mouse HID ********************/
-  /* 18 */
-  0x09,         /*bLength: HID Descriptor size*/
-  HID_DESCRIPTOR_TYPE, /*bDescriptorType: HID*/
-  0x11,         /*bcdHID: HID Class Spec release number*/
-  0x01,
-  0x00,         /*bCountryCode: Hardware target country*/
-  0x01,         /*bNumDescriptors: Number of HID class descriptors to follow*/
-  0x22,         /*bDescriptorType*/
-  HID_MOUSE_REPORT_DESC_SIZE,/*wItemLength: Total length of Report descriptor*/
-  0x00,
-  /******************** Descriptor of Mouse endpoint ********************/
-  /* 27 */
-  0x07,          /*bLength: Endpoint Descriptor size*/
-  USB_ENDPOINT_DESCRIPTOR_TYPE, /*bDescriptorType:*/
-  
-  HID_IN_EP,     /*bEndpointAddress: Endpoint Address (IN)*/
-  0x03,          /*bmAttributes: Interrupt endpoint*/
-  HID_IN_PACKET, /*wMaxPacketSize: 4 Byte max */
-  0x00,
-  0x0A,          /*bInterval: Polling Interval (10 ms)*/
-  /* 34 */
-} ;
+        0x09,           /* bLength (1) Configuration Descriptor size in bytes, always 0x09. */
+        USB_CONFIGURATION_DESCRIPTOR_TYPE, /* bDescriptorType (1B) Stała 0x02 (patrz tabelka typów deskryptorów */
+        USB_HID_CONFIG_DESC_SIZ,           /* wTotalLength (2B) Rozmiar w bajtach całego deskryptora wraz z jego "doklejonymi" */
+        0x00,                              /* deskryptorami interfejsów i endpointów. */
+        0x01,         /* bNumInterfaces (1B) Liczba interfejsów. */
+        0x01,         /* bConfigurationValue (1B) numer porządkowy konfiguracji. Musi być większy równy 1. Rozumiem, że musi być */
+                      /* unikalny dla każdej konfiguracji. */
+        0x00,         /* iConfiguration (1B) Index of string descriptor describing the configuration, albo 0, jeśli nie ma. */
+        0xE0,         /* bmAttributes (1B) Atrybuty w postaci maski bitowej. Bit 6==1 -> self powered. Bit 6==0 -> bus powered */
+                      /* Bit 5==1 -> urządzenie obsługuje "remote wakeup feature". Bit5==0 -> nie obsługuje. Bit 4..0 muszą być 0 */
+                      /* Bit7 musi być równy 1. */
+        0x32,         /* bMaxPower (1B) Max prąd w jednostkach 2mA dla USB 2.0 i w jednostkach 8mA dla USB 3.0. W tym przypadku */
+                      /* 0x32 = 50, czyli 100mA. */
+
+        /*
+         * Device descriptor of mouse interface.
+         */
+        0x09,         /* bLength : Interface Descriptor size == 0x09. */
+        USB_INTERFACE_DESCRIPTOR_TYPE,/* bDescriptorType : Interface descriptor type (constant 0x04). */
+        0x00,         /* bInterfaceNumber: Unikalny numer. Urządzenia typu composite będą miały następne interfejsy, a każdy */
+                      /* będzie miał kolejne numery. Domyślny interfejs ma numer 0. */
+        0x00,         /* bAlternateSetting: Unikalny numer "alternate settings". Każdy interfejs może mieć odmiany, które */
+                      /* właśnie nazywamy "alternate setting". Każde takie ustawienie musi mieć unikalny numer w tym polu. */
+                      /* Domyślny numer to 0 i kazdy interfejs musi mieć takie "alternatywne ustawienie" o nr. 0. */
+        0x01,         /* bNumEndpoints : Liczba endpointów prócz EP0. */
+        0x03,         /* bInterfaceClass : Klasa. Listę można znaleźć na wikipedii. 0xff to vendor specific. Klasę urządzenia */
+                      /* można także podać w deskryptorze urządzenia, ale najczęściej się podaj tu. 0x03 to HID. */
+        0x01,         /* bInterfaceSubClass : 1=BOOT, 0=no boot. Ustanowione przez USB-IF dla klas. 0xff == vendor specific. */
+        0x02,         /* nInterfaceProtocol : 0=none, 1=keyboard, 2=mouse. Ustanowione przez USB-IF dla klas. 0xff == vendor */
+                      /* specific.*/
+        0,            /* iInterface: Index of string descriptor, or 0 if there is no string. */
+
+        /*
+         * HID descriptor (mouse).
+         */
+        0x09,         /* bLength: HID Descriptor size*/
+        HID_DESCRIPTOR_TYPE, /* bDescriptorType: HID*/
+        0x11,         /* bcdHID: HID Class Spec release number*/
+        0x01,
+        0x00,         /* bCountryCode: Hardware target country*/
+        0x01,         /* bNumDescriptors: Number of HID class descriptors to follow*/
+        0x22,         /* bDescriptorType*/
+        HID_MOUSE_REPORT_DESC_SIZE,/* wItemLength: Total length of Report descriptor*/
+        0x00,
+
+        /*
+         * Endpoint descriptor.
+         */
+        0x07,          /* bLength: Endpoint Descriptor size */
+        USB_ENDPOINT_DESCRIPTOR_TYPE, /* bDescriptorType: Stała 0x05 */
+        HID_IN_EP,     /* bEndpointAddress: Endpoint Address. 4 LSB to numer endpointu. Urządzenia LS moga mieć w interfejsie */
+                       /* max 3 endpointy. Pozostałe urządzenia mogą mieć 16. Bit MSB to kierunek : 0 == OUT, 1 == IN. Bity */\
+                       /* 6..4 muszą być 0. */
+        0x03,          /* bmAttributes : */
+                       /* Bits 0..1 Transfer Type */
+                       /*  00 = Control */
+                       /*  01 = Isochronous */
+                       /*  10 = Bulk */
+                       /*  11 = Interrupt */
+                       /* Bits 2..7 are reserved. If Isochronous endpoint, */
+                       /* Bits 3..2 = Synchronisation Type (Iso Mode) */
+                       /*  00 = No Synchonisation */
+                       /*  01 = Asynchronous */
+                       /*  10 = Adaptive */
+                       /*  11 = Synchronous */
+                       /* Bits 5..4 = Usage Type (Iso Mode) */
+                       /*  00 = Data Endpoint */
+                       /*  01 = Feedback Endpoint */
+                       /*  10 = Explicit Feedback Data Endpoint */
+                       /*  11 = Reserved */
+        HID_IN_PACKET, /* wMaxPacketSize (2B): Dla USB 2.0 Bity 0-10 (LSB) oznaczają liczbę bajtów. To może być wartść od 0 */
+                       /* do 1204. Bity 11 i 12 oznaczają liczbę dodatkowych transakcji w mikro ramce dla transferów iso */
+                       /* i interrupt  (0-2, bo 11 jest zarezerwowane). Bity 13-15 musza być 0. */
+        0x00,
+        0x0A,          /* bInterval: Polling Interval. Interval for polling endpoint data transfers. Value in frame counts (ms). */
+                       /* Ignored for Bulk & Control Endpoints. Isochronous must equal 1 and field may range from 1 to 255 for */
+                       /* interrupt endpoints. */
+};
 
 #ifdef USB_OTG_HS_INTERNAL_DMA_ENABLED
   #if defined ( __ICCARM__ ) /*!< IAR Compiler */
