@@ -4,7 +4,7 @@
 #include <usb_core.h> // OTG driver
 #include <usbd_core.h> // Device library
 #include <usbd_usr.h> // USBD_Usr_cb_TypeDef structure implementaion
-#include <usbd_hid_core.h> // Class library
+#include "usbd_vendor_class.h"// Class library
 #include "usbd_desc.h"
 
 __ALIGN_BEGIN USB_OTG_CORE_HANDLE  USB_OTG_dev __ALIGN_END;
@@ -47,17 +47,15 @@ void initUsb (void)
         USBD_Init(&USB_OTG_dev,
                   USB_OTG_FS_CORE_ID,
                   &USR_desc,
-                  &USBD_HID_cb,
+                  &USBDVendorClass,
                   &USR_cb);
 }
 
 int main (void)
 {
         initUsart ();
-        printf ("main function started\r\n");
         initUsb ();
 
         while (1) {
-
         }
 }
