@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 SET (CMAKE_VERBOSE_MAKEFILE OFF) 
 
-PROJECT (usb-test-0)
+PROJECT (usb-vendor-specific)
 include (stm32f4.cmake)
 ADD_DEFINITIONS(-DUSE_STDPERIPH_DRIVER)
 ADD_DEFINITIONS(-DSTM32F40XX)
@@ -22,7 +22,6 @@ LIST (APPEND APP_SOURCES "../3rdparty/STM32_USB_OTG_Driver/src/usb_dcd_int.c")
 LIST (APPEND APP_SOURCES "../3rdparty/STM32_USB_OTG_Driver/src/usb_dcd.c")
 
 AUX_SOURCE_DIRECTORY ("../3rdparty/STM32_USB_Device_Library/Core/src/" APP_SOURCES)
-AUX_SOURCE_DIRECTORY ("../3rdparty/STM32_USB_Device_Library/Class/hid/src/" APP_SOURCES)
 
 ADD_EXECUTABLE(${CMAKE_PROJECT_NAME}.elf ${APP_SOURCES})
 
