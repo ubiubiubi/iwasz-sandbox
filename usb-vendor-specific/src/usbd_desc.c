@@ -9,19 +9,11 @@
 #define USBD_PRODUCT_VER             0x0001
 
 #define USBD_LANGID_STRING            0x409
-#define USBD_MANUFACTURER_STRING      "STMicroelectronics"
-
-#define USBD_PRODUCT_HS_STRING        "Joystick in HS mode"
-#define USBD_SERIALNUMBER_HS_STRING   "00000000011B"
-
-#define USBD_PRODUCT_FS_STRING        "Joystick in FS Mode"
-#define USBD_SERIALNUMBER_FS_STRING   "00000000011C"
-
-#define USBD_CONFIGURATION_HS_STRING  "HID Config"
-#define USBD_INTERFACE_HS_STRING      "HID Interface"
-
-#define USBD_CONFIGURATION_FS_STRING  "HID Config"
-#define USBD_INTERFACE_FS_STRING      "HID Interface"
+#define USBD_MANUFACTURER_STRING      "iwasz.pl"
+#define USBD_PRODUCT_FS_STRING        "forrest prototype hub"
+#define USBD_SERIALNUMBER_FS_STRING   "0001"
+#define USBD_CONFIGURATION_FS_STRING  "Forrest HUB Config"
+#define USBD_INTERFACE_FS_STRING      "Forrest HUB Interface"
 
 USBD_DEVICE USR_desc =
 {
@@ -129,12 +121,7 @@ uint8_t * USBD_USR_LangIDStrDescriptor (uint8_t speed, uint16_t *length)
 uint8_t * USBD_USR_ProductStrDescriptor (uint8_t speed, uint16_t *length)
 {
 
-        if (speed == 0) {
-                USBD_GetString (USBD_PRODUCT_HS_STRING, USBD_StrDesc, length);
-        }
-        else {
-                USBD_GetString (USBD_PRODUCT_FS_STRING, USBD_StrDesc, length);
-        }
+        USBD_GetString (USBD_PRODUCT_FS_STRING, USBD_StrDesc, length);
         return USBD_StrDesc;
 }
 
@@ -160,12 +147,7 @@ uint8_t * USBD_USR_ManufacturerStrDescriptor (uint8_t speed, uint16_t *length)
  */
 uint8_t * USBD_USR_SerialStrDescriptor (uint8_t speed, uint16_t *length)
 {
-        if (speed == USB_OTG_SPEED_HIGH) {
-                USBD_GetString (USBD_SERIALNUMBER_HS_STRING, USBD_StrDesc, length);
-        }
-        else {
-                USBD_GetString (USBD_SERIALNUMBER_FS_STRING, USBD_StrDesc, length);
-        }
+        USBD_GetString (USBD_SERIALNUMBER_FS_STRING, USBD_StrDesc, length);
         return USBD_StrDesc;
 }
 
@@ -178,12 +160,7 @@ uint8_t * USBD_USR_SerialStrDescriptor (uint8_t speed, uint16_t *length)
  */
 uint8_t * USBD_USR_ConfigStrDescriptor (uint8_t speed, uint16_t *length)
 {
-        if (speed == USB_OTG_SPEED_HIGH) {
-                USBD_GetString (USBD_CONFIGURATION_HS_STRING, USBD_StrDesc, length);
-        }
-        else {
-                USBD_GetString (USBD_CONFIGURATION_FS_STRING, USBD_StrDesc, length);
-        }
+        USBD_GetString (USBD_CONFIGURATION_FS_STRING, USBD_StrDesc, length);
         return USBD_StrDesc;
 }
 
@@ -196,12 +173,7 @@ uint8_t * USBD_USR_ConfigStrDescriptor (uint8_t speed, uint16_t *length)
  */
 uint8_t * USBD_USR_InterfaceStrDescriptor (uint8_t speed, uint16_t *length)
 {
-        if (speed == 0) {
-                USBD_GetString (USBD_INTERFACE_HS_STRING, USBD_StrDesc, length);
-        }
-        else {
-                USBD_GetString (USBD_INTERFACE_FS_STRING, USBD_StrDesc, length);
-        }
+        USBD_GetString (USBD_INTERFACE_FS_STRING, USBD_StrDesc, length);
         return USBD_StrDesc;
 }
 

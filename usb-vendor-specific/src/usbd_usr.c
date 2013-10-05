@@ -14,9 +14,6 @@ USBD_Usr_cb_TypeDef USR_cb = {
         USBD_USR_DeviceDisconnected,
 };
 
-#define USER_INFORMATION1      "[Key]:RemoteWakeup"
-#define USER_INFORMATION2      "[Joystick]:Mouse emulation"
-
 /**
  * @brief  USBD_USR_Init
  *         Displays the message on LCD for host lib initialization
