@@ -9,6 +9,9 @@
 #include <iostream>
 #include <thread>
 #include <libusb.h>
+#include <signal.h>
+
+bool doExit = false;
 
 void hello ()
 {
@@ -41,10 +44,69 @@ void print_devs (libusb_device **devs)
         }
 }
 
+static void LIBUSB_CALL cb_xfr (libusb_transfer *xfr)
+{
+        int i;
+
+        if (xfr->status != LIBUSB_TRANSFER_COMPLETED) {
+                fprintf(stderr, "transfer status %d\n", xfr->status);
+                libusb_free_transfer(xfr);
+                exit(3);
+        }
+
+        if (xfr->type == LIBUSB_TRANSFER_TYPE_ISOCHRONOUS) {
+                for (i = 0; i < xfr->num_iso_packets; i++) {
+                        struct libusb_iso_packet_descriptor *pack = &xfr->iso_packet_desc[i];
+
+                        if (pack->status != LIBUSB_TRANSFER_COMPLETED) {
+                                fprintf(stderr, "Error: pack %u status %d\n", i, pack->status);
+                                exit(5);
+                        }
+
+                        printf("pack%u length:%u, actual_length:%u\n", i, pack->length, pack->actual_length);
+                }
+        }
+
+        printf("length:%u, actual_length:%u\n", xfr->length, xfr->actual_length);
+        for (i = 0; i < xfr->actual_length; i++) {
+                printf("%02x", xfr->buffer[i]);
+                if (i % 16)
+                printf("\n");
+                else if (i % 8)
+                printf("  ");
+                else
+                printf(" ");
+        }
+
+//        std::cerr << "Length received : " << xfr->actual_length << std::endl;
+
+        if (libusb_submit_transfer(xfr) < 0) {
+                fprintf(stderr, "error re-submitting URB\n");
+                exit(1);
+        }
+}
+
+static void sig_hdlr(int signum)
+{
+        switch (signum) {
+        case SIGINT:
+                std::cerr << "SIGINT !!!!" << std::endl;
+                doExit = true;
+                break;
+        }
+}
+
 int main ()
 {
 //        std::thread t (hello);
 //        t.join ();
+
+        struct sigaction sigact;
+        sigact.sa_handler = sig_hdlr;
+        sigemptyset(&sigact.sa_mask);
+        sigact.sa_flags = 0;
+        sigaction(SIGINT, &sigact, NULL);
+
 
         libusb_device **devs;
         int r;
@@ -88,6 +150,50 @@ int main ()
         else {
                 std::cerr << "Interface claimed." << std::endl;
         }
+
+        /*--------------------------------------------------------------------------*/
+
+        int num_iso_pack = 1; // ?!?!? CO to jest!
+        libusb_transfer *xfr = libusb_alloc_transfer (num_iso_pack);
+
+        if (!xfr) {
+                std::cerr << "Error" << std::endl;
+                libusb_exit (NULL);
+                exit (1);
+        }
+
+        uint8_t buf[4];
+        libusb_fill_iso_transfer (xfr, devh, 0x81, buf, sizeof(buf), num_iso_pack, cb_xfr, NULL, 1);
+
+        libusb_set_iso_packet_lengths (xfr, sizeof(buf)/num_iso_pack);
+
+        int ret = libusb_submit_transfer (xfr);
+        if (ret) {
+                std::cerr << "libusb_submit_transfer error :" << std::endl;
+                switch (ret) {
+                case LIBUSB_ERROR_NO_DEVICE:
+                        std::cerr << "LIBUSB_ERROR_NO_DEVICE" << std::endl;
+                        break;
+                case LIBUSB_ERROR_BUSY:
+                        std::cerr << "LIBUSB_ERROR_BUSY" << std::endl;
+                        break;
+                case LIBUSB_ERROR_NOT_SUPPORTED:
+                        std::cerr << "LIBUSB_ERROR_NOT_SUPPORTED" << std::endl;
+                        break;
+                default:
+                        std::cerr << "Error nr : " << ret << std::endl;
+                        break;
+                }
+        }
+
+        while (!doExit) {
+                rc = libusb_handle_events(NULL);
+
+                if (rc != LIBUSB_SUCCESS)
+                        break;
+        }
+
+        /*--------------------------------------------------------------------------*/
 
         if (!libusb_release_interface (devh, 0)) {
                 std::cerr << "Interface released." << std::endl;
