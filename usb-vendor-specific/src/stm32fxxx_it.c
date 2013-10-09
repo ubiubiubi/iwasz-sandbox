@@ -1,8 +1,11 @@
 #include "stm32fxxx_it.h"
 #include "usb_core.h"
 #include "usbd_core.h"
-#include "usbd_hid_core.h"
+#include "usbd_vendor_class.h"
 #include "usb_conf.h"
+
+// TODO Wywal
+#include <stdio.h>
 
 __IO uint32_t remote_wakeup =0;
 /* Private function prototypes -----------------------------------------------*/
@@ -32,12 +35,13 @@ void NMI_Handler(void)
 * @param  None
 * @retval None
 */
-void HardFault_Handler(void)
+void HardFault_Handler (void)
 {
-  /* Go to infinite loop when Hard Fault exception occurs */
-  while (1)
-  {
-  }
+        printf ("HardFault_Handler\r\n");
+
+        /* Go to infinite loop when Hard Fault exception occurs */
+        while (1) {
+        }
 }
 
 /**
@@ -113,9 +117,9 @@ void PendSV_Handler(void)
 */
 void SysTick_Handler (void)
 {
-
-        uint8_t buf[] = { 0x66, 0x77, 0x88, 0x99 };
-        vendorSendReport (&USB_OTG_dev, buf, 4);
+        static uint8_t myBuf[] = { 0x0f, 0x02, 0x03, 0xff, 0xfe, 0xfd };
+        vendorSendReport (&USB_OTG_dev, myBuf, 4);
+//        printf ("SysTick_Handler\r\n");
 }
 
 /**

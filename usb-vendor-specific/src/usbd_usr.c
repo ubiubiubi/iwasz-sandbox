@@ -68,7 +68,7 @@ void USBD_USR_DeviceReset (uint8_t speed)
  */
 void USBD_USR_DeviceConfigured (void)
 {
-        printf ("HID Interface started.\r\n");
+        printf ("USBD_USR_DeviceConfigured : Interface started.\r\n");
 }
 
 /**
@@ -79,7 +79,7 @@ void USBD_USR_DeviceConfigured (void)
  */
 void USBD_USR_DeviceConnected (void)
 {
-        printf ("USB Device Connected.\r\n");
+        printf ("USBD_USR_DeviceConnected : USB Device Connected.\r\n");
 }
 
 /**
@@ -90,7 +90,7 @@ void USBD_USR_DeviceConnected (void)
  */
 void USBD_USR_DeviceDisconnected (void)
 {
-        printf ("USB Device Disconnected.\r\n");
+        printf ("USBD_USR_DeviceDisconnected : USB Device Disconnected.\r\n");
 }
 
 /**
@@ -101,7 +101,7 @@ void USBD_USR_DeviceDisconnected (void)
  */
 void USBD_USR_DeviceSuspended (void)
 {
-        printf ("USB Device in Suspend Mode.\r\n");
+        printf ("USBD_USR_DeviceSuspended : USB Device in Suspend Mode.\r\n");
         /* Users can do their application actions here for the USB-Reset */
 }
 
@@ -113,7 +113,7 @@ void USBD_USR_DeviceSuspended (void)
  */
 void USBD_USR_DeviceResumed (void)
 {
-        printf ("USB Device in Idle Mode.\r\n");
+        printf ("USBD_USR_DeviceResumed : USB Device in Idle Mode.\r\n");
         /* Users can do their application actions here for the USB-Reset */
 }
 

@@ -2,6 +2,9 @@
 #include "usbd_desc.h"
 #include "usbd_req.h"
 
+// TODO WYWAL
+#include <stdio.h>
+
 static uint8_t vendorInit (void *pdev, uint8_t cfgidx);
 static uint8_t vendorDeInit (void *pdev, uint8_t cfgidx);
 static uint8_t vendorSetup (void *pdev, USB_SETUP_REQ *req);
@@ -67,19 +70,6 @@ __ALIGN_BEGIN static uint8_t vendorCfgDesc[] __ALIGN_END =
                       /* specific.*/
         0,            /* iInterface: Index of string descriptor, or 0 if there is no string. */
 
-//        /*
-//         * HID descriptor (mouse).
-//         */
-//        0x09,         /* bLength: HID Descriptor size*/
-//        HID_DESCRIPTOR_TYPE, /* bDescriptorType: HID*/
-//        0x11,         /* bcdHID: HID Class Spec release number*/
-//        0x01,
-//        0x00,         /* bCountryCode: Hardware target country*/
-//        0x01,         /* bNumDescriptors: Number of HID class descriptors to follow*/
-//        0x22,         /* bDescriptorType*/
-//        HID_MOUSE_REPORT_DESC_SIZE,/* wItemLength: Total length of Report descriptor*/
-//        0x00,
-
         /*
          * Endpoint descriptor.
          */
@@ -88,7 +78,7 @@ __ALIGN_BEGIN static uint8_t vendorCfgDesc[] __ALIGN_END =
         0x80 | 0x01,   /* bEndpointAddress: Endpoint Address. 4 LSB to numer endpointu. Urządzenia LS moga mieć w interfejsie */
                        /* max 3 endpointy. Pozostałe urządzenia mogą mieć 16. Bit MSB to kierunek : 0 == OUT, 1 == IN. Bity */\
                        /* 6..4 muszą być 0. */
-        0x03,          /* bmAttributes : */
+        0x01,          /* bmAttributes : */
                        /* Bits 0..1 Transfer Type */
                        /*  00 = Control */
                        /*  01 = Isochronous */
@@ -106,7 +96,7 @@ __ALIGN_BEGIN static uint8_t vendorCfgDesc[] __ALIGN_END =
                        /*  10 = Explicit Feedback Data Endpoint */
                        /*  11 = Reserved */
         IN_PACKET_SIZE, /* wMaxPacketSize (2B): Dla USB 2.0 Bity 0-10 (LSB) oznaczają liczbę bajtów. To może być wartść od 0 */
-                       /* do 1204. Bity 11 i 12 oznaczają liczbę dodatkowych transakcji w mikro ramce dla transferów iso */
+                       /* do 1024. Bity 11 i 12 oznaczają liczbę dodatkowych transakcji w mikro ramce dla transferów iso */
                        /* i interrupt  (0-2, bo 11 jest zarezerwowane). Bity 13-15 musza być 0. */
         0x00,
         0x01,          /* bInterval: Polling Interval. Interval for polling endpoint data transfers. Value in frame counts (ms). */
@@ -115,8 +105,6 @@ __ALIGN_BEGIN static uint8_t vendorCfgDesc[] __ALIGN_END =
 };
 
 /**
-  * @brief  USBD_HID_Init
-  *         Initialize the HID interface
   * @param  pdev: device instance
   * @param  cfgidx: Configuration index
   * @retval status
@@ -124,7 +112,9 @@ __ALIGN_BEGIN static uint8_t vendorCfgDesc[] __ALIGN_END =
 static uint8_t vendorInit (void *pdev, uint8_t cfgidx)
 {
         /* Open EP IN */
-        DCD_EP_Open (pdev, IN_EP, IN_PACKET_SIZE, USB_OTG_EP_INT);
+        printf ("vendorInit\r\n");
+        DCD_EP_Open (pdev, IN_EP, IN_PACKET_SIZE, USB_OTG_EP_ISOC);
+
         return USBD_OK;
 }
 
@@ -138,6 +128,7 @@ static uint8_t vendorInit (void *pdev, uint8_t cfgidx)
 static uint8_t vendorDeInit (void *pdev, uint8_t cfgidx)
 {
         /* Close HID EPs */
+        printf ("vendorDeInit\r\n");
         DCD_EP_Close (pdev, IN_EP);
         return USBD_OK;
 }
@@ -153,6 +144,8 @@ static uint8_t vendorSetup (void *pdev, USB_SETUP_REQ *req)
 {
         uint16_t len = 0;
         uint8_t *pbuf = NULL;
+
+        printf ("vendorSetup\r\n");
 
         switch (req->bmRequest & USB_REQ_TYPE_MASK) {
         case USB_REQ_TYPE_CLASS:
@@ -224,7 +217,9 @@ uint8_t vendorSendReport (USB_OTG_CORE_HANDLE *pdev, uint8_t *report, uint16_t l
 {
         if (pdev->dev.device_status == USB_OTG_CONFIGURED) {
                 DCD_EP_Tx (pdev, IN_EP, report, len);
+//                printf ("vendorSendReport\r\n");
         }
+
         return USBD_OK;
 }
 
@@ -237,6 +232,7 @@ uint8_t vendorSendReport (USB_OTG_CORE_HANDLE *pdev, uint8_t *report, uint16_t l
   */
 static uint8_t *vendorGetCfgDesc (uint8_t speed, uint16_t *length)
 {
+        printf ("vendorGetCfgDesc\r\n");
         *length = sizeof(vendorCfgDesc);
         return vendorCfgDesc;
 }
@@ -254,6 +250,7 @@ static uint8_t vendorDataIn (void *pdev, uint8_t epnum)
          * Ensure that the FIFO is empty before a new transfer, this condition could
          * be caused by  a new transfer before the end of the previous transfer
          */
+//        printf ("vendorDataIn\r\n");
         DCD_EP_Flush (pdev, IN_EP);
         return USBD_OK;
 }

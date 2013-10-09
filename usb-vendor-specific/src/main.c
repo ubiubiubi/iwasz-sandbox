@@ -40,7 +40,7 @@ void initUsart (void)
 }
 
 /**
- * Configure the USB OTG engine. This will be a HID class device.
+ * Configure the USB OTG engine.
  */
 void initUsb (void)
 {
