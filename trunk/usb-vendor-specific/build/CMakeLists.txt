@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 SET (CMAKE_VERBOSE_MAKEFILE OFF) 
 
 PROJECT (usb-vendor-specific)
-include (stm32f4.cmake)
+include (stm32f4-crosstool.cmake)
 ADD_DEFINITIONS(-DUSE_STDPERIPH_DRIVER)
 ADD_DEFINITIONS(-DSTM32F40XX)
 
