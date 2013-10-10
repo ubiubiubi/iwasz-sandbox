@@ -53,13 +53,31 @@ __ALIGN_BEGIN static uint8_t vendorCfgDesc[] __ALIGN_END =
                       /* 0x32 = 50, czyli 100mA. */
 
         /*
-         * Device descriptor of mouse interface.
+         * Device descriptor of interface : DEFAULT SETTING, no bandwidth allocation!!!
          */
         0x09,         /* bLength : Interface Descriptor size == 0x09. */
         USB_INTERFACE_DESCRIPTOR_TYPE,/* bDescriptorType : Interface descriptor type (constant 0x04). */
         0x00,         /* bInterfaceNumber: Unikalny numer. Urządzenia typu composite będą miały następne interfejsy, a każdy */
                       /* będzie miał kolejne numery. Domyślny interfejs ma numer 0. */
         0x00,         /* bAlternateSetting: Unikalny numer "alternate settings". Każdy interfejs może mieć odmiany, które */
+                      /* właśnie nazywamy "alternate setting". Każde takie ustawienie musi mieć unikalny numer w tym polu. */
+                      /* Domyślny numer to 0 i kazdy interfejs musi mieć takie "alternatywne ustawienie" o nr. 0. */
+        0x00,         /* bNumEndpoints : Liczba endpointów prócz EP0. */
+        0xff,         /* bInterfaceClass : Klasa. Listę można znaleźć na wikipedii. 0xff to vendor specific. Klasę urządzenia */
+                      /* można także podać w deskryptorze urządzenia, ale najczęściej się podaj tu. 0x03 to HID. */
+        0xff,         /* bInterfaceSubClass : 1=BOOT, 0=no boot. Ustanowione przez USB-IF dla klas. 0xff == vendor specific. */
+        0xff,         /* nInterfaceProtocol : 0=none, 1=keyboard, 2=mouse. Ustanowione przez USB-IF dla klas. 0xff == vendor */
+                      /* specific.*/
+        0,            /* iInterface: Index of string descriptor, or 0 if there is no string. */
+
+        /*
+         * Device descriptor of interface : ALTERNATE SETTING 1.
+         */
+        0x09,         /* bLength : Interface Descriptor size == 0x09. */
+        USB_INTERFACE_DESCRIPTOR_TYPE,/* bDescriptorType : Interface descriptor type (constant 0x04). */
+        0x00,         /* bInterfaceNumber: Unikalny numer. Urządzenia typu composite będą miały następne interfejsy, a każdy */
+                      /* będzie miał kolejne numery. Domyślny interfejs ma numer 0. */
+        0x01,         /* bAlternateSetting: Unikalny numer "alternate settings". Każdy interfejs może mieć odmiany, które */
                       /* właśnie nazywamy "alternate setting". Każde takie ustawienie musi mieć unikalny numer w tym polu. */
                       /* Domyślny numer to 0 i kazdy interfejs musi mieć takie "alternatywne ustawienie" o nr. 0. */
         0x01,         /* bNumEndpoints : Liczba endpointów prócz EP0. */
