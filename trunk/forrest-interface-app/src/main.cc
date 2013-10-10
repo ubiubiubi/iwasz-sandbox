@@ -153,6 +153,15 @@ int main ()
                 std::cerr << "Interface claimed." << std::endl;
         }
 
+        if ((rc = libusb_set_interface_alt_setting (devh, 0, 1)) != 0) {
+                std::cerr << "Error libusb_set_interface_alt_setting rc = "  << rc << std::endl;
+                libusb_exit (NULL);
+                exit (1);
+        }
+        else {
+                std::cerr << "libusb_set_interface_alt_setting OK" << std::endl;
+        }
+
         /*--------------------------------------------------------------------------*/
 
         int num_iso_pack = 1; // ?!?!? CO to jest!
