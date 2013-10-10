@@ -94,18 +94,17 @@
   */
 
 
-static uint8_t  USBD_HID_Init (void  *pdev, 
-                               uint8_t cfgidx);
+static uint8_t USBD_HID_Init (void *pdev, uint8_t cfgidx);
+static uint8_t USBD_HID_DeInit (void *pdev, uint8_t cfgidx);
+static uint8_t USBD_HID_Setup (void *pdev, USB_SETUP_REQ *req);
 
-static uint8_t  USBD_HID_DeInit (void  *pdev, 
-                                 uint8_t cfgidx);
+static uint8_t *USBD_HID_GetCfgDesc (uint8_t speed, uint16_t *length);
+static uint8_t USBD_HID_DataIn (void *pdev, uint8_t epnum);
+static uint8_t USBD_HID_DataOut    (void *pdev, uint8_t epnum);
+static uint8_t USBD_HID_SOF        (void *pdev);
+static uint8_t USBD_HID_IN_Incplt (void  *pdev);
+static uint8_t USBD_HID_OUT_Incplt (void  *pdev);
 
-static uint8_t  USBD_HID_Setup (void  *pdev, 
-                                USB_SETUP_REQ *req);
-
-static uint8_t  *USBD_HID_GetCfgDesc (uint8_t speed, uint16_t *length);
-
-static uint8_t  USBD_HID_DataIn (void  *pdev, uint8_t epnum);
 /**
   * @}
   */ 
@@ -122,10 +121,10 @@ USBD_Class_cb_TypeDef  USBD_HID_cb =
   NULL, /*EP0_TxSent*/  
   NULL, /*EP0_RxReady*/
   USBD_HID_DataIn, /*DataIn*/
-  NULL, /*DataOut*/
-  NULL, /*SOF */
-  NULL,
-  NULL,      
+  USBD_HID_DataOut, /*DataOut*/
+  USBD_HID_SOF, /*SOF */
+  USBD_HID_IN_Incplt,
+  USBD_HID_OUT_Incplt,
   USBD_HID_GetCfgDesc,
 #ifdef USB_OTG_HS_CORE  
   USBD_HID_GetCfgDesc, /* use same config as per FS */
@@ -161,24 +160,24 @@ __ALIGN_BEGIN static uint32_t  USBD_HID_IdleState __ALIGN_END = 0;
 /*
  * Configuration descriptor.
  */
-__ALIGN_BEGIN static uint8_t USBD_HID_CfgDesc[USB_HID_CONFIG_DESC_SIZ] __ALIGN_END =
+__ALIGN_BEGIN static uint8_t USBD_HID_CfgDesc[] __ALIGN_END =
 {
         0x09,           /* bLength (1) Configuration Descriptor size in bytes, always 0x09. */
         USB_CONFIGURATION_DESCRIPTOR_TYPE, /* bDescriptorType (1B) Stała 0x02 (patrz tabelka typów deskryptorów */
-        USB_HID_CONFIG_DESC_SIZ,           /* wTotalLength (2B) Rozmiar w bajtach całego deskryptora wraz z jego "doklejonymi" */
+        9+9+9+7,           /* wTotalLength (2B) Rozmiar w bajtach całego deskryptora wraz z jego "doklejonymi" */
         0x00,                              /* deskryptorami interfejsów i endpointów. */
         0x01,         /* bNumInterfaces (1B) Liczba interfejsów. */
         0x01,         /* bConfigurationValue (1B) numer porządkowy konfiguracji. Musi być większy równy 1. Rozumiem, że musi być */
                       /* unikalny dla każdej konfiguracji. */
         0x00,         /* iConfiguration (1B) Index of string descriptor describing the configuration, albo 0, jeśli nie ma. */
-        0xE0,         /* bmAttributes (1B) Atrybuty w postaci maski bitowej. Bit 6==1 -> self powered. Bit 6==0 -> bus powered */
+        0xa0,         /* bmAttributes (1B) Atrybuty w postaci maski bitowej. Bit 6==1 -> self powered. Bit 6==0 -> bus powered */
                       /* Bit 5==1 -> urządzenie obsługuje "remote wakeup feature". Bit5==0 -> nie obsługuje. Bit 4..0 muszą być 0 */
                       /* Bit7 musi być równy 1. */
         0x32,         /* bMaxPower (1B) Max prąd w jednostkach 2mA dla USB 2.0 i w jednostkach 8mA dla USB 3.0. W tym przypadku */
                       /* 0x32 = 50, czyli 100mA. */
 
         /*
-         * Device descriptor of mouse interface.
+         * Interface descriptor
          */
         0x09,         /* bLength : Interface Descriptor size == 0x09. */
         USB_INTERFACE_DESCRIPTOR_TYPE,/* bDescriptorType : Interface descriptor type (constant 0x04). */
@@ -187,26 +186,31 @@ __ALIGN_BEGIN static uint8_t USBD_HID_CfgDesc[USB_HID_CONFIG_DESC_SIZ] __ALIGN_E
         0x00,         /* bAlternateSetting: Unikalny numer "alternate settings". Każdy interfejs może mieć odmiany, które */
                       /* właśnie nazywamy "alternate setting". Każde takie ustawienie musi mieć unikalny numer w tym polu. */
                       /* Domyślny numer to 0 i kazdy interfejs musi mieć takie "alternatywne ustawienie" o nr. 0. */
-        0x01,         /* bNumEndpoints : Liczba endpointów prócz EP0. */
-        0x03,         /* bInterfaceClass : Klasa. Listę można znaleźć na wikipedii. 0xff to vendor specific. Klasę urządzenia */
+        0x00,         /* bNumEndpoints : Liczba endpointów prócz EP0. */
+        0xff,         /* bInterfaceClass : Klasa. Listę można znaleźć na wikipedii. 0xff to vendor specific. Klasę urządzenia */
                       /* można także podać w deskryptorze urządzenia, ale najczęściej się podaj tu. 0x03 to HID. */
-        0x01,         /* bInterfaceSubClass : 1=BOOT, 0=no boot. Ustanowione przez USB-IF dla klas. 0xff == vendor specific. */
-        0x02,         /* nInterfaceProtocol : 0=none, 1=keyboard, 2=mouse. Ustanowione przez USB-IF dla klas. 0xff == vendor */
+        0xff,         /* bInterfaceSubClass : 1=BOOT, 0=no boot. Ustanowione przez USB-IF dla klas. 0xff == vendor specific. */
+        0xff,         /* nInterfaceProtocol : 0=none, 1=keyboard, 2=mouse. Ustanowione przez USB-IF dla klas. 0xff == vendor */
                       /* specific.*/
         0,            /* iInterface: Index of string descriptor, or 0 if there is no string. */
 
-        /*
-         * HID descriptor (mouse).
+        /**
+         * alt
          */
-        0x09,         /* bLength: HID Descriptor size*/
-        HID_DESCRIPTOR_TYPE, /* bDescriptorType: HID*/
-        0x11,         /* bcdHID: HID Class Spec release number*/
-        0x01,
-        0x00,         /* bCountryCode: Hardware target country*/
-        0x01,         /* bNumDescriptors: Number of HID class descriptors to follow*/
-        0x22,         /* bDescriptorType*/
-        HID_MOUSE_REPORT_DESC_SIZE,/* wItemLength: Total length of Report descriptor*/
-        0x00,
+        0x09,         /* bLength : Interface Descriptor size == 0x09. */
+        USB_INTERFACE_DESCRIPTOR_TYPE,/* bDescriptorType : Interface descriptor type (constant 0x04). */
+        0x00,         /* bInterfaceNumber: Unikalny numer. Urządzenia typu composite będą miały następne interfejsy, a każdy */
+                      /* będzie miał kolejne numery. Domyślny interfejs ma numer 0. */
+        0x01,         /* bAlternateSetting: Unikalny numer "alternate settings". Każdy interfejs może mieć odmiany, które */
+                      /* właśnie nazywamy "alternate setting". Każde takie ustawienie musi mieć unikalny numer w tym polu. */
+                      /* Domyślny numer to 0 i kazdy interfejs musi mieć takie "alternatywne ustawienie" o nr. 0. */
+        0x01,         /* bNumEndpoints : Liczba endpointów prócz EP0. */
+        0xff,         /* bInterfaceClass : Klasa. Listę można znaleźć na wikipedii. 0xff to vendor specific. Klasę urządzenia */
+                      /* można także podać w deskryptorze urządzenia, ale najczęściej się podaj tu. 0x03 to HID. */
+        0xff,         /* bInterfaceSubClass : 1=BOOT, 0=no boot. Ustanowione przez USB-IF dla klas. 0xff == vendor specific. */
+        0xff,         /* nInterfaceProtocol : 0=none, 1=keyboard, 2=mouse. Ustanowione przez USB-IF dla klas. 0xff == vendor */
+                      /* specific.*/
+        0,            /* iInterface: Index of string descriptor, or 0 if there is no string. */
 
         /*
          * Endpoint descriptor.
@@ -216,7 +220,7 @@ __ALIGN_BEGIN static uint8_t USBD_HID_CfgDesc[USB_HID_CONFIG_DESC_SIZ] __ALIGN_E
         HID_IN_EP,     /* bEndpointAddress: Endpoint Address. 4 LSB to numer endpointu. Urządzenia LS moga mieć w interfejsie */
                        /* max 3 endpointy. Pozostałe urządzenia mogą mieć 16. Bit MSB to kierunek : 0 == OUT, 1 == IN. Bity */\
                        /* 6..4 muszą być 0. */
-        0x03,          /* bmAttributes : */
+        0x01,          /* bmAttributes : */
                        /* Bits 0..1 Transfer Type */
                        /*  00 = Control */
                        /*  01 = Isochronous */
@@ -237,7 +241,7 @@ __ALIGN_BEGIN static uint8_t USBD_HID_CfgDesc[USB_HID_CONFIG_DESC_SIZ] __ALIGN_E
                        /* do 1204. Bity 11 i 12 oznaczają liczbę dodatkowych transakcji w mikro ramce dla transferów iso */
                        /* i interrupt  (0-2, bo 11 jest zarezerwowane). Bity 13-15 musza być 0. */
         0x00,
-        0x0A,          /* bInterval: Polling Interval. Interval for polling endpoint data transfers. Value in frame counts (ms). */
+        0x01,          /* bInterval: Polling Interval. Interval for polling endpoint data transfers. Value in frame counts (ms). */
                        /* Ignored for Bulk & Control Endpoints. Isochronous must equal 1 and field may range from 1 to 255 for */
                        /* interrupt endpoints. */
 };
@@ -341,13 +345,7 @@ static uint8_t  USBD_HID_Init (void  *pdev,
   DCD_EP_Open(pdev,
               HID_IN_EP,
               HID_IN_PACKET,
-              USB_OTG_EP_INT);
-  
-  /* Open EP OUT */
-  DCD_EP_Open(pdev,
-              HID_OUT_EP,
-              HID_OUT_PACKET,
-              USB_OTG_EP_INT);
+              USB_OTG_EP_ISOC);
   
   return USBD_OK;
 }
@@ -364,9 +362,6 @@ static uint8_t  USBD_HID_DeInit (void  *pdev,
 {
   /* Close HID EPs */
   DCD_EP_Close (pdev , HID_IN_EP);
-  DCD_EP_Close (pdev , HID_OUT_EP);
-  
-  
   return USBD_OK;
 }
 
@@ -377,83 +372,68 @@ static uint8_t  USBD_HID_DeInit (void  *pdev,
   * @param  req: usb requests
   * @retval status
   */
-static uint8_t  USBD_HID_Setup (void  *pdev, 
-                                USB_SETUP_REQ *req)
+static uint8_t USBD_HID_Setup (void *pdev, USB_SETUP_REQ *req)
 {
-  uint16_t len = 0;
-  uint8_t  *pbuf = NULL;
-  
-  switch (req->bmRequest & USB_REQ_TYPE_MASK)
-  {
-  case USB_REQ_TYPE_CLASS :  
-    switch (req->bRequest)
-    {
-      
-      
-    case HID_REQ_SET_PROTOCOL:
-      USBD_HID_Protocol = (uint8_t)(req->wValue);
-      break;
-      
-    case HID_REQ_GET_PROTOCOL:
-      USBD_CtlSendData (pdev, 
-                        (uint8_t *)&USBD_HID_Protocol,
-                        1);    
-      break;
-      
-    case HID_REQ_SET_IDLE:
-      USBD_HID_IdleState = (uint8_t)(req->wValue >> 8);
-      break;
-      
-    case HID_REQ_GET_IDLE:
-      USBD_CtlSendData (pdev, 
-                        (uint8_t *)&USBD_HID_IdleState,
-                        1);        
-      break;      
-      
-    default:
-      USBD_CtlError (pdev, req);
-      return USBD_FAIL; 
-    }
-    break;
-    
-  case USB_REQ_TYPE_STANDARD:
-    switch (req->bRequest)
-    {
-    case USB_REQ_GET_DESCRIPTOR: 
-      if( req->wValue >> 8 == HID_REPORT_DESC)
-      {
-        len = MIN(HID_MOUSE_REPORT_DESC_SIZE , req->wLength);
-        pbuf = HID_MOUSE_ReportDesc;
-      }
-      else if( req->wValue >> 8 == HID_DESCRIPTOR_TYPE)
-      {
-        
-#ifdef USB_OTG_HS_INTERNAL_DMA_ENABLED
-        pbuf = USBD_HID_Desc;   
-#else
-        pbuf = USBD_HID_CfgDesc + 0x12;
-#endif 
-        len = MIN(USB_HID_DESC_SIZ , req->wLength);
-      }
-      
-      USBD_CtlSendData (pdev, 
-                        pbuf,
-                        len);
-      
-      break;
-      
-    case USB_REQ_GET_INTERFACE :
-      USBD_CtlSendData (pdev,
-                        (uint8_t *)&USBD_HID_AltSet,
-                        1);
-      break;
-      
-    case USB_REQ_SET_INTERFACE :
-      USBD_HID_AltSet = (uint8_t)(req->wValue);
-      break;
-    }
-  }
-  return USBD_OK;
+        uint16_t len = 0;
+        uint8_t *pbuf = NULL;
+
+        switch (req->bmRequest & USB_REQ_TYPE_MASK) {
+//        case USB_REQ_TYPE_CLASS:
+//                switch (req->bRequest) {
+//
+//                case HID_REQ_SET_PROTOCOL:
+//                        USBD_HID_Protocol = (uint8_t) (req->wValue);
+//                        break;
+//
+//                case HID_REQ_GET_PROTOCOL:
+//                        USBD_CtlSendData (pdev, (uint8_t *) &USBD_HID_Protocol, 1);
+//                        break;
+//
+//                case HID_REQ_SET_IDLE:
+//                        USBD_HID_IdleState = (uint8_t) (req->wValue >> 8);
+//                        break;
+//
+//                case HID_REQ_GET_IDLE:
+//                        USBD_CtlSendData (pdev, (uint8_t *) &USBD_HID_IdleState, 1);
+//                        break;
+//
+//                default:
+//                        USBD_CtlError (pdev, req);
+//                        return USBD_FAIL;
+//                }
+//                break;
+
+        case USB_REQ_TYPE_STANDARD:
+                switch (req->bRequest) {
+//                case USB_REQ_GET_DESCRIPTOR:
+//                        if (req->wValue >> 8 == HID_REPORT_DESC) {
+//                                len = MIN(HID_MOUSE_REPORT_DESC_SIZE , req->wLength);
+//                                pbuf = HID_MOUSE_ReportDesc;
+//                        }
+//                        else if (req->wValue >> 8 == HID_DESCRIPTOR_TYPE) {
+//
+//#ifdef USB_OTG_HS_INTERNAL_DMA_ENABLED
+//                                pbuf = USBD_HID_Desc;
+//#else
+//                                pbuf = USBD_HID_CfgDesc + 0x12;
+//#endif
+//                                len = MIN(USB_HID_DESC_SIZ , req->wLength);
+//                        }
+//
+//                        USBD_CtlSendData (pdev, pbuf, len);
+//
+//                        break;
+
+                case USB_REQ_GET_INTERFACE:
+                        USBD_CtlSendData (pdev, (uint8_t *) &USBD_HID_AltSet, 1);
+                        break;
+
+                case USB_REQ_SET_INTERFACE:
+                        USBD_HID_AltSet = (uint8_t) (req->wValue);
+                        break;
+                }
+        }
+        return USBD_OK;
 }
 
 /**
@@ -502,6 +482,26 @@ static uint8_t  USBD_HID_DataIn (void  *pdev,
   be caused by  a new transfer before the end of the previous transfer */
   DCD_EP_Flush(pdev, HID_IN_EP);
   return USBD_OK;
+}
+
+static uint8_t USBD_HID_DataOut    (void *pdev, uint8_t epnum)
+{
+        return USBD_OK;
+}
+
+static uint8_t USBD_HID_SOF        (void *pdev)
+{
+        return USBD_OK;
+}
+
+static uint8_t USBD_HID_OUT_Incplt (void  *pdev)
+{
+        return USBD_OK;
+}
+
+static uint8_t USBD_HID_IN_Incplt (void  *pdev)
+{
+        return USBD_OK;
 }
 
 /**

@@ -33,6 +33,8 @@
 #include "usbd_core.h"
 #include "usbd_hid_core.h"
 #include "usb_conf.h"
+// TODO usuń
+#include <stdio.h>
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -70,6 +72,8 @@ void NMI_Handler(void)
 */
 void HardFault_Handler(void)
 {
+        printf ("HardFault_Handler");
+
   /* Go to infinite loop when Hard Fault exception occurs */
   while (1)
   {
