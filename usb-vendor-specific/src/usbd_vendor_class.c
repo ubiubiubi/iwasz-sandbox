@@ -1,8 +1,6 @@
 #include "usbd_vendor_class.h"
 #include "usbd_desc.h"
 #include "usbd_req.h"
-
-// TODO WYWAL
 #include <stdio.h>
 
 static uint8_t vendorInit (void *pdev, uint8_t cfgidx);
@@ -10,6 +8,10 @@ static uint8_t vendorDeInit (void *pdev, uint8_t cfgidx);
 static uint8_t vendorSetup (void *pdev, USB_SETUP_REQ *req);
 static uint8_t *vendorGetCfgDesc (uint8_t speed, uint16_t *length);
 static uint8_t vendorDataIn (void *pdev, uint8_t epnum);
+static uint8_t vendorDataOut (void *pdev, uint8_t epnum);
+static uint8_t vendorSOF (void *pdev);
+static uint8_t vendorIN_Incplt (void *pdev);
+static uint8_t vendorOUT_Incplt (void *pdev);
 
 /**
  *
@@ -22,16 +24,14 @@ USBD_Class_cb_TypeDef USBDVendorClass =
         NULL, /*EP0_TxSent*/
         NULL, /*EP0_RxReady*/
         vendorDataIn, /*DataIn*/
-        NULL, /*DataOut*/
-        NULL, /*SOF */
-        NULL,
-        NULL,
+        vendorDataOut, /*DataOut*/
+        vendorSOF, /*SOF */
+        vendorIN_Incplt,
+        vendorOUT_Incplt,
         vendorGetCfgDesc,
 };
 
 __ALIGN_BEGIN static uint32_t  vendorAltSet  __ALIGN_END = 0;
-__ALIGN_BEGIN static uint32_t  vendorProtocol  __ALIGN_END = 0;
-__ALIGN_BEGIN static uint32_t  vendorIdleState __ALIGN_END = 0;
 
 /*
  * Configuration descriptor.
@@ -40,20 +40,20 @@ __ALIGN_BEGIN static uint8_t vendorCfgDesc[] __ALIGN_END =
 {
         0x09,         /* bLength (1) Configuration Descriptor size in bytes, always 0x09. */
         USB_CONFIGURATION_DESCRIPTOR_TYPE, /* bDescriptorType (1B) Stała 0x02 (patrz tabelka typów deskryptorów */
-        9+9+7,        /* wTotalLength (2B) Rozmiar w bajtach całego deskryptora wraz z jego "doklejonymi" */
+        9+9+9+7,           /* wTotalLength (2B) Rozmiar w bajtach całego deskryptora wraz z jego "doklejonymi" */
         0x00,                              /* deskryptorami interfejsów i endpointów. */
         0x01,         /* bNumInterfaces (1B) Liczba interfejsów. */
         0x01,         /* bConfigurationValue (1B) numer porządkowy konfiguracji. Musi być większy równy 1. Rozumiem, że musi być */
                       /* unikalny dla każdej konfiguracji. */
         0x00,         /* iConfiguration (1B) Index of string descriptor describing the configuration, albo 0, jeśli nie ma. */
-        0xE0,         /* bmAttributes (1B) Atrybuty w postaci maski bitowej. Bit 6==1 -> self powered. Bit 6==0 -> bus powered */
+        0xa0,         /* bmAttributes (1B) Atrybuty w postaci maski bitowej. Bit 6==1 -> self powered. Bit 6==0 -> bus powered */
                       /* Bit 5==1 -> urządzenie obsługuje "remote wakeup feature". Bit5==0 -> nie obsługuje. Bit 4..0 muszą być 0 */
                       /* Bit7 musi być równy 1. */
         0x32,         /* bMaxPower (1B) Max prąd w jednostkach 2mA dla USB 2.0 i w jednostkach 8mA dla USB 3.0. W tym przypadku */
                       /* 0x32 = 50, czyli 100mA. */
 
         /*
-         * Device descriptor of interface : DEFAULT SETTING, no bandwidth allocation!!!
+         * Device descriptor of mouse interface.
          */
         0x09,         /* bLength : Interface Descriptor size == 0x09. */
         USB_INTERFACE_DESCRIPTOR_TYPE,/* bDescriptorType : Interface descriptor type (constant 0x04). */
@@ -70,8 +70,8 @@ __ALIGN_BEGIN static uint8_t vendorCfgDesc[] __ALIGN_END =
                       /* specific.*/
         0,            /* iInterface: Index of string descriptor, or 0 if there is no string. */
 
-        /*
-         * Device descriptor of interface : ALTERNATE SETTING 1.
+        /**
+         * alt
          */
         0x09,         /* bLength : Interface Descriptor size == 0x09. */
         USB_INTERFACE_DESCRIPTOR_TYPE,/* bDescriptorType : Interface descriptor type (constant 0x04). */
@@ -93,7 +93,7 @@ __ALIGN_BEGIN static uint8_t vendorCfgDesc[] __ALIGN_END =
          */
         0x07,          /* bLength: Endpoint Descriptor size */
         USB_ENDPOINT_DESCRIPTOR_TYPE, /* bDescriptorType: Stała 0x05 */
-        0x80 | 0x01,   /* bEndpointAddress: Endpoint Address. 4 LSB to numer endpointu. Urządzenia LS moga mieć w interfejsie */
+        IN_EP,         /* bEndpointAddress: Endpoint Address. 4 LSB to numer endpointu. Urządzenia LS moga mieć w interfejsie */
                        /* max 3 endpointy. Pozostałe urządzenia mogą mieć 16. Bit MSB to kierunek : 0 == OUT, 1 == IN. Bity */\
                        /* 6..4 muszą być 0. */
         0x01,          /* bmAttributes : */
@@ -132,13 +132,10 @@ static uint8_t vendorInit (void *pdev, uint8_t cfgidx)
         /* Open EP IN */
         printf ("vendorInit\r\n");
         DCD_EP_Open (pdev, IN_EP, IN_PACKET_SIZE, USB_OTG_EP_ISOC);
-
         return USBD_OK;
 }
 
 /**
-  * @brief  USBD_HID_Init
-  *         DeInitialize the HID layer
   * @param  pdev: device instance
   * @param  cfgidx: Configuration index
   * @retval status
@@ -152,65 +149,63 @@ static uint8_t vendorDeInit (void *pdev, uint8_t cfgidx)
 }
 
 /**
-  * @brief  USBD_HID_Setup
-  *         Handle the HID specific requests
   * @param  pdev: instance
   * @param  req: usb requests
   * @retval status
   */
 static uint8_t vendorSetup (void *pdev, USB_SETUP_REQ *req)
 {
-        uint16_t len = 0;
-        uint8_t *pbuf = NULL;
+//        uint16_t len = 0;
+//        uint8_t *pbuf = NULL;
 
         printf ("vendorSetup\r\n");
 
         switch (req->bmRequest & USB_REQ_TYPE_MASK) {
-        case USB_REQ_TYPE_CLASS:
-                switch (req->bRequest) {
-
-                case HID_REQ_SET_PROTOCOL:
-                        vendorProtocol = (uint8_t) (req->wValue);
-                        break;
-
-                case HID_REQ_GET_PROTOCOL:
-                        USBD_CtlSendData (pdev, (uint8_t *) &vendorProtocol, 1);
-                        break;
-
-                case HID_REQ_SET_IDLE:
-                        vendorIdleState = (uint8_t) (req->wValue >> 8);
-                        break;
-
-                case HID_REQ_GET_IDLE:
-                        USBD_CtlSendData (pdev, (uint8_t *) &vendorIdleState, 1);
-                        break;
-
-                default:
-                        USBD_CtlError (pdev, req);
-                        return USBD_FAIL;
-                }
-                break;
+//        case USB_REQ_TYPE_CLASS:
+//                switch (req->bRequest) {
+//
+//                case HID_REQ_SET_PROTOCOL:
+//                        USBD_HID_Protocol = (uint8_t) (req->wValue);
+//                        break;
+//
+//                case HID_REQ_GET_PROTOCOL:
+//                        USBD_CtlSendData (pdev, (uint8_t *) &USBD_HID_Protocol, 1);
+//                        break;
+//
+//                case HID_REQ_SET_IDLE:
+//                        USBD_HID_IdleState = (uint8_t) (req->wValue >> 8);
+//                        break;
+//
+//                case HID_REQ_GET_IDLE:
+//                        USBD_CtlSendData (pdev, (uint8_t *) &USBD_HID_IdleState, 1);
+//                        break;
+//
+//                default:
+//                        USBD_CtlError (pdev, req);
+//                        return USBD_FAIL;
+//                }
+//                break;
 
         case USB_REQ_TYPE_STANDARD:
                 switch (req->bRequest) {
-                case USB_REQ_GET_DESCRIPTOR:
-/*                        if (req->wValue >> 8 == HID_REPORT_DESC) {
-                                len = MIN(HID_MOUSE_REPORT_DESC_SIZE , req->wLength);
-                                pbuf = HID_MOUSE_ReportDesc;
-                        }
-                        else if (req->wValue >> 8 == HID_DESCRIPTOR_TYPE) {
-
-#ifdef USB_OTG_HS_INTERNAL_DMA_ENABLED
-                                pbuf = USBD_HID_Desc;
-#else
-                                pbuf = vendorCfgDesc + 0x12;
-#endif 
-                                len = MIN(USB_HID_DESC_SIZ , req->wLength);
-                        }
-
-                        USBD_CtlSendData (pdev, pbuf, len);
-*/
-                        break;
+//                case USB_REQ_GET_DESCRIPTOR:
+//                        if (req->wValue >> 8 == HID_REPORT_DESC) {
+//                                len = MIN(HID_MOUSE_REPORT_DESC_SIZE , req->wLength);
+//                                pbuf = HID_MOUSE_ReportDesc;
+//                        }
+//                        else if (req->wValue >> 8 == HID_DESCRIPTOR_TYPE) {
+//
+//#ifdef USB_OTG_HS_INTERNAL_DMA_ENABLED
+//                                pbuf = USBD_HID_Desc;
+//#else
+//                                pbuf = USBD_HID_CfgDesc + 0x12;
+//#endif
+//                                len = MIN(USB_HID_DESC_SIZ , req->wLength);
+//                        }
+//
+//                        USBD_CtlSendData (pdev, pbuf, len);
+//
+//                        break;
 
                 case USB_REQ_GET_INTERFACE:
                         USBD_CtlSendData (pdev, (uint8_t *) &vendorAltSet, 1);
@@ -242,12 +237,8 @@ uint8_t vendorSendReport (USB_OTG_CORE_HANDLE *pdev, uint8_t *report, uint16_t l
 }
 
 /**
-  * @brief  USBD_HID_GetCfgDesc 
-  *         return configuration descriptor
-  * @param  speed : current device speed
-  * @param  length : pointer data length
-  * @retval pointer to descriptor buffer
-  */
+ *
+ */
 static uint8_t *vendorGetCfgDesc (uint8_t speed, uint16_t *length)
 {
         printf ("vendorGetCfgDesc\r\n");
@@ -256,12 +247,8 @@ static uint8_t *vendorGetCfgDesc (uint8_t speed, uint16_t *length)
 }
 
 /**
-  * @brief  USBD_HID_DataIn
-  *         handle data IN Stage
-  * @param  pdev: device instance
-  * @param  epnum: endpoint index
-  * @retval status
-  */
+ *
+ */
 static uint8_t vendorDataIn (void *pdev, uint8_t epnum)
 {
         /*
@@ -273,3 +260,25 @@ static uint8_t vendorDataIn (void *pdev, uint8_t epnum)
         return USBD_OK;
 }
 
+static uint8_t vendorDataOut (void *pdev, uint8_t epnum)
+{
+        return USBD_OK;
+}
+
+static uint8_t vendorSOF (void *pdev)
+{
+//        This way we are sure, every frame will contain our data.
+//        static uint8_t myBuf[] = { 0x0f, 0x02, 0x03, 0xff };
+//        vendorSendReport (pdev, myBuf, 4);
+        return USBD_OK;
+}
+
+static uint8_t vendorOUT_Incplt (void *pdev)
+{
+        return USBD_OK;
+}
+
+static uint8_t vendorIN_Incplt (void *pdev)
+{
+        return USBD_OK;
+}
