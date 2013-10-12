@@ -104,7 +104,7 @@ static void print_hello (GtkWidget *widget, gpointer data)
         g_print ("Hello World\n");
 }
 
-int main ()
+int main (int argc, char **argv)
 {
         GtkBuilder *builder;
         GObject *window;
@@ -114,7 +114,7 @@ int main ()
 
         /* Construct a GtkBuilder instance and load our UI description */
         builder = gtk_builder_new ();
-        gtk_builder_add_from_file (builder, "builder.ui", NULL);
+        gtk_builder_add_from_file (builder, "forrest.ui", NULL);
 
         /* Connect signal handlers to the constructed widgets. */
         window = gtk_builder_get_object (builder, "window");
@@ -128,6 +128,10 @@ int main ()
 
         button = gtk_builder_get_object (builder, "quit");
         g_signal_connect (button, "clicked", G_CALLBACK (gtk_main_quit), NULL);
+
+//        GtkScale *scale = GTK_SCALE (gtk_builder_get_object (builder, "scale1"));
+        GtkAdjustment *adjustment = GTK_ADJUSTMENT (gtk_builder_get_object (builder, "adjustment1"));
+        gtk_adjustment_set_value (adjustment, 12.0);
 
         gtk_main ();
 
