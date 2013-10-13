@@ -96,7 +96,7 @@ __ALIGN_BEGIN static uint8_t vendorCfgDesc[] __ALIGN_END =
         IN_EP,         /* bEndpointAddress: Endpoint Address. 4 LSB to numer endpointu. Urządzenia LS moga mieć w interfejsie */
                        /* max 3 endpointy. Pozostałe urządzenia mogą mieć 16. Bit MSB to kierunek : 0 == OUT, 1 == IN. Bity */\
                        /* 6..4 muszą być 0. */
-        0x01,          /* bmAttributes : */
+        0x0d,          /* bmAttributes : */
                        /* Bits 0..1 Transfer Type */
                        /*  00 = Control */
                        /*  01 = Isochronous */
