@@ -14,12 +14,15 @@
 
 bool doExit = false;
 
-void hello ()
-{
-        std::cout << "Hello Concurrent World\n";
-}
+// Pointer to adjustment.
+static GtkAdjustment *adjustment = NULL;
 
-void print_devs (libusb_device **devs)
+// Handle to my device.
+static libusb_device_handle *devh = NULL;
+
+static void LIBUSB_CALL cb_xfr (libusb_transfer *xfr);
+
+void printDevs (libusb_device **devs)
 {
         libusb_device *dev;
         int i = 0, j = 0;
@@ -45,114 +48,23 @@ void print_devs (libusb_device **devs)
         }
 }
 
-static void LIBUSB_CALL cb_xfr (libusb_transfer *xfr)
+void initUsb ()
 {
-        int i;
-        // Error checkin on whole transfer.
-        if (xfr->status != LIBUSB_TRANSFER_COMPLETED) {
-                fprintf(stderr, "transfer status %d\n", xfr->status);
-                libusb_free_transfer(xfr);
-                exit(3);
-        }
-
-        // Error checking on every individual packet as suggested in the API docs.
-        for (i = 0; i < xfr->num_iso_packets; i++) {
-                struct libusb_iso_packet_descriptor *pack = &xfr->iso_packet_desc[i];
-
-                if (pack->status != LIBUSB_TRANSFER_COMPLETED) {
-                        fprintf(stderr, "Error: pack %u status %d\n", i, pack->status);
-                        exit(5);
-                }
-                printf("pack%u length:%u, actual_length:%u\n", i, pack->length, pack->actual_length);
-
-                uint8_t *buffer = libusb_get_iso_packet_buffer (xfr, 0);
-
-                printf ("[");
-                for (unsigned int i = 0; i < pack->actual_length; ++i) {
-                        printf("%02x", buffer[i]);
-                }
-                printf("]\n");
-        }
-
-        printf("length:%u, actual_length:%u\n", xfr->length, xfr->actual_length);
-
-        for (i = 0; i < xfr->actual_length; ++i) {
-                printf("%02x", xfr->buffer[i]);
-        }
-        printf ("\n");
-
-//        std::cerr << "Length received : " << xfr->actual_length << std::endl;
-
-        if (libusb_submit_transfer(xfr) < 0) {
-                fprintf(stderr, "error re-submitting URB\n");
-                exit(1);
-        }
-}
-
-static void sig_hdlr(int signum)
-{
-        switch (signum) {
-        case SIGINT:
-                std::cerr << "SIGINT !!!!" << std::endl;
-                doExit = true;
-                break;
-        }
-}
-
-static void print_hello (GtkWidget *widget, gpointer data)
-{
-        g_print ("Hello World\n");
-}
-
-int main (int argc, char **argv)
-{
-        GtkBuilder *builder;
-        GObject *window;
-        GObject *button;
-
-        gtk_init (&argc, &argv);
-
-        /* Construct a GtkBuilder instance and load our UI description */
-        builder = gtk_builder_new ();
-        gtk_builder_add_from_file (builder, "forrest.ui", NULL);
-
-        /* Connect signal handlers to the constructed widgets. */
-        window = gtk_builder_get_object (builder, "window");
-        g_signal_connect (window, "destroy", G_CALLBACK (gtk_main_quit), NULL);
-
-        button = gtk_builder_get_object (builder, "button1");
-        g_signal_connect (button, "clicked", G_CALLBACK (print_hello), NULL);
-
-        button = gtk_builder_get_object (builder, "button2");
-        g_signal_connect (button, "clicked", G_CALLBACK (print_hello), NULL);
-
-        button = gtk_builder_get_object (builder, "quit");
-        g_signal_connect (button, "clicked", G_CALLBACK (gtk_main_quit), NULL);
-
-//        GtkScale *scale = GTK_SCALE (gtk_builder_get_object (builder, "scale1"));
-        GtkAdjustment *adjustment = GTK_ADJUSTMENT (gtk_builder_get_object (builder, "adjustment1"));
-        gtk_adjustment_set_value (adjustment, 12.0);
-
-        gtk_main ();
-
-//        std::thread t (hello);
-//        t.join ();
-
-        struct sigaction sigact;
-        sigact.sa_handler = sig_hdlr;
-        sigemptyset(&sigact.sa_mask);
-        sigact.sa_flags = 0;
-        sigaction(SIGINT, &sigact, NULL);
+//        struct sigaction sigact;
+//        sigact.sa_handler = sig_hdlr;
+//        sigemptyset(&sigact.sa_mask);
+//        sigact.sa_flags = 0;
+//        sigaction(SIGINT, &sigact, NULL);
 
 
         libusb_device **devs;
-        int r;
         ssize_t cnt;
 
-        r = libusb_init (NULL);
+        int r = libusb_init (NULL);
 
         if (r < 0) {
-                return r;
+                std::cerr << "Error libusb_init!" << std::endl;
+                return;
         }
 
         cnt = libusb_get_device_list (NULL, &devs);
@@ -163,10 +75,10 @@ int main (int argc, char **argv)
                 exit (1);
         }
 
-        print_devs (devs);
+        printDevs (devs);
         libusb_free_device_list (devs, 1);
 
-        libusb_device_handle *devh = libusb_open_device_with_vid_pid (NULL, 0x20a0, 0x41ff);
+        devh = libusb_open_device_with_vid_pid (NULL, 0x20a0, 0x41ff);
 
         if (!devh) {
                 std::cerr << "Error finding USB device" << std::endl;
@@ -235,16 +147,10 @@ int main (int argc, char **argv)
         else {
                 std::cerr << "libusb_submit_transfer OK" << std::endl;
         }
+}
 
-        while (!doExit) {
-                rc = libusb_handle_events(NULL);
-
-                if (rc != LIBUSB_SUCCESS)
-                        break;
-        }
-
-        /*--------------------------------------------------------------------------*/
-
+void closeUsb ()
+{
         if (!libusb_release_interface (devh, 0)) {
                 std::cerr << "Interface released." << std::endl;
         }
@@ -254,8 +160,138 @@ int main (int argc, char **argv)
 
         if (devh) {
                 libusb_close(devh);
+                std::cerr << "Device closed" << std::endl;
         }
 
         libusb_exit (NULL);
+}
+
+void usbThread ()
+{
+        initUsb ();
+
+        while (true) {
+                int rc = libusb_handle_events(NULL);
+
+                if (rc != LIBUSB_SUCCESS) {
+                        std::cerr << "Problem with handling event from the USB!" << std::endl;
+                        break;
+                }
+        }
+}
+
+static void LIBUSB_CALL cb_xfr (libusb_transfer *xfr)
+{
+        int i;
+        // Error checkin on whole transfer.
+        if (xfr->status != LIBUSB_TRANSFER_COMPLETED) {
+                fprintf(stderr, "transfer status %d\n", xfr->status);
+                libusb_free_transfer(xfr);
+                exit(3);
+        }
+
+        // Error checking on every individual packet as suggested in the API docs.
+        for (i = 0; i < xfr->num_iso_packets; i++) {
+                struct libusb_iso_packet_descriptor *pack = &xfr->iso_packet_desc[i];
+
+                if (pack->status != LIBUSB_TRANSFER_COMPLETED) {
+                        fprintf(stderr, "Error: pack %u status %d\n", i, pack->status);
+                        exit(5);
+                }
+                uint8_t *buffer = libusb_get_iso_packet_buffer (xfr, 0);
+
+#if 0
+                printf("pack%u length:%u, actual_length:%u\n", i, pack->length, pack->actual_length);
+
+                printf ("[");
+                for (unsigned int i = 0; i < pack->actual_length; ++i) {
+                        printf("%02x", buffer[i]);
+                }
+                printf("]\n");
+#endif
+
+                if (pack->actual_length > 0) {
+                        gtk_adjustment_set_value (adjustment, buffer[0]);
+                        std::cerr << (int)buffer[0] << std::endl;
+                }
+        }
+
+#if 0
+        printf("length:%u, actual_length:%u\n", xfr->length, xfr->actual_length);
+
+        for (i = 0; i < xfr->actual_length; ++i) {
+                printf("%02x", xfr->buffer[i]);
+        }
+        printf ("\n");
+
+//        std::cerr << "Length received : " << xfr->actual_length << std::endl;
+#endif
+
+        if (libusb_submit_transfer(xfr) < 0) {
+                fprintf(stderr, "error re-submitting URB\n");
+                exit(1);
+        }
+}
+
+//static void sig_hdlr(int signum)
+//{
+//        switch (signum) {
+//        case SIGINT:
+//                std::cerr << "SIGINT !!!!" << std::endl;
+//                doExit = true;
+//                break;
+//        }
+//}
+//
+//static void print_hello (GtkWidget *widget, gpointer data)
+//{
+//        g_print ("Hello World\n");
+//}
+
+int main (int argc, char **argv)
+{
+        GtkBuilder *builder;
+        GObject *window;
+        GObject *button;
+
+        gtk_init (&argc, &argv);
+
+        /* Construct a GtkBuilder instance and load our UI description */
+        builder = gtk_builder_new ();
+        gtk_builder_add_from_file (builder, "forrest.ui", NULL);
+
+        /* Connect signal handlers to the constructed widgets. */
+        window = gtk_builder_get_object (builder, "window");
+        g_signal_connect (window, "destroy", G_CALLBACK (gtk_main_quit), NULL);
+
+//        button = gtk_builder_get_object (builder, "button1");
+//        g_signal_connect (button, "clicked", G_CALLBACK (print_hello), NULL);
+//
+//        button = gtk_builder_get_object (builder, "button2");
+//        g_signal_connect (button, "clicked", G_CALLBACK (print_hello), NULL);
+
+        button = gtk_builder_get_object (builder, "quit");
+        g_signal_connect (button, "clicked", G_CALLBACK (gtk_main_quit), NULL);
+
+//        GtkScale *scale = GTK_SCALE (gtk_builder_get_object (builder, "scale1"));
+        adjustment = GTK_ADJUSTMENT (gtk_builder_get_object (builder, "adjustment1"));
+
+        std::thread t (usbThread);
+        t.detach ();
+
+        gtk_main ();
+        closeUsb ();
+
+
+
+//        while (!doExit) {
+//                int rc = libusb_handle_events(NULL);
+//
+//                if (rc != LIBUSB_SUCCESS)
+//                        break;
+//        }
+
+        /*--------------------------------------------------------------------------*/
+
         return 0;
 }
