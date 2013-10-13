@@ -112,8 +112,12 @@ void PendSV_Handler (void)
  */
 void SysTick_Handler (void)
 {
-        static uint8_t myBuf[] = { 0x0f, 0x02, 0x03, 0xff, 0xfe, 0xfd };
+        static uint8_t myBuf[4] = { 0x00, 0x00, 0x00, 0x00 };
+        ++myBuf[0];
+        --myBuf[1];
+
         vendorSendReport (&USB_OTG_dev, myBuf, 4);
+        printf ("sending : %d,%d,%d,%d\r\n", myBuf[0], myBuf[1], myBuf[2], myBuf[3]);
 }
 
 /**
