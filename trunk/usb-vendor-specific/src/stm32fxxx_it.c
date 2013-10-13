@@ -117,7 +117,8 @@ void SysTick_Handler (void)
         --myBuf[1];
 
         vendorSendReport (&USB_OTG_dev, myBuf, 4);
-        printf ("sending : %d,%d,%d,%d\r\n", myBuf[0], myBuf[1], myBuf[2], myBuf[3]);
+//        To *bardzo* spowalnia wysyłanie.
+//        printf ("sending : %d,%d,%d,%d\r\n", myBuf[0], myBuf[1], myBuf[2], myBuf[3]);
 }
 
 /**

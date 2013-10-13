@@ -28,7 +28,8 @@ void USBD_USR_Init (void)
 //  IOE_Config();
         /* Setup SysTick Timer for 20 msec interrupts
          This interrupt is used to probe the joystick */
-        if (SysTick_Config (SystemCoreClock / 50)) {
+//        if (SysTick_Config (SystemCoreClock / 50)) {
+        if (SysTick_Config (SystemCoreClock / 1000)) {
                 /* Capture error */
                 while (1)
                         ;
