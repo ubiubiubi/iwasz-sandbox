@@ -39,6 +39,46 @@ void initUsart (void)
         USART_Cmd (USART1, ENABLE);
 }
 
+void initExti (void)
+{
+        // Konfiguracja portu jak zwykle.
+        RCC_AHB1PeriphClockCmd (RCC_AHB1Periph_GPIOE, ENABLE);
+        GPIO_InitTypeDef gpioInitStruct;
+        gpioInitStruct.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2;
+        gpioInitStruct.GPIO_Mode = GPIO_Mode_IN;
+        gpioInitStruct.GPIO_Speed = GPIO_Speed_50MHz;
+//        gpioInitStruct.GPIO_OType = GPIO_OType_OD;
+        gpioInitStruct.GPIO_PuPd = GPIO_PuPd_DOWN;
+        GPIO_Init (GPIOE, &gpioInitStruct);
+
+        /*
+         * Podłaczenie pinu portu i linii EXTI.  EXTI_PinSource1 oznacza, pin1 (portu E) podłączony
+         * będzie do linii 1.
+         */
+        SYSCFG_EXTILineConfig (EXTI_PortSourceGPIOE, EXTI_PinSource1);
+
+        // Konfiguracja linii 1 EXTI.
+        EXTI_InitTypeDef extiInitStructure;
+        EXTI_ClearITPendingBit(EXTI_Line1);
+        extiInitStructure.EXTI_Line = EXTI_Line1;
+        extiInitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
+        extiInitStructure.EXTI_Trigger = EXTI_Trigger_Rising;
+        extiInitStructure.EXTI_LineCmd = ENABLE;
+        EXTI_Init(&extiInitStructure);
+        EXTI_ClearITPendingBit(EXTI_Line1);
+
+        // Konfiguracja NVIC. Grupa jest ustawiona w pliku usb_bsp.c na 1
+//        NVIC_PriorityGroupConfig (NVIC_PriorityGroup_0);
+
+        NVIC_InitTypeDef nvicInitStructure;
+        nvicInitStructure.NVIC_IRQChannel = EXTI1_IRQn;
+        nvicInitStructure.NVIC_IRQChannelPreemptionPriority = 1;
+        nvicInitStructure.NVIC_IRQChannelSubPriority = 0;
+        nvicInitStructure.NVIC_IRQChannelCmd = ENABLE;
+        NVIC_Init (&nvicInitStructure);
+        EXTI_ClearITPendingBit (EXTI_Line1);
+}
+
 /**
  * Configure the USB OTG engine.
  */
@@ -55,6 +95,7 @@ int main (void)
 {
         initUsart ();
         initUsb ();
+        initExti ();
 
         while (1) {
         }

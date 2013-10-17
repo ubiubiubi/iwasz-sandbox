@@ -15,6 +15,7 @@ LIST (APPEND APP_SOURCES "../3rdparty/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_r
 LIST (APPEND APP_SOURCES "../3rdparty/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_gpio.c")
 LIST (APPEND APP_SOURCES "../3rdparty/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_usart.c")
 LIST (APPEND APP_SOURCES "../3rdparty/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_exti.c")
+LIST (APPEND APP_SOURCES "../3rdparty/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_syscfg.c")
 LIST (APPEND APP_SOURCES "../3rdparty/STM32F4xx_StdPeriph_Driver/src/misc.c")
 
 LIST (APPEND APP_SOURCES "../3rdparty/STM32_USB_OTG_Driver/src/usb_core.c")
