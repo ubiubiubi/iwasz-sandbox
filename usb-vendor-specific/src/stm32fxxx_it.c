@@ -132,6 +132,12 @@ void EXTI0_IRQHandler (void)
         EXTI_ClearITPendingBit (EXTI_Line0); // User button
 }
 
+void EXTI1_IRQHandler (void)
+{
+        EXTI_ClearITPendingBit (EXTI_Line1);
+        printf ("EXTI1_IRQHandler!!!\r\n");
+}
+
 /**
  * @brief  This function handles EXTI15_10_IRQ Handler.
  * @param  None
