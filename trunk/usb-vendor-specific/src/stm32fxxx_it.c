@@ -6,6 +6,10 @@
 #include <stdio.h>
 
 __IO uint32_t remote_wakeup = 0;
+static int16_t angle = 0;
+static int8_t lookup[] = {0, -1, +1, 0, +1, 0, 0, -1, -1, 0, 0, +1, 0, +1, -1, 0};
+static uint8_t oldAb = 0x00;
+
 /* Private function prototypes -----------------------------------------------*/
 extern USB_OTG_CORE_HANDLE USB_OTG_dev;
 extern uint32_t USBD_OTG_ISR_Handler (USB_OTG_CORE_HANDLE *pdev);
@@ -113,12 +117,10 @@ void PendSV_Handler (void)
 void SysTick_Handler (void)
 {
         static uint8_t myBuf[4] = { 0x00, 0x00, 0x00, 0x00 };
-        ++myBuf[0];
-        --myBuf[1];
-
+        myBuf[0] = angle;
+        myBuf[1] = angle >> 8;
         vendorSendReport (&USB_OTG_dev, myBuf, 4);
-//        To *bardzo* spowalnia wysyłanie.
-//        printf ("sending : %d,%d,%d,%d\r\n", myBuf[0], myBuf[1], myBuf[2], myBuf[3]);
+//        printf ("Angle %d!!!\r\n", angle);
 }
 
 /**
@@ -128,14 +130,26 @@ void SysTick_Handler (void)
  */
 void EXTI0_IRQHandler (void)
 {
-        /* Clear the EXTI line pending bit */
-        EXTI_ClearITPendingBit (EXTI_Line0); // User button
+        EXTI_ClearITPendingBit (EXTI_Line0);
+        uint8_t gpiod = GPIOD->IDR & 0x03;
+        uint8_t ab = ((gpiod & 0x01) << 1) | ((gpiod & 0x02) >> 1);
+        uint8_t sum = oldAb << 2 | ab;
+        int8_t l = lookup[sum];
+        angle += l;
+        oldAb = ab;
+//        printf ("gpiod = %d, sum = %d, lookup = %d, angle = %d\r\n", gpiod, sum, l, angle);
 }
 
 void EXTI1_IRQHandler (void)
 {
         EXTI_ClearITPendingBit (EXTI_Line1);
-        printf ("EXTI1_IRQHandler!!!\r\n");
+        uint8_t gpiod = GPIOD->IDR & 0x03;
+        uint8_t ab = ((gpiod & 0x01) << 1) | ((gpiod & 0x02) >> 1);
+        uint8_t sum = oldAb << 2 | ab;
+        int8_t l = lookup[sum];
+        angle += l;
+        oldAb = ab;
+//        printf ("gpiod = %d, sum = %d, lookup = %d, angle = %d\r\n", gpiod, sum, l, angle);
 }
 
 /**
