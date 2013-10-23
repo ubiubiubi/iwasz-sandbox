@@ -6,9 +6,12 @@
 #include <stdio.h>
 
 __IO uint32_t remote_wakeup = 0;
-static int16_t angle = 0;
+int16_t angle[32];
+static uint32_t abC = 0x00;
+static uint32_t abD = 0x00;
+static uint32_t abE = 0x00;
+static uint32_t abF = 0x00;
 static int8_t lookup[] = {0, -1, +1, 0, +1, 0, 0, -1, -1, 0, 0, +1, 0, +1, -1, 0};
-static uint8_t oldAb = 0x00;
 
 /* Private function prototypes -----------------------------------------------*/
 extern USB_OTG_CORE_HANDLE USB_OTG_dev;
@@ -116,11 +119,49 @@ void PendSV_Handler (void)
  */
 void SysTick_Handler (void)
 {
-        static uint8_t myBuf[4] = { 0x00, 0x00, 0x00, 0x00 };
-        myBuf[0] = angle;
-        myBuf[1] = angle >> 8;
-        vendorSendReport (&USB_OTG_dev, myBuf, 4);
-//        printf ("Angle %d!!!\r\n", angle);
+        abC <<= 2;
+        abC |= (GPIOC->IDR & 0x3333);
+        angle[0] += lookup[abC & 0x0000000f];
+        angle[1] += lookup[abC & 0x000000f0];
+        angle[2] += lookup[abC & 0x00000f00];
+        angle[3] += lookup[abC & 0x0000f000];
+        angle[4] += lookup[abC & 0x000f0000];
+        angle[5] += lookup[abC & 0x00f00000];
+        angle[6] += lookup[abC & 0x0f000000];
+        angle[7] += lookup[abC & 0xf0000000];
+
+        abD <<= 2;
+        abD |= (GPIOD->IDR & 0x3333);
+        angle[8] += lookup[abD & 0x0000000f];
+        angle[9] += lookup[abD & 0x000000f0];
+        angle[10] += lookup[abD & 0x00000f00];
+        angle[11] += lookup[abD & 0x0000f000];
+        angle[12] += lookup[abD & 0x000f0000];
+//        angle[13] += lookup[abD & 0x00f00000];
+//        angle[14] += lookup[abD & 0x0f000000];
+//        angle[15] += lookup[abD & 0xf0000000];
+//
+//        abE <<= 2;
+//        abE |= (GPIOE->IDR & 0x3333);
+//        angle[16] += lookup[abE & 0x0000000f];
+//        angle[17] += lookup[abE & 0x000000f0];
+//        angle[18] += lookup[abE & 0x00000f00];
+//        angle[19] += lookup[abE & 0x0000f000];
+//        angle[20] += lookup[abE & 0x000f0000];
+//        angle[21] += lookup[abE & 0x00f00000];
+//        angle[22] += lookup[abE & 0x0f000000];
+//        angle[23] += lookup[abE & 0xf0000000];
+//
+//        abF <<= 2;
+//        abF |= (GPIOF->IDR & 0x3333);
+//        angle[24] += lookup[abF & 0x0000000f];
+//        angle[25] += lookup[abF & 0x000000f0];
+//        angle[26] += lookup[abF & 0x00000f00];
+//        angle[27] += lookup[abF & 0x0000f000];
+//        angle[28] += lookup[abF & 0x000f0000];
+//        angle[29] += lookup[abF & 0x00f00000];
+//        angle[30] += lookup[abF & 0x0f000000];
+//        angle[31] += lookup[abF & 0xf0000000];
 }
 
 /**
@@ -131,25 +172,17 @@ void SysTick_Handler (void)
 void EXTI0_IRQHandler (void)
 {
         EXTI_ClearITPendingBit (EXTI_Line0);
-        uint8_t gpiod = GPIOD->IDR & 0x03;
-        uint8_t ab = ((gpiod & 0x01) << 1) | ((gpiod & 0x02) >> 1);
-        uint8_t sum = oldAb << 2 | ab;
-        int8_t l = lookup[sum];
-        angle += l;
-        oldAb = ab;
-//        printf ("gpiod = %d, sum = %d, lookup = %d, angle = %d\r\n", gpiod, sum, l, angle);
+//        ab <<= 2;
+//        ab |= (GPIOD->IDR & 0x03);
+//        angle += lookup[ab & 0x0f];
 }
 
 void EXTI1_IRQHandler (void)
 {
         EXTI_ClearITPendingBit (EXTI_Line1);
-        uint8_t gpiod = GPIOD->IDR & 0x03;
-        uint8_t ab = ((gpiod & 0x01) << 1) | ((gpiod & 0x02) >> 1);
-        uint8_t sum = oldAb << 2 | ab;
-        int8_t l = lookup[sum];
-        angle += l;
-        oldAb = ab;
-//        printf ("gpiod = %d, sum = %d, lookup = %d, angle = %d\r\n", gpiod, sum, l, angle);
+//        ab <<= 2;
+//        ab |= (GPIOD->IDR & 0x03);
+//        angle += lookup[ab & 0x0f];
 }
 
 /**

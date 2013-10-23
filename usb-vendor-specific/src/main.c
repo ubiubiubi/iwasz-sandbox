@@ -44,12 +44,16 @@ void initExti (void)
         // Konfiguracja portu jak zwykle.
         RCC_AHB1PeriphClockCmd (RCC_AHB1Periph_GPIOD, ENABLE);
         GPIO_InitTypeDef gpioInitStruct;
-        gpioInitStruct.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2;
+        gpioInitStruct.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2 | GPIO_Pin_3 | GPIO_Pin_4 | GPIO_Pin_5 | GPIO_Pin_6 | GPIO_Pin_7;
         gpioInitStruct.GPIO_Mode = GPIO_Mode_IN;
         gpioInitStruct.GPIO_Speed = GPIO_Speed_2MHz;
         gpioInitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;
+        GPIO_Init (GPIOC, &gpioInitStruct);
         GPIO_Init (GPIOD, &gpioInitStruct);
+        GPIO_Init (GPIOE, &gpioInitStruct);
+        GPIO_Init (GPIOF, &gpioInitStruct);
 
+#if 0
         /*
          * Podłaczenie pinu portu i linii EXTI.  EXTI_PinSource1 oznacza, pin1 (portu E) podłączony
          * będzie do linii 1.
@@ -73,23 +77,23 @@ void initExti (void)
 
         // Konfiguracja NVIC. Grupa jest ustawiona w pliku usb_bsp.c na 1
         // NVIC_PriorityGroupConfig (NVIC_PriorityGroup_0);
-
+#endif
         NVIC_InitTypeDef nvicInitStructure;
-        nvicInitStructure.NVIC_IRQChannel = EXTI0_IRQn;
-        nvicInitStructure.NVIC_IRQChannelPreemptionPriority = 0;
-        nvicInitStructure.NVIC_IRQChannelSubPriority = 0;
-        nvicInitStructure.NVIC_IRQChannelCmd = ENABLE;
-        NVIC_Init (&nvicInitStructure);
-
-        nvicInitStructure.NVIC_IRQChannel = EXTI1_IRQn;
-        nvicInitStructure.NVIC_IRQChannelPreemptionPriority = 0;
-        nvicInitStructure.NVIC_IRQChannelSubPriority = 0;
-        nvicInitStructure.NVIC_IRQChannelCmd = ENABLE;
-        NVIC_Init (&nvicInitStructure);
+//        nvicInitStructure.NVIC_IRQChannel = EXTI0_IRQn;
+//        nvicInitStructure.NVIC_IRQChannelPreemptionPriority = 0;
+//        nvicInitStructure.NVIC_IRQChannelSubPriority = 0;
+//        nvicInitStructure.NVIC_IRQChannelCmd = ENABLE;
+//        NVIC_Init (&nvicInitStructure);
+//
+//        nvicInitStructure.NVIC_IRQChannel = EXTI1_IRQn;
+//        nvicInitStructure.NVIC_IRQChannelPreemptionPriority = 0;
+//        nvicInitStructure.NVIC_IRQChannelSubPriority = 0;
+//        nvicInitStructure.NVIC_IRQChannelCmd = ENABLE;
+//        NVIC_Init (&nvicInitStructure);
 
         // SysTick ma mniejszy priorytet niż GPIO.
         nvicInitStructure.NVIC_IRQChannel = SysTick_IRQn;
-        nvicInitStructure.NVIC_IRQChannelPreemptionPriority = 1;
+        nvicInitStructure.NVIC_IRQChannelPreemptionPriority = 0;
         nvicInitStructure.NVIC_IRQChannelSubPriority = 0;
         nvicInitStructure.NVIC_IRQChannelCmd = ENABLE;
         NVIC_Init (&nvicInitStructure);

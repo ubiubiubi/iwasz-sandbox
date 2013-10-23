@@ -24,12 +24,9 @@ void USBD_USR_Init (void)
 {
         printf ("Init.\r\n");
 
-        /* Configure the IOE on which the JoyStick is connected */
-//  IOE_Config();
-        /* Setup SysTick Timer for 20 msec interrupts
-         This interrupt is used to probe the joystick */
 //        if (SysTick_Config (SystemCoreClock / 50)) {
-        if (SysTick_Config (SystemCoreClock / 1000)) {
+
+        if (SysTick_Config (SystemCoreClock / 10000)) {
                 /* Capture error */
                 while (1)
                         ;
