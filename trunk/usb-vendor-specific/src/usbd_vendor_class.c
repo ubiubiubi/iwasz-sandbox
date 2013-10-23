@@ -13,6 +13,8 @@ static uint8_t vendorSOF (void *pdev);
 static uint8_t vendorIN_Incplt (void *pdev);
 static uint8_t vendorOUT_Incplt (void *pdev);
 
+extern int16_t angle[32];
+
 /**
  *
  */
@@ -267,9 +269,7 @@ static uint8_t vendorDataOut (void *pdev, uint8_t epnum)
 
 static uint8_t vendorSOF (void *pdev)
 {
-//        This way we are sure, every frame will contain our data.
-//        static uint8_t myBuf[] = { 0x0f, 0x02, 0x03, 0xff };
-//        vendorSendReport (pdev, myBuf, 4);
+        vendorSendReport (pdev, (uint8_t *)angle, IN_PACKET_SIZE);
         return USBD_OK;
 }
 
