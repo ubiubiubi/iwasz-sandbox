@@ -199,7 +199,7 @@ static void LIBUSB_CALL cb_xfr (libusb_transfer *xfr)
                         exit(5);
                 }
                 uint8_t *buffer = libusb_get_iso_packet_buffer (xfr, 0);
-                static uint8_t prev = 0;
+//                static uint8_t prev = 0;
 
 #if 0
                 printf("pack%u length:%u, actual_length:%u\n", i, pack->length, pack->actual_length);
@@ -213,11 +213,11 @@ static void LIBUSB_CALL cb_xfr (libusb_transfer *xfr)
 
                 if (pack->actual_length > 0) {
                         gtk_adjustment_set_value (adjustment, buffer[0]);
-
-                        if ((buffer[0] - prev) > 1) {
-                                std::cerr << (int)buffer[0] << ", prev=" << (int)prev << std::endl;
-                        }
-                        prev = buffer[0];
+//
+//                        if ((buffer[0] - prev) > 1) {
+//                                std::cerr << (int)buffer[0] << ", prev=" << (int)prev << std::endl;
+//                        }
+//                        prev = buffer[0];
                 }
         }
 
