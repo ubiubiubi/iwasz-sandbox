@@ -12,6 +12,7 @@
 #include <signal.h>
 #include <gtk/gtk.h>
 
+const unsigned int ISO_PACKET_SIZE = 4;
 bool doExit = false;
 
 // Pointer to adjustment.
@@ -120,9 +121,10 @@ void initUsb ()
                 exit (1);
         }
 
-        uint8_t buf[4];
-        libusb_fill_iso_transfer (xfr, devh, 0x81, buf, sizeof(buf), num_iso_pack, cb_xfr, NULL, 0);
-        libusb_set_iso_packet_lengths (xfr, sizeof(buf)/num_iso_pack);
+
+        uint8_t buf[ISO_PACKET_SIZE];
+        libusb_fill_iso_transfer (xfr, devh, 0x81, buf, ISO_PACKET_SIZE, num_iso_pack, cb_xfr, NULL, 0);
+        libusb_set_iso_packet_lengths (xfr, ISO_PACKET_SIZE / num_iso_pack);
 
 //        libusb_fill_interrupt_transfer(xfr, devh, 0x81, buf, sizeof (buf), cb_xfr, NULL, 100);
 
@@ -198,10 +200,13 @@ static void LIBUSB_CALL cb_xfr (libusb_transfer *xfr)
                         fprintf(stderr, "Error: pack %u status %d\n", i, pack->status);
                         exit(5);
                 }
+
                 uint8_t *buffer = libusb_get_iso_packet_buffer (xfr, 0);
+                // Both x86 and STM32 are little endian.
+                uint16_t *angles = (uint16_t *)buffer;
 //                static uint8_t prev = 0;
 
-#if 0
+#if 1
                 printf("pack%u length:%u, actual_length:%u\n", i, pack->length, pack->actual_length);
 
                 printf ("[");
@@ -212,7 +217,8 @@ static void LIBUSB_CALL cb_xfr (libusb_transfer *xfr)
 #endif
 
                 if (pack->actual_length > 0) {
-                        gtk_adjustment_set_value (adjustment, buffer[0]);
+                        gtk_adjustment_set_value (adjustment, angles[8]);
+                        std::cerr << angles[8] << std::endl;
 //
 //                        if ((buffer[0] - prev) > 1) {
 //                                std::cerr << (int)buffer[0] << ", prev=" << (int)prev << std::endl;
@@ -221,7 +227,7 @@ static void LIBUSB_CALL cb_xfr (libusb_transfer *xfr)
                 }
         }
 
-#if 0
+#if 1
         printf("length:%u, actual_length:%u\n", xfr->length, xfr->actual_length);
 
         for (i = 0; i < xfr->actual_length; ++i) {
