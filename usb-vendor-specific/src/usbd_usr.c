@@ -26,7 +26,7 @@ void USBD_USR_Init (void)
 
 //        if (SysTick_Config (SystemCoreClock / 50)) {
 
-        if (SysTick_Config (SystemCoreClock / 10000)) {
+        if (SysTick_Config (SystemCoreClock / 1000)) {
                 /* Capture error */
                 while (1)
                         ;

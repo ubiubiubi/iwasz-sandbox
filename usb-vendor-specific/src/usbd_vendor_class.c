@@ -232,7 +232,7 @@ uint8_t vendorSendReport (USB_OTG_CORE_HANDLE *pdev, uint8_t *report, uint16_t l
 {
         if (pdev->dev.device_status == USB_OTG_CONFIGURED) {
                 DCD_EP_Tx (pdev, IN_EP, report, len);
-//                printf ("vendorSendReport\r\n");
+//                printf (".\r\n");
         }
 
         return USBD_OK;
