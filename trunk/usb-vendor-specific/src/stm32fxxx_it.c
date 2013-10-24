@@ -119,24 +119,32 @@ void PendSV_Handler (void)
  */
 void SysTick_Handler (void)
 {
-        abC <<= 2;
-        abC |= (GPIOC->IDR & 0x3333);
-        angle[0] += lookup[abC & 0x0000000f];
-        angle[1] += lookup[abC & 0x000000f0];
-        angle[2] += lookup[abC & 0x00000f00];
-        angle[3] += lookup[abC & 0x0000f000];
-        angle[4] += lookup[abC & 0x000f0000];
-        angle[5] += lookup[abC & 0x00f00000];
-        angle[6] += lookup[abC & 0x0f000000];
-        angle[7] += lookup[abC & 0xf0000000];
-
         abD <<= 2;
         abD |= (GPIOD->IDR & 0x3333);
-        angle[8] += lookup[abD & 0x0000000f];
-        angle[9] += lookup[abD & 0x000000f0];
-        angle[10] += lookup[abD & 0x00000f00];
-        angle[11] += lookup[abD & 0x0000f000];
-        angle[12] += lookup[abD & 0x000f0000];
+        angle[0] += lookup[abD & 0x0000000f];
+        angle[1] += lookup[abD & 0x000000f0];
+//        vendorSendReport (&USB_OTG_dev, (uint8_t *)angle, IN_PACKET_SIZE);
+
+//        abC <<= 2;
+//        abC |= (GPIOC->IDR & 0x3333);
+//        angle[0] += lookup[abC & 0x0000000f];
+//        angle[1] += lookup[abC & 0x000000f0];
+//        angle[2] += lookup[abC & 0x00000f00];
+//        angle[3] += lookup[abC & 0x0000f000];
+//        angle[4] += lookup[abC & 0x000f0000];
+//        angle[5] += lookup[abC & 0x00f00000];
+//        angle[6] += lookup[abC & 0x0f000000];
+//        angle[7] += lookup[abC & 0xf0000000];
+//
+//        abD <<= 2;
+//        abD |= (GPIOD->IDR & 0x3333);
+//        angle[8] += lookup[abD & 0x0000000f];
+//        angle[9] += lookup[abD & 0x000000f0];
+//        angle[10] += lookup[abD & 0x00000f00];
+//        angle[11] += lookup[abD & 0x0000f000];
+
+//        Do tąd daje radę @ 10kHz + debug.
+//        angle[12] += lookup[abD & 0x000f0000];
 //        angle[13] += lookup[abD & 0x00f00000];
 //        angle[14] += lookup[abD & 0x0f000000];
 //        angle[15] += lookup[abD & 0xf0000000];
