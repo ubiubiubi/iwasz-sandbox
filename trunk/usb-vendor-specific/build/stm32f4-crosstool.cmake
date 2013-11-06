@@ -1,6 +1,6 @@
 # GCC toolchain prefix
-#SET(TOOLCHAIN_PREFIX "/home/iwasz/x-tools/arm-unknown-eabi")
-SET(TOOLCHAIN_PREFIX "/home/iwasz/local/share/arm-unknown-eabi")
+SET(TOOLCHAIN_PREFIX "/home/iwasz/x-tools/arm-unknown-eabi")
+#SET(TOOLCHAIN_PREFIX "/home/iwasz/local/share/arm-unknown-eabi")
 SET(TARGET_TRIPLET "arm-unknown-eabi")
 
 SET(TOOLCHAIN_BIN_DIR ${TOOLCHAIN_PREFIX}/bin)
@@ -23,8 +23,9 @@ SET(CMAKE_C_FLAGS_DEBUG "-O0 -g -ggdb -gstabs+" CACHE INTERNAL "c debug compiler
 SET(CMAKE_CXX_FLAGS_DEBUG "-O0 -ggdb -g -gstabs+" CACHE INTERNAL "cxx debug compiler flags")
 SET(CMAKE_ASM_FLAGS_DEBUG "-g -gstabs+" CACHE INTERNAL "asm debug compiler flags")
 
-SET(CMAKE_C_FLAGS_RELEASE "-O3 -flto" CACHE INTERNAL "c release compiler flags")
-SET(CMAKE_CXX_FLAGS_RELEASE "-O3 -flto" CACHE INTERNAL "cxx release compiler flags")
+# -flto powoduje problemy z funkcjami syscalls
+SET(CMAKE_C_FLAGS_RELEASE "-O3" CACHE INTERNAL "c release compiler flags")
+SET(CMAKE_CXX_FLAGS_RELEASE "-O3" CACHE INTERNAL "cxx release compiler flags")
 SET(CMAKE_ASM_FLAGS_RELEASE "" CACHE INTERNAL "asm release compiler flags")
 
 SET(CMAKE_EXE_LINKER_FLAGS "-T${CMAKE_CURRENT_BINARY_DIR}/stm32f4.ld " CACHE INTERNAL "exe link flags")

@@ -42,12 +42,16 @@ void initUsart (void)
 void initExti (void)
 {
         // Konfiguracja portu jak zwykle.
+        RCC_AHB1PeriphClockCmd (RCC_AHB1Periph_GPIOC, ENABLE);
         RCC_AHB1PeriphClockCmd (RCC_AHB1Periph_GPIOD, ENABLE);
+        RCC_AHB1PeriphClockCmd (RCC_AHB1Periph_GPIOE, ENABLE);
+        RCC_AHB1PeriphClockCmd (RCC_AHB1Periph_GPIOF, ENABLE);
         GPIO_InitTypeDef gpioInitStruct;
-        gpioInitStruct.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2 | GPIO_Pin_3 | GPIO_Pin_4 | GPIO_Pin_5 | GPIO_Pin_6 | GPIO_Pin_7;
+        gpioInitStruct.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2 | GPIO_Pin_3 | GPIO_Pin_4 | GPIO_Pin_5 | GPIO_Pin_6 | GPIO_Pin_7 |
+                                  GPIO_Pin_8 | GPIO_Pin_9 | GPIO_Pin_10 | GPIO_Pin_11 | GPIO_Pin_12 | GPIO_Pin_13 | GPIO_Pin_14 | GPIO_Pin_15;
         gpioInitStruct.GPIO_Mode = GPIO_Mode_IN;
-        gpioInitStruct.GPIO_Speed = GPIO_Speed_2MHz;
-        gpioInitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;
+        gpioInitStruct.GPIO_Speed = GPIO_Speed_100MHz;
+        gpioInitStruct.GPIO_PuPd = GPIO_PuPd_UP;
         GPIO_Init (GPIOC, &gpioInitStruct);
         GPIO_Init (GPIOD, &gpioInitStruct);
         GPIO_Init (GPIOE, &gpioInitStruct);

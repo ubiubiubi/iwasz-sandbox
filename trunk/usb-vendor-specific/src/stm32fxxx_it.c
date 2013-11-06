@@ -6,12 +6,16 @@
 #include <stdio.h>
 
 __IO uint32_t remote_wakeup = 0;
-int16_t angle[32];
-static uint32_t abC = 0x00;
-static uint32_t abD = 0x00;
-static uint32_t abE = 0x00;
-static uint32_t abF = 0x00;
-static int8_t lookup[] = {0, -1, +1, 0, +1, 0, 0, -1, -1, 0, 0, +1, 0, +1, -1, 0};
+int16_t angle[32] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+static uint32_t abCe = 0x00;
+static uint32_t abCo = 0x00;
+static uint32_t abDe = 0x00;
+static uint32_t abDo = 0x00;
+static uint32_t abEe = 0x00;
+static uint32_t abEo = 0x00;
+static uint32_t abFe = 0x00;
+static uint32_t abFo = 0x00;
+static int8_t lookup[] = { 0, -1, +1, 0, +1, 0, 0, -1, -1, 0, 0, +1, 0, +1, -1, 0 };
 
 /* Private function prototypes -----------------------------------------------*/
 extern USB_OTG_CORE_HANDLE USB_OTG_dev;
@@ -119,57 +123,66 @@ void PendSV_Handler (void)
  */
 void SysTick_Handler (void)
 {
-        abD <<= 2;
-        abD |= (GPIOD->IDR & 0x3333);
-        angle[0] += lookup[abD & 0x0000000f];
-        angle[1] += lookup[abD & 0x000000f0];
-//        vendorSendReport (&USB_OTG_dev, (uint8_t *)angle, IN_PACKET_SIZE);
+        uint16_t gpioc = GPIOC->IDR;
+        uint16_t gpiod = GPIOD->IDR;
+        uint16_t gpioe = GPIOE->IDR;
+        uint16_t gpiof = GPIOF->IDR;
 
-//        abC <<= 2;
-//        abC |= (GPIOC->IDR & 0x3333);
-//        angle[0] += lookup[abC & 0x0000000f];
-//        angle[1] += lookup[abC & 0x000000f0];
-//        angle[2] += lookup[abC & 0x00000f00];
-//        angle[3] += lookup[abC & 0x0000f000];
-//        angle[4] += lookup[abC & 0x000f0000];
-//        angle[5] += lookup[abC & 0x00f00000];
-//        angle[6] += lookup[abC & 0x0f000000];
-//        angle[7] += lookup[abC & 0xf0000000];
-//
-//        abD <<= 2;
-//        abD |= (GPIOD->IDR & 0x3333);
-//        angle[8] += lookup[abD & 0x0000000f];
-//        angle[9] += lookup[abD & 0x000000f0];
-//        angle[10] += lookup[abD & 0x00000f00];
-//        angle[11] += lookup[abD & 0x0000f000];
+        abCe <<= 2;
+        abCe |= (gpioc & 0x3333);
+        angle[0] += lookup[abCe & 0x000f];
+        angle[2] += lookup[(abCe & 0x00f0) >> 4];
+        angle[4] += lookup[(abCe & 0x0f00) >> 8];
+        angle[6] += lookup[(abCe & 0xf000) >> 12];
 
-//        Do tąd daje radę @ 10kHz + debug.
-//        angle[12] += lookup[abD & 0x000f0000];
-//        angle[13] += lookup[abD & 0x00f00000];
-//        angle[14] += lookup[abD & 0x0f000000];
-//        angle[15] += lookup[abD & 0xf0000000];
-//
-//        abE <<= 2;
-//        abE |= (GPIOE->IDR & 0x3333);
-//        angle[16] += lookup[abE & 0x0000000f];
-//        angle[17] += lookup[abE & 0x000000f0];
-//        angle[18] += lookup[abE & 0x00000f00];
-//        angle[19] += lookup[abE & 0x0000f000];
-//        angle[20] += lookup[abE & 0x000f0000];
-//        angle[21] += lookup[abE & 0x00f00000];
-//        angle[22] += lookup[abE & 0x0f000000];
-//        angle[23] += lookup[abE & 0xf0000000];
-//
-//        abF <<= 2;
-//        abF |= (GPIOF->IDR & 0x3333);
-//        angle[24] += lookup[abF & 0x0000000f];
-//        angle[25] += lookup[abF & 0x000000f0];
-//        angle[26] += lookup[abF & 0x00000f00];
-//        angle[27] += lookup[abF & 0x0000f000];
-//        angle[28] += lookup[abF & 0x000f0000];
-//        angle[29] += lookup[abF & 0x00f00000];
-//        angle[30] += lookup[abF & 0x0f000000];
-//        angle[31] += lookup[abF & 0xf0000000];
+        abCo <<= 2;
+        abCo |= ((gpioc & 0xcccc) >> 2);
+        angle[1] += lookup[abCo & 0x000f];
+        angle[3] += lookup[(abCo & 0x00f0) >> 4];
+        angle[5] += lookup[(abCo & 0x0f00) >> 8];
+        angle[7] += lookup[(abCo & 0xf000) >> 12];
+
+        abDe <<= 2;
+        abDe |= (gpiod & 0x3333);
+        angle[8] += lookup[abDe & 0x000f];
+        angle[10] += lookup[(abDe & 0x00f0 ) >> 4];
+        angle[12] += lookup[(abDe & 0x0f00) >> 8];
+        angle[14] += lookup[(abDe & 0xf000) >> 12];
+
+        abDo <<= 2;
+        abDo |= (gpiod & 0xcccc) >> 2;
+        angle[9] += lookup[abDo & 0x000f];
+        angle[11] += lookup[(abDo & 0x00f0) >> 4];
+        angle[13] += lookup[(abDo & 0x0f00) >> 8];
+        angle[15] += lookup[(abDo & 0xf000) >> 12];
+
+        abEe <<= 2;
+        abEe |= (gpioe & 0x3333);
+        angle[16] += lookup[abEe & 0x000f];
+        angle[18] += lookup[(abEe & 0x00f0) >> 4];
+        angle[20] += lookup[(abEe & 0x0f00) >> 8];
+        angle[22] += lookup[(abEe & 0xf000) >> 12];
+
+        abEo <<= 2;
+        abEo |= (gpioe & 0xcccc) >> 2;
+        angle[17] += lookup[abEo & 0x000f];
+        angle[19] += lookup[(abEo & 0x00f0) >> 4];
+        angle[21] += lookup[(abEo & 0x0f00) >> 8];
+        angle[23] += lookup[(abEo & 0xf000) >> 12];
+
+        abFe <<= 2;
+        abFe |= (gpiof & 0x3333);
+        angle[24] += lookup[abFe & 0x000f];
+        angle[26] += lookup[(abFe & 0x00f0) >> 4];
+        angle[28] += lookup[(abFe & 0x0f00) >> 8];
+        angle[30] += lookup[(abFe & 0xf000) >> 12];
+
+        abFo <<= 2;
+        abFo |= (gpiof & 0xcccc) >> 2;
+        angle[25] += lookup[abFo & 0x000f];
+        angle[27] += lookup[(abFo & 0x00f0) >> 4];
+        angle[29] += lookup[(abFo & 0x0f00) >> 8];
+        angle[31] += lookup[(abFo & 0xf000) >> 12];
 }
 
 /**

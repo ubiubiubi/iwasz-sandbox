@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
-SET (CMAKE_VERBOSE_MAKEFILE ON) 
+SET (CMAKE_VERBOSE_MAKEFILE OFF) 
 
 PROJECT (usb-vendor-specific)
 include (stm32f4-crosstool.cmake)

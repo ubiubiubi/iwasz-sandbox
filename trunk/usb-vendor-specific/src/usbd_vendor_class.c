@@ -98,7 +98,7 @@ __ALIGN_BEGIN static uint8_t vendorCfgDesc[] __ALIGN_END =
         IN_EP,         /* bEndpointAddress: Endpoint Address. 4 LSB to numer endpointu. Urządzenia LS moga mieć w interfejsie */
                        /* max 3 endpointy. Pozostałe urządzenia mogą mieć 16. Bit MSB to kierunek : 0 == OUT, 1 == IN. Bity */\
                        /* 6..4 muszą być 0. */
-        0x0d,          /* bmAttributes : */
+        0x03,/*0x0d,*/          /* bmAttributes : */
                        /* Bits 0..1 Transfer Type */
                        /*  00 = Control */
                        /*  01 = Isochronous */
@@ -119,7 +119,7 @@ __ALIGN_BEGIN static uint8_t vendorCfgDesc[] __ALIGN_END =
                        /* do 1024. Bity 11 i 12 oznaczają liczbę dodatkowych transakcji w mikro ramce dla transferów iso */
                        /* i interrupt  (0-2, bo 11 jest zarezerwowane). Bity 13-15 musza być 0. */
         0x00,
-        0x01,          /* bInterval: Polling Interval. Interval for polling endpoint data transfers. Value in frame counts (ms). */
+        0xa/*0x01*/,          /* bInterval: Polling Interval. Interval for polling endpoint data transfers. Value in frame counts (ms). */
                        /* Ignored for Bulk & Control Endpoints. Isochronous must equal 1 and field may range from 1 to 255 for */
                        /* interrupt endpoints. */
 };
@@ -133,7 +133,7 @@ static uint8_t vendorInit (void *pdev, uint8_t cfgidx)
 {
         /* Open EP IN */
         printf ("vendorInit\r\n");
-        DCD_EP_Open (pdev, IN_EP, IN_PACKET_SIZE, USB_OTG_EP_ISOC);
+        DCD_EP_Open (pdev, IN_EP, IN_PACKET_SIZE, USB_OTG_EP_INT);
         return USBD_OK;
 }
 
