@@ -8,20 +8,28 @@
 
 #include <iostream>
 #include <thread>
+#include <mutex>
 #include <libusb.h>
 #include <signal.h>
 #include <gtk/gtk.h>
+#include <string.h>
+#include <boost/lexical_cast.hpp>
 
-const unsigned int ISO_PACKET_SIZE = 4;
+const int ISO_PACKET_SIZE = 64;
+const int ENCODERS_NUMBER = 32;
 bool doExit = false;
 
 // Pointer to adjustment.
-static GtkAdjustment *adjustment = NULL;
+static GtkAdjustment *adjustment[ENCODERS_NUMBER];
 
 // Handle to my device.
 static libusb_device_handle *devh = NULL;
 
 static void LIBUSB_CALL cb_xfr (libusb_transfer *xfr);
+
+typedef uint8_t Buffer[ISO_PACKET_SIZE];
+Buffer buf;
+std::mutex bufferMutex;
 
 void printDevs (libusb_device **devs)
 {
@@ -51,13 +59,6 @@ void printDevs (libusb_device **devs)
 
 void initUsb ()
 {
-//        struct sigaction sigact;
-//        sigact.sa_handler = sig_hdlr;
-//        sigemptyset(&sigact.sa_mask);
-//        sigact.sa_flags = 0;
-//        sigaction(SIGINT, &sigact, NULL);
-
-
         libusb_device **devs;
         ssize_t cnt;
 
@@ -121,12 +122,10 @@ void initUsb ()
                 exit (1);
         }
 
+//        libusb_fill_iso_transfer (xfr, devh, 0x81, buf, ISO_PACKET_SIZE, num_iso_pack, cb_xfr, NULL, 1000);
+//        libusb_set_iso_packet_lengths (xfr, ISO_PACKET_SIZE / num_iso_pack);
 
-        uint8_t buf[ISO_PACKET_SIZE];
-        libusb_fill_iso_transfer (xfr, devh, 0x81, buf, ISO_PACKET_SIZE, num_iso_pack, cb_xfr, NULL, 0);
-        libusb_set_iso_packet_lengths (xfr, ISO_PACKET_SIZE / num_iso_pack);
-
-//        libusb_fill_interrupt_transfer(xfr, devh, 0x81, buf, sizeof (buf), cb_xfr, NULL, 100);
+        libusb_fill_interrupt_transfer(xfr, devh, 0x81, buf, sizeof (buf), cb_xfr, NULL, 100);
 
         int ret = libusb_submit_transfer (xfr);
         if (ret) {
@@ -182,6 +181,31 @@ void usbThread ()
         }
 }
 
+gboolean guiThread (gpointer user_data)
+{
+                {
+                        std::lock_guard<std::mutex> guard (bufferMutex);
+
+                        for (int i = 0; i < ENCODERS_NUMBER; ++i) {
+                                int bufPos = i*2;
+                                uint16_t val = buf[bufPos] | ((uint16_t)buf[bufPos + 1] << 8);
+                                gtk_adjustment_set_value (adjustment[i], val);
+                        }
+
+//                        printf ("[");
+//                        for (unsigned int i = 0; i < ISO_PACKET_SIZE; ++i) {
+//                                printf("%02x", buf[i]);
+//                        }
+//                        printf("]%d %d\n", buf[16], buf[17]);
+                }
+
+//                for (int i = 0; i < ENCODERS_NUMBER; ++i) {
+//                        gtk_adjustment_set_value (adjustment, buffer[0]);
+//                }
+
+        return G_SOURCE_CONTINUE;
+}
+
 static void LIBUSB_CALL cb_xfr (libusb_transfer *xfr)
 {
         int i;
@@ -201,12 +225,12 @@ static void LIBUSB_CALL cb_xfr (libusb_transfer *xfr)
                         exit(5);
                 }
 
-                uint8_t *buffer = libusb_get_iso_packet_buffer (xfr, 0);
+//                uint8_t *buffer = libusb_get_iso_packet_buffer (xfr, 0);
                 // Both x86 and STM32 are little endian.
-                uint16_t *angles = (uint16_t *)buffer;
+//                uint16_t *angles = (uint16_t *)buffer;
 //                static uint8_t prev = 0;
 
-#if 1
+#if 0
                 printf("pack%u length:%u, actual_length:%u\n", i, pack->length, pack->actual_length);
 
                 printf ("[");
@@ -215,28 +239,34 @@ static void LIBUSB_CALL cb_xfr (libusb_transfer *xfr)
                 }
                 printf("]\n");
 #endif
+        }
 
-                if (pack->actual_length > 0) {
-                        gtk_adjustment_set_value (adjustment, angles[8]);
-                        std::cerr << angles[8] << std::endl;
-//
-//                        if ((buffer[0] - prev) > 1) {
-//                                std::cerr << (int)buffer[0] << ", prev=" << (int)prev << std::endl;
-//                        }
-//                        prev = buffer[0];
+#if 0
+        printf("length:%u, actual_length:%u\n", xfr->length, xfr->actual_length);
+
+        if (xfr->actual_length == ISO_PACKET_SIZE) {
+                for (i = 0; i < xfr->actual_length; ++i) {
+                        printf ("%02x", xfr->buffer[i]);
+                        if ((i+1) % 16 == 0) {
+                                printf (" ");
+                        }
+                }
+        }
+        else {
+                for (i = 0; i < xfr->actual_length; ++i) {
+                        printf ("%02x", xfr->buffer[i]);
                 }
         }
 
-#if 1
-        printf("length:%u, actual_length:%u\n", xfr->length, xfr->actual_length);
-
-        for (i = 0; i < xfr->actual_length; ++i) {
-                printf("%02x", xfr->buffer[i]);
-        }
         printf ("\n");
 
 //        std::cerr << "Length received : " << xfr->actual_length << std::endl;
 #endif
+
+        if (xfr->actual_length == ISO_PACKET_SIZE) {
+                std::lock_guard<std::mutex> guard(bufferMutex);
+                memcpy(buf, xfr->buffer, ISO_PACKET_SIZE);
+        }
 
         if (libusb_submit_transfer(xfr) < 0) {
                 fprintf(stderr, "error re-submitting URB\n");
@@ -285,11 +315,17 @@ int main (int argc, char **argv)
         g_signal_connect (button, "clicked", G_CALLBACK (gtk_main_quit), NULL);
 
 //        GtkScale *scale = GTK_SCALE (gtk_builder_get_object (builder, "scale1"));
-        adjustment = GTK_ADJUSTMENT (gtk_builder_get_object (builder, "adjustment1"));
+        for (int i = 0; i < ENCODERS_NUMBER; ++i) {
+                adjustment[i] = GTK_ADJUSTMENT (gtk_builder_get_object (builder, (std::string ("adjustment") + boost::lexical_cast <std::string> (i + 1)).c_str ()));
+        }
 
         std::thread t (usbThread);
         t.detach ();
 
+//        std::thread t2 (guiThread);
+//        t2.detach ();
+
+        g_idle_add (guiThread, NULL);
         gtk_main ();
         closeUsb ();
 
