@@ -24,9 +24,8 @@ void USBD_USR_Init (void)
 {
         printf ("Init.\r\n");
 
-//        if (SysTick_Config (SystemCoreClock / 50)) {
-
-        if (SysTick_Config (SystemCoreClock / 100000)) {
+        if (SysTick_Config (SystemCoreClock / 50)) {
+//        if (SysTick_Config (SystemCoreClock / 100000)) {
                 /* Capture error */
                 while (1)
                         ;
