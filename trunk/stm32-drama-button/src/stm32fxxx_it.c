@@ -113,8 +113,9 @@ void PendSV_Handler (void)
  */
 void SysTick_Handler (void)
 {
-        uint8_t buf[4] = {0, 0, 0, 0};
-        USBD_HID_SendReport (&USB_OTG_dev, buf, 4);
+//        uint8_t buf[HID_IN_PACKET] = { 0x00, 0x00, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04};
+        uint8_t buf[HID_IN_PACKET] = { 0x00, 0x00, 0x40, 0x04, 0x00, 0x00, 0x00, 0x00 };
+        USBD_HID_SendReport (&USB_OTG_dev, buf, HID_IN_PACKET);
 }
 
 /**
