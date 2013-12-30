@@ -1,21 +1,11 @@
 #include "stm32fxxx_it.h"
 #include "usb_core.h"
 #include "usbd_core.h"
-#include "usbd_vendor_class.h"
+#include "usbd_hid_core.h"
 #include "usb_conf.h"
 #include <stdio.h>
 
 __IO uint32_t remote_wakeup = 0;
-int16_t angle[32] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-static uint32_t abCe = 0x00;
-static uint32_t abCo = 0x00;
-static uint32_t abDe = 0x00;
-static uint32_t abDo = 0x00;
-static uint32_t abEe = 0x00;
-static uint32_t abEo = 0x00;
-static uint32_t abFe = 0x00;
-static uint32_t abFo = 0x00;
-static int8_t lookup[] = { 0, -1, +1, 0, +1, 0, 0, -1, -1, 0, 0, +1, 0, +1, -1, 0 };
 
 /* Private function prototypes -----------------------------------------------*/
 extern USB_OTG_CORE_HANDLE USB_OTG_dev;
@@ -123,66 +113,8 @@ void PendSV_Handler (void)
  */
 void SysTick_Handler (void)
 {
-        uint16_t gpioc = GPIOC->IDR;
-        uint16_t gpiod = GPIOD->IDR;
-        uint16_t gpioe = GPIOE->IDR;
-        uint16_t gpiof = GPIOF->IDR;
-
-        abCe <<= 2;
-        abCe |= (gpioc & 0x3333);
-        angle[0] += lookup[abCe & 0x000f];
-        angle[2] += lookup[(abCe & 0x00f0) >> 4];
-        angle[4] += lookup[(abCe & 0x0f00) >> 8];
-        angle[6] += lookup[(abCe & 0xf000) >> 12];
-
-        abCo <<= 2;
-        abCo |= ((gpioc & 0xcccc) >> 2);
-        angle[1] += lookup[abCo & 0x000f];
-        angle[3] += lookup[(abCo & 0x00f0) >> 4];
-        angle[5] += lookup[(abCo & 0x0f00) >> 8];
-        angle[7] += lookup[(abCo & 0xf000) >> 12];
-
-        abDe <<= 2;
-        abDe |= (gpiod & 0x3333);
-        angle[8] += lookup[abDe & 0x000f];
-        angle[10] += lookup[(abDe & 0x00f0 ) >> 4];
-        angle[12] += lookup[(abDe & 0x0f00) >> 8];
-        angle[14] += lookup[(abDe & 0xf000) >> 12];
-
-        abDo <<= 2;
-        abDo |= (gpiod & 0xcccc) >> 2;
-        angle[9] += lookup[abDo & 0x000f];
-        angle[11] += lookup[(abDo & 0x00f0) >> 4];
-        angle[13] += lookup[(abDo & 0x0f00) >> 8];
-        angle[15] += lookup[(abDo & 0xf000) >> 12];
-
-        abEe <<= 2;
-        abEe |= (gpioe & 0x3333);
-        angle[16] += lookup[abEe & 0x000f];
-        angle[18] += lookup[(abEe & 0x00f0) >> 4];
-        angle[20] += lookup[(abEe & 0x0f00) >> 8];
-        angle[22] += lookup[(abEe & 0xf000) >> 12];
-
-        abEo <<= 2;
-        abEo |= (gpioe & 0xcccc) >> 2;
-        angle[17] += lookup[abEo & 0x000f];
-        angle[19] += lookup[(abEo & 0x00f0) >> 4];
-        angle[21] += lookup[(abEo & 0x0f00) >> 8];
-        angle[23] += lookup[(abEo & 0xf000) >> 12];
-
-        abFe <<= 2;
-        abFe |= (gpiof & 0x3333);
-        angle[24] += lookup[abFe & 0x000f];
-        angle[26] += lookup[(abFe & 0x00f0) >> 4];
-        angle[28] += lookup[(abFe & 0x0f00) >> 8];
-        angle[30] += lookup[(abFe & 0xf000) >> 12];
-
-        abFo <<= 2;
-        abFo |= (gpiof & 0xcccc) >> 2;
-        angle[25] += lookup[abFo & 0x000f];
-        angle[27] += lookup[(abFo & 0x00f0) >> 4];
-        angle[29] += lookup[(abFo & 0x0f00) >> 8];
-        angle[31] += lookup[(abFo & 0xf000) >> 12];
+        uint8_t buf[4] = {0, 0, 0, 0};
+        USBD_HID_SendReport (&USB_OTG_dev, buf, 4);
 }
 
 /**
@@ -193,17 +125,11 @@ void SysTick_Handler (void)
 void EXTI0_IRQHandler (void)
 {
         EXTI_ClearITPendingBit (EXTI_Line0);
-//        ab <<= 2;
-//        ab |= (GPIOD->IDR & 0x03);
-//        angle += lookup[ab & 0x0f];
 }
 
 void EXTI1_IRQHandler (void)
 {
         EXTI_ClearITPendingBit (EXTI_Line1);
-//        ab <<= 2;
-//        ab |= (GPIOD->IDR & 0x03);
-//        angle += lookup[ab & 0x0f];
 }
 
 /**
