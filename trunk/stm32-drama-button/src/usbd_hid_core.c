@@ -72,9 +72,13 @@ USBD_Class_cb_TypeDef  USBD_HID_cb =
   USBD_HID_GetCfgDesc,
 };
 
-__ALIGN_BEGIN static uint32_t  USBD_HID_AltSet  __ALIGN_END = 0;
-__ALIGN_BEGIN static uint32_t  USBD_HID_Protocol  __ALIGN_END = 0;
-__ALIGN_BEGIN static uint32_t  USBD_HID_IdleState __ALIGN_END = 0;
+__ALIGN_BEGIN uint32_t  USBD_HID_AltSet  __ALIGN_END = 0;
+__ALIGN_BEGIN uint32_t  USBD_HID_Protocol  __ALIGN_END = 0;
+__ALIGN_BEGIN uint32_t  USBD_HID_IdleState __ALIGN_END = 0;
+
+// Actual report to send.
+uint8_t keyboardReport[HID_IN_PACKET] = { 0x00, 0x00 };
+uint8_t lastKey = 0x00;
 
 /*
  * Configuration descriptor.
@@ -96,7 +100,7 @@ __ALIGN_BEGIN static uint8_t USBD_HID_CfgDesc[USB_HID_CONFIG_DESC_SIZ] __ALIGN_E
                       /* 0x32 = 50, czyli 100mA. */
 
         /*
-         * Device descriptor of mouse interface.
+         * Device descriptor of keyboard interface.
          */
         0x09,         /* bLength : Interface Descriptor size == 0x09. */
         USB_INTERFACE_DESCRIPTOR_TYPE,/* bDescriptorType : Interface descriptor type (constant 0x04). */
@@ -109,8 +113,9 @@ __ALIGN_BEGIN static uint8_t USBD_HID_CfgDesc[USB_HID_CONFIG_DESC_SIZ] __ALIGN_E
         0x03,         /* bInterfaceClass : Klasa. Listę można znaleźć na wikipedii. 0xff to vendor specific. Klasę urządzenia */
                       /* można także podać w deskryptorze urządzenia, ale najczęściej się podaj tu. 0x03 to HID. */
         0x01,         /* bInterfaceSubClass : 1=BOOT, 0=no boot. Ustanowione przez USB-IF dla klas. 0xff == vendor specific. */
+                      /* Linux has some trouble indentifying the device when boot == 0 here. */
         0x01,         /* nInterfaceProtocol : 0=none, 1=keyboard, 2=mouse. Ustanowione przez USB-IF dla klas. 0xff == vendor */
-                      /* specific.*/
+                      /* specific. Ustawiamy tylko gdy boot protocol. */
         0,            /* iInterface: Index of string descriptor, or 0 if there is no string. */
 
         /*
@@ -207,6 +212,7 @@ __ALIGN_BEGIN static uint8_t USBD_HID_CfgDesc[USB_HID_CONFIG_DESC_SIZ] __ALIGN_E
  * Report descriptor. It only describes the report, this is not the report itself.
  * Based on USB HID spec.
  */
+#if 0
 __ALIGN_BEGIN static uint8_t HID_KEYBOARD_ReportDesc[HID_KEYBOARD_REPORT_DESC_SIZE] __ALIGN_END = {
         0x05, 0x01, // Usage Page (Generic Desktop),
         0x09, 0x06, // Usage (Keyboard),
@@ -244,6 +250,28 @@ __ALIGN_BEGIN static uint8_t HID_KEYBOARD_ReportDesc[HID_KEYBOARD_REPORT_DESC_SI
         0x29, 0x65, //  Usage Maximum (101),
         0x81, 0x00, //  Input (Data, Array), ;Key arrays (6 bytes)
         0xC0       // End Collection
+};
+#endif
+
+__ALIGN_BEGIN static uint8_t HID_KEYBOARD_ReportDesc[HID_KEYBOARD_REPORT_DESC_SIZE] __ALIGN_END = {
+        0x05, 0x01,                    // USAGE_PAGE (Generic Desktop)
+        0x09, 0x06,                    // USAGE (Keyboard)
+        0xa1, 0x01,                    // COLLECTION (Application)
+        0x05, 0x07,                    //   USAGE_PAGE (Keyboard)
+        0x19, 0xe0,                    //   USAGE_MINIMUM (Keyboard LeftControl)
+        0x29, 0xe7,                    //   USAGE_MAXIMUM (Keyboard Right GUI)
+        0x15, 0x00,                    //   LOGICAL_MINIMUM (0)
+        0x25, 0x01,                    //   LOGICAL_MAXIMUM (1)
+        0x75, 0x01,                    //   REPORT_SIZE (1)
+        0x95, 0x08,                    //   REPORT_COUNT (8)
+        0x81, 0x02,                    //   INPUT (Data,Var,Abs)
+        0x95, 0x01,                    //   REPORT_COUNT (1)
+        0x75, 0x08,                    //   REPORT_SIZE (8)
+        0x25, 0x65,                    //   LOGICAL_MAXIMUM (101)
+        0x19, 0x00,                    //   USAGE_MINIMUM (Reserved (no event indicated))
+        0x29, 0x65,                    //   USAGE_MAXIMUM (Keyboard Application)
+        0x81, 0x00,                    //   INPUT (Data,Ary,Abs)
+        0xc0                           // END_COLLECTION
 };
 
 /**
@@ -297,28 +325,28 @@ static uint8_t USBD_HID_Setup (void *pdev, USB_SETUP_REQ *req)
         case USB_REQ_TYPE_CLASS:
                 switch (req->bRequest) {
 
-                case HID_REQ_SET_PROTOCOL:
+                case HID_REQ_SET_PROTOCOL: // required for HIDs that support a boot protocol
                         USBD_HID_Protocol = (uint8_t) (req->wValue);
                         break;
 
-                case HID_REQ_GET_PROTOCOL:
+                case HID_REQ_GET_PROTOCOL: // required for HIDs that support a boot protocol
                         USBD_CtlSendData (pdev, (uint8_t *) &USBD_HID_Protocol, 1);
                         break;
 
-                case HID_REQ_SET_IDLE:
+                case HID_REQ_SET_IDLE: // Not required, except for keyboards using the boot protocol
                         USBD_HID_IdleState = (uint8_t) (req->wValue >> 8);
                         break;
 
-                case HID_REQ_GET_IDLE:
+                case HID_REQ_GET_IDLE: // Optional for keyboards (?)
                         USBD_CtlSendData (pdev, (uint8_t *) &USBD_HID_IdleState, 1);
                         break;
 
-//                case HID_REQ_SET_REPORT:
-//                {
-//                        uint8_t buf[HID_IN_PACKET] = { 0x00, 0x00, 0x00,  0x04, 0x00, 0x00, 0x00, 0x00, 0x00 };
-//                        USBD_HID_SendReport (pdev, buf, HID_IN_PACKET);
-//                        break;
-//                }
+                case HID_REQ_GET_REPORT:
+                {
+                        buildReport (0x00, lastKey);
+                        USBD_HID_SendReport (pdev);
+                        break;
+                }
 
                 default:
                         USBD_CtlError (pdev, req);
@@ -361,12 +389,18 @@ static uint8_t USBD_HID_Setup (void *pdev, USB_SETUP_REQ *req)
  * @param  buff: pointer to report
  * @retval status
  */
-uint8_t USBD_HID_SendReport (USB_OTG_CORE_HANDLE *pdev, uint8_t *report, uint16_t len)
+uint8_t USBD_HID_SendReport (USB_OTG_CORE_HANDLE *pdev)
 {
         if (pdev->dev.device_status == USB_OTG_CONFIGURED) {
-                DCD_EP_Tx (pdev, HID_IN_EP, report, len);
+                DCD_EP_Tx (pdev, HID_IN_EP, keyboardReport, HID_IN_PACKET);
         }
         return USBD_OK;
+}
+
+void buildReport (uint8_t modifier, uint8_t key)
+{
+        keyboardReport[0] = modifier; // Modifier.
+        keyboardReport[1] = key; // Key (A).
 }
 
 /**
@@ -391,7 +425,6 @@ static uint8_t *USBD_HID_GetCfgDesc (uint8_t speed, uint16_t *length)
  */
 static uint8_t USBD_HID_DataIn (void *pdev, uint8_t epnum)
 {
-
         /* Ensure that the FIFO is empty before a new transfer, this condition could
          be caused by  a new transfer before the end of the previous transfer */
         DCD_EP_Flush (pdev, HID_IN_EP);

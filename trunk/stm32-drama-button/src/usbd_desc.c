@@ -10,10 +10,10 @@
 
 #define USBD_LANGID_STRING            0x409
 #define USBD_MANUFACTURER_STRING      "iwasz.pl"
-#define USBD_PRODUCT_FS_STRING        "forrest prototype hub"
+#define USBD_PRODUCT_FS_STRING        "drama button"
 #define USBD_SERIALNUMBER_FS_STRING   "0001"
-#define USBD_CONFIGURATION_FS_STRING  "Forrest HUB Config"
-#define USBD_INTERFACE_FS_STRING      "Forrest HUB Interface"
+#define USBD_CONFIGURATION_FS_STRING  "Drama Button Config"
+#define USBD_INTERFACE_FS_STRING      "Drama button Interface"
 
 USBD_DEVICE USR_desc =
 {

@@ -113,9 +113,23 @@ void PendSV_Handler (void)
  */
 void SysTick_Handler (void)
 {
-//        uint8_t buf[HID_IN_PACKET] = { 0x00, 0x00, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04};
-        uint8_t buf[HID_IN_PACKET] = { 0x00, 0x00, 0x40, 0x04, 0x00, 0x00, 0x00, 0x00 };
-        USBD_HID_SendReport (&USB_OTG_dev, buf, HID_IN_PACKET);
+        static int i = 0;
+//        static uint8_t lastKey = 0x00;
+        uint8_t keyChanged = 0;
+
+        uint8_t currentKey = (GPIOA->IDR & GPIO_Pin_0) ? (MY_KEY_KEYCODE) : (0x00);
+
+        if (lastKey != currentKey) {
+                lastKey = currentKey;
+                keyChanged = 1;
+        }
+
+        if (++i >= USBD_HID_IdleState || keyChanged) {
+                buildReport (0x00, lastKey);
+                USBD_HID_SendReport (&USB_OTG_dev);
+                i = 0;
+                keyChanged = 0;
+        }
 }
 
 /**
