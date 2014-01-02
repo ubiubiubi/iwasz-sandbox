@@ -27,7 +27,7 @@ SET(CMAKE_C_FLAGS_RELEASE "-O3" CACHE INTERNAL "c release compiler flags")
 SET(CMAKE_CXX_FLAGS_RELEASE "-O3" CACHE INTERNAL "cxx release compiler flags")
 SET(CMAKE_ASM_FLAGS_RELEASE "" CACHE INTERNAL "asm release compiler flags")
 
-SET(CMAKE_EXE_LINKER_FLAGS "-T${CMAKE_CURRENT_BINARY_DIR}/stm32f4.ld " CACHE INTERNAL "exe link flags")
+SET(CMAKE_EXE_LINKER_FLAGS "-T${CMAKE_CURRENT_BINARY_DIR}/stm32f105.ld " CACHE INTERNAL "exe link flags")
 SET(CMAKE_MODULE_LINKER_FLAGS "-L${TOOLCHAIN_LIB_DIR}" CACHE INTERNAL "module link flags")
 SET(CMAKE_SHARED_LINKER_FLAGS "-L${TOOLCHAIN_LIB_DIR}" CACHE INTERNAL "shared link flags")
 
@@ -39,9 +39,9 @@ SET(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
 SET(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS "")
 
 INCLUDE_DIRECTORIES(
-    ../3rdparty/CMSIS/Include
-    ../3rdparty/CMSIS/ST/STM32F4xx/Include
-    ../3rdparty/STM32F4xx_StdPeriph_Driver/inc
+    ../3rdparty/CMSIS/CM3/CoreSupport 
+    ../3rdparty/CMSIS/CM3/DeviceSupport/ST/STM32F10x
+    ../3rdparty/STM32F10x_StdPeriph_Driver/inc
     ../3rdparty/STM32_USB_OTG_Driver/inc
     ../3rdparty/STM32_USB_Device_Library/Core/inc
     ../3rdparty/STM32_USB_Device_Library/Class/audio/inc
