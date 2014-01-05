@@ -113,8 +113,9 @@ void PendSV_Handler (void)
  */
 void SysTick_Handler (void)
 {
+//        printf (".\r\n");
+
         static int i = 0;
-//        static uint8_t lastKey = 0x00;
         uint8_t keyChanged = 0;
 
         uint8_t currentKey = (GPIOA->IDR & GPIO_Pin_0) ? (MY_KEY_KEYCODE) : (0x00);
@@ -160,6 +161,7 @@ void OTG_FS_WKUP_IRQHandler (void)
 
                 /* After wake-up from sleep mode, reconfigure the system clock */
                 SystemInit ();
+
                 USB_OTG_UngateClock (&USB_OTG_dev);
         }
         EXTI_ClearITPendingBit (EXTI_Line18);

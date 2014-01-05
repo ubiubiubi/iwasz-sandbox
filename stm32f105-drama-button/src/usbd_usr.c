@@ -3,6 +3,7 @@
 #include "usb_conf.h"
 #include <stdio.h>
 
+extern void testSequence (void);
 
 USBD_Usr_cb_TypeDef USR_cb = {
         USBD_USR_Init,
@@ -42,16 +43,16 @@ void USBD_USR_DeviceReset (uint8_t speed)
 {
         switch (speed) {
         case USB_OTG_SPEED_HIGH:
-                printf ("USB Device Library v1.1.0 [HS]\r\n");
+                printf ("Reset : USB Device Library v1.1.0 [HS]\r\n");
 
                 break;
 
         case USB_OTG_SPEED_FULL:
-                printf ("USB Device Library v1.1.0 [FS]\r\n");
+                printf ("Reset : USB Device Library v1.1.0 [FS]\r\n");
                 break;
 
         default:
-                printf ("USB Device Library v1.1.0 [??]\r\n");
+                printf ("Reset : USB Device Library v1.1.0 [??]\r\n");
                 break;
 
         }

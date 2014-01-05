@@ -216,21 +216,25 @@ uint32_t USBD_OTG_ISR_Handler (USB_OTG_CORE_HANDLE *pdev)
     gintr_status.d32 = USB_OTG_ReadCoreItr(pdev);
     if (!gintr_status.d32) /* avoid spurious interrupt */
     {
+      printf ("USBD_OTG_ISR_Handler spurious interrupt!\r\n");
       return 0;
     }
     
     if (gintr_status.b.outepintr)
     {
+      printf ("gintr_status.b.outepintr\r\n");
       retval |= DCD_HandleOutEP_ISR(pdev);
-    }    
-    
+    }
+
     if (gintr_status.b.inepint)
     {
+            printf ("gintr_status.b.inepint\r\n");
       retval |= DCD_HandleInEP_ISR(pdev);
     }
     
     if (gintr_status.b.modemismatch)
     {
+            printf ("gintr_status.b.modemismatch\r\n");
       USB_OTG_GINTSTS_TypeDef  gintsts;
       
       /* Clear interrupt */
@@ -241,42 +245,50 @@ uint32_t USBD_OTG_ISR_Handler (USB_OTG_CORE_HANDLE *pdev)
     
     if (gintr_status.b.wkupintr)
     {
+            printf ("gintr_status.b.wkupintr\r\n");
       retval |= DCD_HandleResume_ISR(pdev);
     }
     
     if (gintr_status.b.usbsuspend)
     {
+            printf ("gintr_status.b.usbsuspend\r\n");
       retval |= DCD_HandleUSBSuspend_ISR(pdev);
     }
+
     if (gintr_status.b.sofintr)
     {
+            printf ("gintr_status.b.sofintr\r\n");
       retval |= DCD_HandleSof_ISR(pdev);
       
     }
     
     if (gintr_status.b.rxstsqlvl)
     {
+            printf ("gintr_status.b.rxstsqlvl\r\n");
       retval |= DCD_HandleRxStatusQueueLevel_ISR(pdev);
-      
     }
     
     if (gintr_status.b.usbreset)
     {
+            printf ("gintr_status.b.usbreset\r\n");
       retval |= DCD_HandleUsbReset_ISR(pdev);
       
     }
     if (gintr_status.b.enumdone)
     {
+            printf ("gintr_status.b.enumdone\r\n");
       retval |= DCD_HandleEnumDone_ISR(pdev);
     }
     
     if (gintr_status.b.incomplisoin)
     {
+            printf ("gintr_status.b.incomplisoin\r\n");
       retval |= DCD_IsoINIncomplete_ISR(pdev);
     }
 
     if (gintr_status.b.incomplisoout)
     {
+            printf ("gintr_status.b.incomplisoout\r\n");
       retval |= DCD_IsoOUTIncomplete_ISR(pdev);
     }    
 #ifdef VBUS_SENSING_ENABLED
@@ -291,6 +303,7 @@ uint32_t USBD_OTG_ISR_Handler (USB_OTG_CORE_HANDLE *pdev)
     }   
 #endif    
   }
+
   return retval;
 }
 

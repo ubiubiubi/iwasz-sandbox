@@ -11,11 +11,12 @@ AUX_SOURCE_DIRECTORY ("../src/" APP_SOURCES)
 
 # According to : http://www.atollic.com/index.php/truestudio/building/tsbuildercompiler, TrueSTUDIO uses GCC, so I assume this startup code is OK for any GCC.
 LIST (APPEND APP_SOURCES "../3rdparty/CMSIS/CM3/DeviceSupport/ST/STM32F10x/startup/TrueSTUDIO/startup_stm32f10x_cl.s")
-LIST (APPEND APP_SOURCES "../3rdparty/CMSIS/CM3/CoreSupport/core_cm3.c")
+#LIST (APPEND APP_SOURCES "../3rdparty/CMSIS/CM3/CoreSupport/core_cm3.c")
 LIST (APPEND APP_SOURCES "../3rdparty/STM32F10x_StdPeriph_Driver/src/stm32f10x_rcc.c")
 LIST (APPEND APP_SOURCES "../3rdparty/STM32F10x_StdPeriph_Driver/src/stm32f10x_gpio.c")
 LIST (APPEND APP_SOURCES "../3rdparty/STM32F10x_StdPeriph_Driver/src/stm32f10x_usart.c")
 LIST (APPEND APP_SOURCES "../3rdparty/STM32F10x_StdPeriph_Driver/src/stm32f10x_exti.c")
+LIST (APPEND APP_SOURCES "../3rdparty/STM32F10x_StdPeriph_Driver/src/stm32f10x_tim.c")
 LIST (APPEND APP_SOURCES "../3rdparty/STM32F10x_StdPeriph_Driver/src/misc.c")
 
 LIST (APPEND APP_SOURCES "../3rdparty/STM32_USB_OTG_Driver/src/usb_core.c")
