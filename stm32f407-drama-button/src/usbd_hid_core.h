@@ -49,7 +49,7 @@
 #define USB_HID_DESC_SIZ              9
 //#define HID_KEYBOARD_REPORT_DESC_SIZE 63
 //#define HID_KEYBOARD_REPORT_DESC_SIZE 45
-#define HID_KEYBOARD_REPORT_DESC_SIZE 35
+#define HID_KEYBOARD_REPORT_DESC_SIZE 37
 //#define HID_KEYBOARD_REPORT_DESC_SIZE 74
 
 #define HID_DESCRIPTOR_TYPE           0x21
@@ -66,8 +66,11 @@
 #define HID_REQ_GET_REPORT            0x01
 
 //#define MY_KEY_KEYCODE 0x7f
-#define MY_KEY_KEYCODE 0x04
+#define MY_KEY_KEYCODE 0x04 // A
 // #define MY_KEY_KEYCODE 0x45 // F12
+
+#define MY_KEY_KEYCODE 0x08 // play/pause
+
 
 extern USBD_Class_cb_TypeDef  USBD_HID_cb;
 extern uint8_t keyboardReport[HID_IN_PACKET];
