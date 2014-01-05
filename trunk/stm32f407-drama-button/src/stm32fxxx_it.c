@@ -125,7 +125,9 @@ void SysTick_Handler (void)
         }
 
         if (++i >= USBD_HID_IdleState || keyChanged) {
-                buildReport (0x00, lastKey);
+//                buildReport (0x00, lastKey);
+                keyboardReport[0] = lastKey;
+
                 USBD_HID_SendReport (&USB_OTG_dev);
                 i = 0;
                 keyChanged = 0;
