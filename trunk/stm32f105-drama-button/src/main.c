@@ -9,43 +9,81 @@
 
 __ALIGN_BEGIN USB_OTG_CORE_HANDLE  USB_OTG_dev __ALIGN_END;
 
-
-http://www.embedds.com/st32mvldiscovery-project-template-for-gcc/
-
-
-
-
-
 /**
  * For printf.
  */
-//void initUsart (void)
-//{
-////        RCC_APB2PeriphClockCmd (RCC_APB2Periph_USART1, ENABLE);
-////        RCC_APB1PeriphClockCmd (RCC_APB2Periph_GPIOB, ENABLE);
-////
-////        GPIO_InitTypeDef gpioInitStruct;
-////
-////        gpioInitStruct.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7;
-////        gpioInitStruct.GPIO_Mode = GPIO_Mode_
-////        gpioInitStruct.GPIO_Speed = GPIO_Speed_50MHz;
-////        gpioInitStruct.GPIO_OType = GPIO_OType_PP;
-////        gpioInitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;
-////        GPIO_Init(GPIOB, &gpioInitStruct);
-////
-////        GPIO_PinAFConfig (GPIOB, GPIO_PinSource6, GPIO_AF_USART1); // TX
-////        GPIO_PinAFConfig (GPIOB, GPIO_PinSource7, GPIO_AF_USART1); // RX
-////
-////        USART_InitTypeDef usartInitStruct;
-////        usartInitStruct.USART_BaudRate = 9600;
-////        usartInitStruct.USART_WordLength = USART_WordLength_8b;
-////        usartInitStruct.USART_StopBits = USART_StopBits_1;
-////        usartInitStruct.USART_Parity = USART_Parity_No;
-////        usartInitStruct.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
-////        usartInitStruct.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
-////        USART_Init (USART1, &usartInitStruct);
-////        USART_Cmd (USART1, ENABLE);
-//}
+void initUsart (void)
+{
+        RCC_APB1PeriphClockCmd (RCC_APB1Periph_USART2, ENABLE);
+        RCC_APB2PeriphClockCmd (RCC_APB2Periph_GPIOA, ENABLE);
+
+        GPIO_InitTypeDef GPIO_InitStructure;
+        GPIO_PinRemapConfig (GPIO_Remap_USART2, ENABLE);
+
+        /* Configure USART2 Rx as input floating */
+        GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3;
+        GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+        GPIO_Init (GPIOA, &GPIO_InitStructure);
+
+        /* Configure USART1 Tx as alternate function push-pull */
+        GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;
+        GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+        GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
+        GPIO_Init (GPIOA, &GPIO_InitStructure);
+
+        USART_InitTypeDef usartInitStruct;
+        usartInitStruct.USART_BaudRate = 9600;
+        usartInitStruct.USART_WordLength = USART_WordLength_8b;
+        usartInitStruct.USART_StopBits = USART_StopBits_1;
+        usartInitStruct.USART_Parity = USART_Parity_No;
+        usartInitStruct.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
+        usartInitStruct.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
+        USART_Init (USART2, &usartInitStruct);
+        USART_Cmd (USART2, ENABLE);
+}
+
+void initTestPin (void)
+{
+        RCC_APB2PeriphClockCmd (RCC_APB2Periph_GPIOB, ENABLE);
+
+        GPIO_InitTypeDef gpioInitStruct;
+
+        gpioInitStruct.GPIO_Pin = GPIO_Pin_All;
+        gpioInitStruct.GPIO_Mode = GPIO_Mode_Out_PP;
+        gpioInitStruct.GPIO_Speed = GPIO_Speed_2MHz;
+        GPIO_Init (GPIOB, &gpioInitStruct);
+}
+
+
+void uDelay (const uint32_t usec)
+{
+
+        volatile uint32_t count = 0;
+        const uint32_t utime = ((SystemCoreClock/10000000) * usec / 7);
+        do {
+                if (++count > utime) {
+                        return;
+                }
+        } while (1);
+}
+
+void testSequence (void)
+{
+        for (int i = 0; i < 5; ++i) {
+                //GPIOB->ODR = 0xffff;
+                /* Set */
+                GPIOB->BSRR = 0x00000001;
+
+
+                uDelay (1000);
+
+//                GPIOB->ODR = 0x0000;
+                /* Reset PD0 and PD2 */
+                GPIOB->BRR  = 0x00000001;
+
+                uDelay (1000);
+        }
+}
 
 void initExti (void)
 {
@@ -117,9 +155,13 @@ void initUsb (void)
 
 int main (void)
 {
-//        initUsart ();
+        initUsart ();
+        initTestPin ();
+        testSequence();
         initUsb ();
+        printf ("after initUsb\r\n");
         initExti ();
+        printf ("after initExti\r\n");
 
         while (1) {
         }

@@ -50,6 +50,7 @@
 #include "usbd_hid_core.h"
 #include "usbd_desc.h"
 #include "usbd_req.h"
+#include <stdio.h>
 
 static uint8_t USBD_HID_Init (void *pdev, uint8_t cfgidx);
 static uint8_t USBD_HID_DeInit (void *pdev, uint8_t cfgidx);
@@ -283,6 +284,7 @@ __ALIGN_BEGIN static uint8_t HID_KEYBOARD_ReportDesc[HID_KEYBOARD_REPORT_DESC_SI
  */
 static uint8_t USBD_HID_Init (void *pdev, uint8_t cfgidx)
 {
+        printf ("USBD_HID_Init\r\n");
 
         /* Open EP IN */
         DCD_EP_Open (pdev, HID_IN_EP, HID_IN_PACKET, USB_OTG_EP_INT);
@@ -302,6 +304,8 @@ static uint8_t USBD_HID_Init (void *pdev, uint8_t cfgidx)
  */
 static uint8_t USBD_HID_DeInit (void *pdev, uint8_t cfgidx)
 {
+        printf ("USBD_HID_DeInit\r\n");
+
         /* Close HID EPs */
         DCD_EP_Close (pdev, HID_IN_EP);
         DCD_EP_Close (pdev, HID_OUT_EP);
@@ -318,6 +322,8 @@ static uint8_t USBD_HID_DeInit (void *pdev, uint8_t cfgidx)
  */
 static uint8_t USBD_HID_Setup (void *pdev, USB_SETUP_REQ *req)
 {
+        printf ("USBD_HID_Setup\r\n");
+
         uint16_t len = 0;
         uint8_t *pbuf = NULL;
 
@@ -392,7 +398,8 @@ static uint8_t USBD_HID_Setup (void *pdev, USB_SETUP_REQ *req)
 uint8_t USBD_HID_SendReport (USB_OTG_CORE_HANDLE *pdev)
 {
         if (pdev->dev.device_status == USB_OTG_CONFIGURED) {
-                DCD_EP_Tx (pdev, HID_IN_EP, keyboardReport, HID_IN_PACKET);
+               DCD_EP_Tx (pdev, HID_IN_EP, keyboardReport, HID_IN_PACKET);
+               printf ("USBD_HID_SendReport\r\n");
         }
         return USBD_OK;
 }
@@ -412,6 +419,7 @@ void buildReport (uint8_t modifier, uint8_t key)
  */
 static uint8_t *USBD_HID_GetCfgDesc (uint8_t speed, uint16_t *length)
 {
+        printf ("USBD_HID_GetCfgDesc\r\n");
         *length = sizeof(USBD_HID_CfgDesc);
         return USBD_HID_CfgDesc;
 }
@@ -425,6 +433,7 @@ static uint8_t *USBD_HID_GetCfgDesc (uint8_t speed, uint16_t *length)
  */
 static uint8_t USBD_HID_DataIn (void *pdev, uint8_t epnum)
 {
+        printf ("USBD_HID_DataIn\r\n");
         /* Ensure that the FIFO is empty before a new transfer, this condition could
          be caused by  a new transfer before the end of the previous transfer */
         DCD_EP_Flush (pdev, HID_IN_EP);

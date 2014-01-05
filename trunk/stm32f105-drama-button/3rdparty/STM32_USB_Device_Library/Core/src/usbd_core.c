@@ -121,6 +121,7 @@ USBD_DCD_INT_cb_TypeDef  *USBD_DCD_INT_fops = &USBD_DCD_INT_cb;
 /** @defgroup USBD_CORE_Private_Functions
 * @{
 */ 
+extern void testSequence (void);
 
 /**
 * @brief  USBD_Init
@@ -141,7 +142,7 @@ void USBD_Init(USB_OTG_CORE_HANDLE *pdev,
   USB_OTG_BSP_Init(pdev);  
   
   USBD_DeInit(pdev);
-  
+
   /*Register class and user callbacks */
   pdev->dev.class_cb = class_cb;
   pdev->dev.usr_cb = usr_cb;  
