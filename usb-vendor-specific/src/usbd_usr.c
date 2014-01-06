@@ -2,7 +2,7 @@
 #include "usbd_ioreq.h"
 #include "usb_conf.h"
 #include <stdio.h>
-
+#include <stm32f4xx.h>
 
 USBD_Usr_cb_TypeDef USR_cb = {
         USBD_USR_Init,
@@ -67,6 +67,7 @@ void USBD_USR_DeviceReset (uint8_t speed)
 void USBD_USR_DeviceConfigured (void)
 {
         printf ("USBD_USR_DeviceConfigured : Interface started.\r\n");
+        GPIOA->BSRRL = 0x01;
 }
 
 /**
@@ -101,6 +102,7 @@ void USBD_USR_DeviceSuspended (void)
 {
         printf ("USBD_USR_DeviceSuspended : USB Device in Suspend Mode.\r\n");
         /* Users can do their application actions here for the USB-Reset */
+        GPIOA->BSRRH = 0x01;
 }
 
 /**
