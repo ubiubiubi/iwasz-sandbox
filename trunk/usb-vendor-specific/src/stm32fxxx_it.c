@@ -5,8 +5,9 @@
 #include "usb_conf.h"
 #include <stdio.h>
 
+#define SENSORS_NUMBER 32
 __IO uint32_t remote_wakeup = 0;
-int16_t angle[32] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+int16_t angle[SENSORS_NUMBER] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 static uint32_t abCe = 0x00;
 static uint32_t abCo = 0x00;
 static uint32_t abDe = 0x00;
@@ -256,6 +257,22 @@ void SysTick_Handler (void)
         angle[31] += lookup[(abFo & 0xf000) >> 12];
 }
 #endif
+
+void setCountersToZero ()
+{
+        for (uint8_t i = 0; i < SENSORS_NUMBER; ++i) {
+                angle[i] = 0;
+        }
+
+        abCe = 0x00;
+        abCo = 0x00;
+        abDe = 0x00;
+        abDo = 0x00;
+        abEe = 0x00;
+        abEo = 0x00;
+        abFe = 0x00;
+        abFo = 0x00;
+}
 
 /**
  * @brief  This function handles EXTI0_IRQ Handler.

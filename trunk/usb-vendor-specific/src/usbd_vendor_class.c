@@ -3,6 +3,8 @@
 #include "usbd_req.h"
 #include <stdio.h>
 
+extern void setCountersToZero ();
+
 static uint8_t vendorInit (void *pdev, uint8_t cfgidx);
 static uint8_t vendorDeInit (void *pdev, uint8_t cfgidx);
 static uint8_t vendorSetup (void *pdev, USB_SETUP_REQ *req);
@@ -160,8 +162,6 @@ static uint8_t vendorSetup (void *pdev, USB_SETUP_REQ *req)
 //        uint16_t len = 0;
 //        uint8_t *pbuf = NULL;
 
-        printf ("vendorSetup\r\n");
-
         switch (req->bmRequest & USB_REQ_TYPE_MASK) {
 //        case USB_REQ_TYPE_CLASS:
 //                switch (req->bRequest) {
@@ -217,6 +217,17 @@ static uint8_t vendorSetup (void *pdev, USB_SETUP_REQ *req)
                         vendorAltSet = (uint8_t) (req->wValue);
                         break;
                 }
+
+                case USB_REQ_TYPE_VENDOR:
+                        printf ("Vendor request %d\r\n", req->bRequest);
+
+                        switch (req->bRequest) {
+                        case 0x00: // Zero
+                                setCountersToZero ();
+                                printf ("Set to zero requested\r\n");
+                                break;
+                        }
+
         }
         return USBD_OK;
 }

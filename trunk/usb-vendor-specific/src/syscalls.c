@@ -12,15 +12,15 @@
 
 
 #ifndef STDOUT_USART
-#define STDOUT_USART 1
+#define STDOUT_USART 2
 #endif
 
 #ifndef STDERR_USART
-#define STDERR_USART 1
+#define STDERR_USART 2
 #endif
 
 #ifndef STDIN_USART
-#define STDIN_USART 1
+#define STDIN_USART 2
 #endif
 
 #undef errno
