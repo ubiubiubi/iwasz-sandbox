@@ -116,11 +116,82 @@ void PendSV_Handler (void)
 {
 }
 
+#if 1
 /**
  * @brief  This function handles SysTick Handler.
  * @param  None
  * @retval None
  */
+void SysTick_Handler (void)
+{
+        uint16_t gpioc = GPIOC->IDR;
+        uint16_t gpiod = GPIOD->IDR;
+        uint16_t gpioe = GPIOE->IDR;
+        uint16_t gpiof = GPIOF->IDR;
+
+        abCe <<= 2;
+        abCe &= 0xcccc;
+        abCe |= (gpioc & 0x3333);
+//        angle[0] += lookup[abCe & 0x000f];
+//        angle[2] += lookup[(abCe & 0x00f0) >> 4];
+//        angle[4] += lookup[(abCe & 0x0f00) >> 8];
+        angle[3] += lookup[(abCe & 0xf000) >> 12];
+
+        abCo <<= 2;
+        abCo &= 0xcccc;
+        abCo |= ((gpioc & 0xcccc) >> 2);
+//        angle[1] += lookup[abCo & 0x000f];
+//        angle[3] += lookup[(abCo & 0x00f0) >> 4];
+//        angle[5] += lookup[(abCo & 0x0f00) >> 8];
+//        angle[7] += lookup[(abCo & 0xf000) >> 12];
+
+        abDe <<= 2;
+        abDe |= (gpiod & 0x3333);
+//        angle[8] += lookup[abDe & 0x000f];
+//        angle[10] += lookup[(abDe & 0x00f0 ) >> 4];
+//        angle[12] += lookup[(abDe & 0x0f00) >> 8];
+//        angle[14] += lookup[(abDe & 0xf000) >> 12];
+
+        abDo <<= 2;
+        abDo |= (gpiod & 0xcccc) >> 2;
+//        angle[9] += lookup[abDo & 0x000f];
+//        angle[11] += lookup[(abDo & 0x00f0) >> 4];
+//        angle[13] += lookup[(abDo & 0x0f00) >> 8];
+//        angle[15] += lookup[(abDo & 0xf000) >> 12];
+
+        abEe <<= 2;
+        abEe &= 0xcccc;
+        abEe |= (gpioe & 0x3333);
+//        angle[16] += lookup[abEe & 0x000f];
+        angle[1] += lookup[(abEe & 0x00f0) >> 4];
+//        angle[20] += lookup[(abEe & 0x0f00) >> 8];
+//        angle[22] += lookup[(abEe & 0xf000) >> 12];
+
+        abEo <<= 2;
+        abEo &= 0xcccc;
+        abEo |= (gpioe & 0xcccc) >> 2;
+        angle[0] += lookup[abEo & 0x000f];
+        angle[2] += lookup[(abEo & 0x00f0) >> 4];
+//        angle[21] += lookup[(abEo & 0x0f00) >> 8];
+//        angle[23] += lookup[(abEo & 0xf000) >> 12];
+
+        abFe <<= 2;
+        abFe |= (gpiof & 0x3333);
+//        angle[24] += lookup[abFe & 0x000f];
+//        angle[26] += lookup[(abFe & 0x00f0) >> 4];
+//        angle[28] += lookup[(abFe & 0x0f00) >> 8];
+//        angle[30] += lookup[(abFe & 0xf000) >> 12];
+
+        abFo <<= 2;
+        abFo |= (gpiof & 0xcccc) >> 2;
+//        angle[25] += lookup[abFo & 0x000f];
+//        angle[27] += lookup[(abFo & 0x00f0) >> 4];
+//        angle[29] += lookup[(abFo & 0x0f00) >> 8];
+//        angle[31] += lookup[(abFo & 0xf000) >> 12];
+}
+
+#else
+
 void SysTick_Handler (void)
 {
         uint16_t gpioc = GPIOC->IDR;
@@ -184,6 +255,7 @@ void SysTick_Handler (void)
         angle[29] += lookup[(abFo & 0x0f00) >> 8];
         angle[31] += lookup[(abFo & 0xf000) >> 12];
 }
+#endif
 
 /**
  * @brief  This function handles EXTI0_IRQ Handler.
