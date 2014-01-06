@@ -9,6 +9,42 @@
 
 __ALIGN_BEGIN USB_OTG_CORE_HANDLE  USB_OTG_dev __ALIGN_END;
 
+void initLeds ()
+{
+        RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
+
+        GPIO_InitTypeDef gpioInitStruct;
+
+        gpioInitStruct.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1;
+        gpioInitStruct.GPIO_Mode = GPIO_Mode_OUT;
+        gpioInitStruct.GPIO_Speed = GPIO_Speed_2MHz;
+        gpioInitStruct.GPIO_OType = GPIO_OType_PP;
+        gpioInitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;
+        GPIO_Init(GPIOA, &gpioInitStruct);
+}
+
+/**
+ * Pokaż że urządzenie żyje.
+ */
+void blink ()
+{
+        GPIOA->BSRRH = 0xFF;
+
+        for (int i = 0; i < 5; ++i) {
+                GPIOA->ODR = 0x01;
+
+                for (volatile int j = 0; j < 1000000; ++j)
+                        ;
+
+                GPIOA->ODR = 0x02;
+
+                for (volatile int j = 0; j < 1000000; ++j)
+                        ;
+        }
+
+        GPIOA->BSRRH = 0xFF;
+}
+
 /**
  * For printf.
  */
@@ -51,7 +87,7 @@ void initExti (void)
                                   GPIO_Pin_8 | GPIO_Pin_9 | GPIO_Pin_10 | GPIO_Pin_11 | GPIO_Pin_12 | GPIO_Pin_13 | GPIO_Pin_14 | GPIO_Pin_15;
         gpioInitStruct.GPIO_Mode = GPIO_Mode_IN;
         gpioInitStruct.GPIO_Speed = GPIO_Speed_100MHz;
-        gpioInitStruct.GPIO_PuPd = GPIO_PuPd_UP;
+        gpioInitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;
         GPIO_Init (GPIOC, &gpioInitStruct);
         GPIO_Init (GPIOD, &gpioInitStruct);
         GPIO_Init (GPIOE, &gpioInitStruct);
@@ -120,6 +156,8 @@ int main (void)
         initUsart ();
         initUsb ();
         initExti ();
+        initLeds ();
+        blink ();
 
         while (1) {
         }
