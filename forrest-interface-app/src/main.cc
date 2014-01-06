@@ -103,7 +103,7 @@ void initUsb ()
         }
 
         if ((rc = libusb_set_interface_alt_setting (devh, 0, 1)) != 0) {
-                std::cerr << "Error libusb_set_interface_alt_setting rc = "  << rc << std::endl;
+                std::cerr << "Error libusb_set_interface_alt_setting rc = " << rc << std::endl;
                 libusb_exit (NULL);
                 exit (1);
         }
@@ -125,7 +125,7 @@ void initUsb ()
 //        libusb_fill_iso_transfer (xfr, devh, 0x81, buf, ISO_PACKET_SIZE, num_iso_pack, cb_xfr, NULL, 1000);
 //        libusb_set_iso_packet_lengths (xfr, ISO_PACKET_SIZE / num_iso_pack);
 
-        libusb_fill_interrupt_transfer(xfr, devh, 0x81, buf, sizeof (buf), cb_xfr, NULL, 100);
+        libusb_fill_interrupt_transfer (xfr, devh, 0x81, buf, sizeof(buf), cb_xfr, NULL, 100);
 
         int ret = libusb_submit_transfer (xfr);
         if (ret) {
@@ -160,7 +160,7 @@ void closeUsb ()
         }
 
         if (devh) {
-                libusb_close(devh);
+                libusb_close (devh);
                 std::cerr << "Device closed" << std::endl;
         }
 
@@ -172,7 +172,7 @@ void usbThread ()
         initUsb ();
 
         while (true) {
-                int rc = libusb_handle_events(NULL);
+                int rc = libusb_handle_events (NULL);
 
                 if (rc != LIBUSB_SUCCESS) {
                         std::cerr << "Problem with handling event from the USB!" << std::endl;
@@ -183,21 +183,21 @@ void usbThread ()
 
 gboolean guiThread (gpointer user_data)
 {
-                {
-                        std::lock_guard<std::mutex> guard (bufferMutex);
+        {
+                std::lock_guard < std::mutex > guard (bufferMutex);
 
-                        for (int i = 0; i < ENCODERS_NUMBER; ++i) {
-                                int bufPos = i*2;
-                                uint16_t val = buf[bufPos] | ((uint16_t)buf[bufPos + 1] << 8);
-                                gtk_adjustment_set_value (adjustment[i], val);
-                        }
+                for (int i = 0; i < ENCODERS_NUMBER; ++i) {
+                        int bufPos = i * 2;
+                        int16_t val = static_cast <int16_t> (buf[bufPos] | (static_cast <uint16_t> (buf[bufPos + 1]) << 8));
+                        gtk_adjustment_set_value (adjustment[i], val);
+                }
 
 //                        printf ("[");
 //                        for (unsigned int i = 0; i < ISO_PACKET_SIZE; ++i) {
 //                                printf("%02x", buf[i]);
 //                        }
 //                        printf("]%d %d\n", buf[16], buf[17]);
-                }
+        }
 
 //                for (int i = 0; i < ENCODERS_NUMBER; ++i) {
 //                        gtk_adjustment_set_value (adjustment, buffer[0]);
@@ -211,9 +211,9 @@ static void LIBUSB_CALL cb_xfr (libusb_transfer *xfr)
         int i;
         // Error checkin on whole transfer.
         if (xfr->status != LIBUSB_TRANSFER_COMPLETED) {
-                fprintf(stderr, "transfer status %d\n", xfr->status);
-                libusb_free_transfer(xfr);
-                exit(3);
+                fprintf (stderr, "transfer status %d\n", xfr->status);
+                libusb_free_transfer (xfr);
+                exit (3);
         }
 
         // Error checking on every individual packet as suggested in the API docs.
@@ -221,8 +221,8 @@ static void LIBUSB_CALL cb_xfr (libusb_transfer *xfr)
                 struct libusb_iso_packet_descriptor *pack = &xfr->iso_packet_desc[i];
 
                 if (pack->status != LIBUSB_TRANSFER_COMPLETED) {
-                        fprintf(stderr, "Error: pack %u status %d\n", i, pack->status);
-                        exit(5);
+                        fprintf (stderr, "Error: pack %u status %d\n", i, pack->status);
+                        exit (5);
                 }
 
 //                uint8_t *buffer = libusb_get_iso_packet_buffer (xfr, 0);
@@ -264,13 +264,13 @@ static void LIBUSB_CALL cb_xfr (libusb_transfer *xfr)
 #endif
 
         if (xfr->actual_length == ISO_PACKET_SIZE) {
-                std::lock_guard<std::mutex> guard(bufferMutex);
-                memcpy(buf, xfr->buffer, ISO_PACKET_SIZE);
+                std::lock_guard < std::mutex > guard (bufferMutex);
+                memcpy (buf, xfr->buffer, ISO_PACKET_SIZE);
         }
 
-        if (libusb_submit_transfer(xfr) < 0) {
-                fprintf(stderr, "error re-submitting URB\n");
-                exit(1);
+        if (libusb_submit_transfer (xfr) < 0) {
+                fprintf (stderr, "error re-submitting URB\n");
+                exit (1);
         }
 }
 
@@ -289,11 +289,48 @@ static void LIBUSB_CALL cb_xfr (libusb_transfer *xfr)
 //        g_print ("Hello World\n");
 //}
 
+void zeroButtonClicked (GtkButton *button, gpointer user_data)
+{
+        int ret = libusb_control_transfer (devh,
+                        LIBUSB_RECIPIENT_INTERFACE | LIBUSB_REQUEST_TYPE_VENDOR,
+                        0x00,
+                        0x00,
+                        0x00,
+                        NULL,
+                        0x00,
+                        500);
+
+        if (ret >= 0) {
+                return;
+        }
+
+        switch (ret) {
+        case LIBUSB_ERROR_TIMEOUT:
+                std::cerr << "Timeout reached when setting HUB to zero" << std::endl;
+                break;
+
+        case LIBUSB_ERROR_PIPE:
+                std::cerr << "The control request was not supported by the device" << std::endl;
+                break;
+
+        case LIBUSB_ERROR_NO_DEVICE:
+                std::cerr << "The device has been disconnected" << std::endl;
+                break;
+
+        default:
+                std::cerr << "Undefined error : " << ret << std::endl;
+                break;
+        }
+}
+
+/**
+ *
+ */
 int main (int argc, char **argv)
 {
         GtkBuilder *builder;
         GObject *window;
-        GObject *button;
+        GObject *quitButton;
 
         gtk_init (&argc, &argv);
 
@@ -311,12 +348,15 @@ int main (int argc, char **argv)
 //        button = gtk_builder_get_object (builder, "button2");
 //        g_signal_connect (button, "clicked", G_CALLBACK (print_hello), NULL);
 
-        button = gtk_builder_get_object (builder, "quit");
-        g_signal_connect (button, "clicked", G_CALLBACK (gtk_main_quit), NULL);
+        quitButton = gtk_builder_get_object (builder, "quit");
+        g_signal_connect (quitButton, "clicked", G_CALLBACK (gtk_main_quit), NULL);
+
+        GObject *zeroButton = gtk_builder_get_object (builder, "zero");
+        g_signal_connect (zeroButton, "clicked", G_CALLBACK (zeroButtonClicked), NULL);
 
 //        GtkScale *scale = GTK_SCALE (gtk_builder_get_object (builder, "scale1"));
         for (int i = 0; i < ENCODERS_NUMBER; ++i) {
-                adjustment[i] = GTK_ADJUSTMENT (gtk_builder_get_object (builder, (std::string ("adjustment") + boost::lexical_cast <std::string> (i + 1)).c_str ()));
+                adjustment[i] = GTK_ADJUSTMENT (gtk_builder_get_object (builder, (std::string ("adjustment") + boost::lexical_cast<std::string> (i + 1)).c_str ()));
         }
 
         std::thread t (usbThread);
@@ -328,8 +368,6 @@ int main (int argc, char **argv)
         g_idle_add (guiThread, NULL);
         gtk_main ();
         closeUsb ();
-
-
 
 //        while (!doExit) {
 //                int rc = libusb_handle_events(NULL);
