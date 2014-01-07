@@ -39,21 +39,23 @@ void printDevs (libusb_device **devs)
 
         while ((dev = devs[i++]) != NULL) {
                 struct libusb_device_descriptor desc;
-                int r = libusb_get_device_descriptor (dev, &desc);
+                int r = libusb_get_device_descriptor(dev, &desc);
                 if (r < 0) {
-                        fprintf (stderr, "failed to get device descriptor");
+                        fprintf(stderr, "failed to get device descriptor");
                         return;
                 }
 
-                printf ("%04x:%04x (bus %d, device %d)", desc.idVendor, desc.idProduct, libusb_get_bus_number (dev), libusb_get_device_address (dev));
+                printf("%04x:%04x (bus %d, device %d)", desc.idVendor,
+                                desc.idProduct, libusb_get_bus_number(dev),
+                                libusb_get_device_address(dev));
 
-                r = libusb_get_port_numbers (dev, path, sizeof(path));
+                r = libusb_get_port_numbers(dev, path, sizeof(path));
                 if (r > 0) {
-                        printf (" path: %d", path[0]);
+                        printf(" path: %d", path[0]);
                         for (j = 1; j < r; j++)
-                                printf (".%d", path[j]);
+                                printf(".%d", path[j]);
                 }
-                printf ("\n");
+                printf("\n");
         }
 }
 
@@ -62,72 +64,73 @@ void initUsb ()
         libusb_device **devs;
         ssize_t cnt;
 
-        int r = libusb_init (NULL);
+        int r = libusb_init(NULL);
 
         if (r < 0) {
                 std::cerr << "Error libusb_init!" << std::endl;
                 return;
         }
 
-        cnt = libusb_get_device_list (NULL, &devs);
+        cnt = libusb_get_device_list(NULL, &devs);
 
         if (cnt < 0) {
-                std::cerr << "Error retrieving usbList cnt=" << cnt << std::endl;
+                std::cerr << "Error retrieving usbList cnt=" << cnt
+                                << std::endl;
                 libusb_exit (NULL);
-                exit (1);
+                exit(1);
         }
 
-        printDevs (devs);
-        libusb_free_device_list (devs, 1);
+        printDevs(devs);
+        libusb_free_device_list(devs, 1);
 
-        devh = libusb_open_device_with_vid_pid (NULL, 0x20a0, 0x41ff);
+        devh = libusb_open_device_with_vid_pid(NULL, 0x20a0, 0x41ff);
 
         if (!devh) {
                 std::cerr << "Error finding USB device" << std::endl;
                 libusb_exit (NULL);
-                exit (1);
-        }
-        else {
+                exit(1);
+        } else {
                 std::cerr << "USB device has been found." << std::endl;
         }
 
-        int rc = libusb_claim_interface (devh, 0);
+        int rc = libusb_claim_interface(devh, 0);
 
         if (rc < 0) {
-                std::cerr << "Error claiming interface : " << libusb_error_name (rc) << std::endl;
+                std::cerr << "Error claiming interface : "
+                                << libusb_error_name(rc) << std::endl;
                 libusb_exit (NULL);
-                exit (1);
-        }
-        else {
+                exit(1);
+        } else {
                 std::cerr << "Interface claimed." << std::endl;
         }
 
-        if ((rc = libusb_set_interface_alt_setting (devh, 0, 1)) != 0) {
-                std::cerr << "Error libusb_set_interface_alt_setting rc = " << rc << std::endl;
+        if ((rc = libusb_set_interface_alt_setting(devh, 0, 1)) != 0) {
+                std::cerr << "Error libusb_set_interface_alt_setting rc = "
+                                << rc << std::endl;
                 libusb_exit (NULL);
-                exit (1);
-        }
-        else {
+                exit(1);
+        } else {
                 std::cerr << "libusb_set_interface_alt_setting OK" << std::endl;
         }
 
         /*--------------------------------------------------------------------------*/
 
         int num_iso_pack = 1; // ?!?!? CO to jest!
-        libusb_transfer *xfr = libusb_alloc_transfer (num_iso_pack);
+        libusb_transfer *xfr = libusb_alloc_transfer(num_iso_pack);
 
         if (!xfr) {
                 std::cerr << "Error" << std::endl;
                 libusb_exit (NULL);
-                exit (1);
+                exit(1);
         }
 
 //        libusb_fill_iso_transfer (xfr, devh, 0x81, buf, ISO_PACKET_SIZE, num_iso_pack, cb_xfr, NULL, 1000);
 //        libusb_set_iso_packet_lengths (xfr, ISO_PACKET_SIZE / num_iso_pack);
 
-        libusb_fill_interrupt_transfer (xfr, devh, 0x81, buf, sizeof(buf), cb_xfr, NULL, 100);
+        libusb_fill_interrupt_transfer(xfr, devh, 0x81, buf, sizeof(buf),
+                        cb_xfr, NULL, 100);
 
-        int ret = libusb_submit_transfer (xfr);
+        int ret = libusb_submit_transfer(xfr);
         if (ret) {
                 std::cerr << "libusb_submit_transfer error :" << std::endl;
                 switch (ret) {
@@ -144,23 +147,21 @@ void initUsb ()
                         std::cerr << "Error nr : " << ret << std::endl;
                         break;
                 }
-        }
-        else {
+        } else {
                 std::cerr << "libusb_submit_transfer OK" << std::endl;
         }
 }
 
 void closeUsb ()
 {
-        if (!libusb_release_interface (devh, 0)) {
+        if (!libusb_release_interface(devh, 0)) {
                 std::cerr << "Interface released." << std::endl;
-        }
-        else {
+        } else {
                 std::cerr << "Error releasing interface." << std::endl;
         }
 
         if (devh) {
-                libusb_close (devh);
+                libusb_close(devh);
                 std::cerr << "Device closed" << std::endl;
         }
 
@@ -169,13 +170,14 @@ void closeUsb ()
 
 void usbThread ()
 {
-        initUsb ();
+        initUsb();
 
         while (true) {
-                int rc = libusb_handle_events (NULL);
+                int rc = libusb_handle_events(NULL);
 
                 if (rc != LIBUSB_SUCCESS) {
-                        std::cerr << "Problem with handling event from the USB!" << std::endl;
+                        std::cerr << "Problem with handling event from the USB!"
+                                        << std::endl;
                         break;
                 }
         }
@@ -184,12 +186,16 @@ void usbThread ()
 gboolean guiThread (gpointer user_data)
 {
         {
-                std::lock_guard < std::mutex > guard (bufferMutex);
+                std::lock_guard < std::mutex > guard(bufferMutex);
 
                 for (int i = 0; i < ENCODERS_NUMBER; ++i) {
                         int bufPos = i * 2;
-                        int16_t val = static_cast <int16_t> (buf[bufPos] | (static_cast <uint16_t> (buf[bufPos + 1]) << 8));
-                        gtk_adjustment_set_value (adjustment[i], val);
+                        int16_t val =
+                                        static_cast<int16_t>(buf[bufPos]
+                                                        | (static_cast<uint16_t>(buf[bufPos
+                                                                        + 1])
+                                                                        << 8));
+                        gtk_adjustment_set_value(adjustment[i], val);
                 }
 
 //                        printf ("[");
@@ -211,18 +217,20 @@ static void LIBUSB_CALL cb_xfr (libusb_transfer *xfr)
         int i;
         // Error checkin on whole transfer.
         if (xfr->status != LIBUSB_TRANSFER_COMPLETED) {
-                fprintf (stderr, "transfer status %d\n", xfr->status);
-                libusb_free_transfer (xfr);
-                exit (3);
+                fprintf(stderr, "transfer status %d\n", xfr->status);
+                libusb_free_transfer(xfr);
+                exit(3);
         }
 
         // Error checking on every individual packet as suggested in the API docs.
         for (i = 0; i < xfr->num_iso_packets; i++) {
-                struct libusb_iso_packet_descriptor *pack = &xfr->iso_packet_desc[i];
+                struct libusb_iso_packet_descriptor *pack =
+                                &xfr->iso_packet_desc[i];
 
                 if (pack->status != LIBUSB_TRANSFER_COMPLETED) {
-                        fprintf (stderr, "Error: pack %u status %d\n", i, pack->status);
-                        exit (5);
+                        fprintf(stderr, "Error: pack %u status %d\n", i,
+                                        pack->status);
+                        exit(5);
                 }
 
 //                uint8_t *buffer = libusb_get_iso_packet_buffer (xfr, 0);
@@ -239,6 +247,16 @@ static void LIBUSB_CALL cb_xfr (libusb_transfer *xfr)
                 }
                 printf("]\n");
 #endif
+
+//                if (pack->actual_length > 0) {
+//                        gtk_adjustment_set_value (adjustment, angles[0]);
+//                        std::cerr << angles[0] << std::endl;
+//
+//                        if ((buffer[0] - prev) > 1) {
+//                                std::cerr << (int)buffer[0] << ", prev=" << (int)prev << std::endl;
+//                        }
+//                        prev = buffer[0];
+//                }
         }
 
 #if 0
@@ -264,13 +282,13 @@ static void LIBUSB_CALL cb_xfr (libusb_transfer *xfr)
 #endif
 
         if (xfr->actual_length == ISO_PACKET_SIZE) {
-                std::lock_guard < std::mutex > guard (bufferMutex);
-                memcpy (buf, xfr->buffer, ISO_PACKET_SIZE);
+                std::lock_guard < std::mutex > guard(bufferMutex);
+                memcpy(buf, xfr->buffer, ISO_PACKET_SIZE);
         }
 
-        if (libusb_submit_transfer (xfr) < 0) {
-                fprintf (stderr, "error re-submitting URB\n");
-                exit (1);
+        if (libusb_submit_transfer(xfr) < 0) {
+                fprintf(stderr, "error re-submitting URB\n");
+                exit(1);
         }
 }
 
@@ -291,14 +309,9 @@ static void LIBUSB_CALL cb_xfr (libusb_transfer *xfr)
 
 void zeroButtonClicked (GtkButton *button, gpointer user_data)
 {
-        int ret = libusb_control_transfer (devh,
+        int ret = libusb_control_transfer(devh,
                         LIBUSB_RECIPIENT_INTERFACE | LIBUSB_REQUEST_TYPE_VENDOR,
-                        0x00,
-                        0x00,
-                        0x00,
-                        NULL,
-                        0x00,
-                        500);
+                        0x00, 0x00, 0x00, NULL, 0x00, 500);
 
         if (ret >= 0) {
                 return;
@@ -306,11 +319,14 @@ void zeroButtonClicked (GtkButton *button, gpointer user_data)
 
         switch (ret) {
         case LIBUSB_ERROR_TIMEOUT:
-                std::cerr << "Timeout reached when setting HUB to zero" << std::endl;
+                std::cerr << "Timeout reached when setting HUB to zero"
+                                << std::endl;
                 break;
 
         case LIBUSB_ERROR_PIPE:
-                std::cerr << "The control request was not supported by the device" << std::endl;
+                std::cerr
+                                << "The control request was not supported by the device"
+                                << std::endl;
                 break;
 
         case LIBUSB_ERROR_NO_DEVICE:
@@ -323,6 +339,39 @@ void zeroButtonClicked (GtkButton *button, gpointer user_data)
         }
 }
 
+void guiLoadTheme (const char *directory, const char *theme_name, GObject *toplevel)
+{
+        GtkCssProvider *css_provider;
+        GError *error = NULL;
+        char buf[strlen(directory) + strlen(theme_name) + 32];
+        /* Gtk theme is a directory containing gtk-3.0/gtkrc file */
+        snprintf(buf, sizeof(buf), "%s/%s/gtk-3.0/gtk.css", directory, theme_name);
+        css_provider = gtk_css_provider_new();
+        gtk_css_provider_load_from_file(css_provider, g_file_new_for_path(buf), &error);
+
+        if (error) {
+                g_warning("%s\n", error->message);
+                return;
+        }
+
+//        gtk_style_context_remove_provider_for_screen (gtk_widget_get_screen (GTK_WIDGET (toplevel)), NULL);
+
+//        gtk_style_context_add_provider_for_screen(
+//                        gtk_widget_get_screen (GTK_WIDGET (toplevel)),
+//                        GTK_STYLE_PROVIDER(css_provider),
+//                        GTK_STYLE_PROVIDER_PRIORITY_USER + 100);
+
+
+        GdkDisplay *display = gdk_display_get_default();
+        GdkScreen *screen = gdk_display_get_default_screen(display);
+
+        gtk_style_context_add_provider_for_screen(screen,
+                        GTK_STYLE_PROVIDER(css_provider),
+                        GTK_STYLE_PROVIDER_PRIORITY_USER);
+
+        g_object_unref (css_provider);
+}
+
 /**
  *
  */
@@ -332,51 +381,35 @@ int main (int argc, char **argv)
         GObject *window;
         GObject *quitButton;
 
-        gtk_init (&argc, &argv);
+        gtk_init(&argc, &argv);
 
         /* Construct a GtkBuilder instance and load our UI description */
-        builder = gtk_builder_new ();
-        gtk_builder_add_from_file (builder, "forrest.ui", NULL);
+        builder = gtk_builder_new();
+        gtk_builder_add_from_file(builder, "forrest.ui", NULL);
 
         /* Connect signal handlers to the constructed widgets. */
-        window = gtk_builder_get_object (builder, "window");
-        g_signal_connect (window, "destroy", G_CALLBACK (gtk_main_quit), NULL);
+        window = gtk_builder_get_object(builder, "window");
+        g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
 
-//        button = gtk_builder_get_object (builder, "button1");
-//        g_signal_connect (button, "clicked", G_CALLBACK (print_hello), NULL);
-//
-//        button = gtk_builder_get_object (builder, "button2");
-//        g_signal_connect (button, "clicked", G_CALLBACK (print_hello), NULL);
+        guiLoadTheme ("../theme", "Flattastic-Orange", window);
 
-        quitButton = gtk_builder_get_object (builder, "quit");
-        g_signal_connect (quitButton, "clicked", G_CALLBACK (gtk_main_quit), NULL);
+        quitButton = gtk_builder_get_object(builder, "quit");
+        g_signal_connect(quitButton, "clicked", G_CALLBACK(gtk_main_quit), NULL);
 
-        GObject *zeroButton = gtk_builder_get_object (builder, "zero");
-        g_signal_connect (zeroButton, "clicked", G_CALLBACK (zeroButtonClicked), NULL);
+        GObject *zeroButton = gtk_builder_get_object(builder, "zero");
+        g_signal_connect(zeroButton, "clicked", G_CALLBACK(zeroButtonClicked), NULL);
 
-//        GtkScale *scale = GTK_SCALE (gtk_builder_get_object (builder, "scale1"));
+        //        GtkScale *scale = GTK_SCALE (gtk_builder_get_object (builder, "scale1"));
         for (int i = 0; i < ENCODERS_NUMBER; ++i) {
-                adjustment[i] = GTK_ADJUSTMENT (gtk_builder_get_object (builder, (std::string ("adjustment") + boost::lexical_cast<std::string> (i + 1)).c_str ()));
+                adjustment[i] = GTK_ADJUSTMENT(gtk_builder_get_object(builder, (std::string("adjustment") + boost::lexical_cast <std::string> (i + 1)).c_str()));
         }
 
-        std::thread t (usbThread);
-        t.detach ();
+//        std::thread t(usbThread);
+//        t.detach();
 
-//        std::thread t2 (guiThread);
-//        t2.detach ();
-
-        g_idle_add (guiThread, NULL);
-        gtk_main ();
-        closeUsb ();
-
-//        while (!doExit) {
-//                int rc = libusb_handle_events(NULL);
-//
-//                if (rc != LIBUSB_SUCCESS)
-//                        break;
-//        }
-
-        /*--------------------------------------------------------------------------*/
+//        g_idle_add(guiThread, NULL);
+        gtk_main();
+//        closeUsb();
 
         return 0;
 }
