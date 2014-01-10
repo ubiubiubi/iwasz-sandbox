@@ -1,1 +1,0 @@
-/home/iwasz/workspace/raspberry-first/build/CMakeFiles/spitest.dir
