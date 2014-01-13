@@ -110,23 +110,25 @@ void SysTick_Handler (void)
 void DMA2_Stream7_IRQHandler (void)
 {
         if (DMA2->LISR & DMA_FLAG_TCIF7) {
-                logf ("Transfer complete\r\n");
+//                logf ("Transfer complete\r\n");
                 DMA_ClearFlag (DMA2_Stream7, DMA_FLAG_TCIF7 | DMA_FLAG_FEIF7);
         }
         if (DMA2->LISR & DMA_FLAG_HTIF7) {
-                logf ("Half-transfer complete\r\n");
+//                logf ("Half-transfer complete\r\n");
                 DMA_ClearFlag (DMA2_Stream7, DMA_FLAG_HTIF7);
         }
         if (DMA2->LISR & DMA_FLAG_TEIF7) {
-                logf ("Transfer error\r\n");
+//                logf ("Transfer error\r\n");
                 DMA_ClearFlag (DMA2_Stream7, DMA_FLAG_TEIF7);
         }
         if (DMA2->LISR & DMA_FLAG_FEIF7) {
-                logf ("FIFO overrun/underrun\r\n");
+//                logf ("FIFO overrun/underrun\r\n");
                 DMA_ClearFlag (DMA2_Stream7, DMA_FLAG_FEIF7);
         }
         if (DMA2->LISR & DMA_FLAG_DMEIF7) {
-                logf ("Direct mode error\r\n");
+//                logf ("Direct mode error\r\n");
                 DMA_ClearFlag (DMA2_Stream7, DMA_FLAG_DMEIF7);
         }
 }
+
+
