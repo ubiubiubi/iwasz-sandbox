@@ -105,7 +105,13 @@ int main (void)
          * table 44 in reference manual for STM32F407 (RM0090) this would be DMA2 peripheral.
          * Description in stm32f4xx_dma.c advises to do this as the first operarion.
          */
-        RCC_AHB1PeriphResetCmd (RCC_AHB1Periph_DMA2, ENABLE);
+
+        /*
+         * Spend two fu.king nights on this. Docs says to use RCC_AHB1PeriphResetCmd, but use
+         * RCC_AHB1PeriphClockCmd instead
+         */
+//        RCC_AHB1PeriphResetCmd (RCC_AHB1Periph_DMA2, ENABLE);
+        RCC_AHB1PeriphClockCmd (RCC_AHB1Periph_DMA2, ENABLE);
 
 /*--------------------------------------------------------------------------*/
 
@@ -117,7 +123,10 @@ int main (void)
 
 /*--------------------------------------------------------------------------*/
 
-        /* Reset DMA Stream registers (for debug purpose). For DMA2_Stream7 exmplanation read on. */
+        /*
+         * Reset DMA Stream registers (for debug purpose). For DMA2_Stream7 exmplanation read on.
+         * It also disables the stream.
+         */
         DMA_DeInit (DMA2_Stream7);
 
         /*
@@ -177,17 +186,16 @@ int main (void)
         dmaInitStructure.DMA_Mode = DMA_Mode_Normal;
 
         /* DMA_Priority_Low, DMA_Priority_Medium, DMA_Priority_High or DMA_Priority_VeryHigh */
-        dmaInitStructure.DMA_Priority = DMA_Priority_High;
+        dmaInitStructure.DMA_Priority = DMA_Priority_VeryHigh;
 
         /* DMA_FIFOMode_Disable means direst mode, DMA_FIFOMode_Enable means FIFO mode. FIFO is good. */
-        dmaInitStructure.DMA_FIFOMode = DMA_FIFOMode_Enable;
-
+        dmaInitStructure.DMA_FIFOMode = DMA_FIFOMode_Disable;
 
         /*
          * DMA_FIFOThreshold_1QuarterFull, DMA_FIFOThreshold_HalfFull, DMA_FIFOThreshold_3QuartersFull or
          * DMA_FIFOThreshold_Full.
          */
-        dmaInitStructure.DMA_FIFOThreshold = DMA_FIFOThreshold_HalfFull;
+        dmaInitStructure.DMA_FIFOThreshold = DMA_FIFOThreshold_Full;
 
         /*
          * Specifies whether to use single or busrt mode. If burst, then it specifies how much "beats" to use.
@@ -199,11 +207,16 @@ int main (void)
         /* Configure DMA, but still leave it turned off. */
         DMA_Init (DMA2_Stream7, &dmaInitStructure);
 
+        /* DMA_FlowCtrl_Memory, DMA_FlowCtrl_Peripheral */
+        DMA_FlowControllerConfig (DMA2_Stream7, DMA_FlowCtrl_Memory);
+
+        /* Enable DMA interrupts. */
+        DMA_ITConfig (DMA2_Stream7, DMA_IT_TC | DMA_IT_HT | DMA_IT_TE | DMA_IT_DME | DMA_IT_FE, ENABLE);
+
 /*--------------------------------------------------------------------------*/
 
         /* Enable the DMA Stream. */
         DMA_Cmd (DMA2_Stream7, ENABLE);
-
 
         /*
          * And check if the DMA Stream has been effectively enabled.
@@ -234,20 +247,11 @@ int main (void)
         while (USART_GetFlagStatus (USART1, USART_FLAG_TC) == RESET)
                 ;
 
-        logf("1\r\n");
-
         while (DMA_GetFlagStatus (DMA2_Stream7, DMA_FLAG_TCIF7) == RESET)
                 ;
 
-        logf("2\r\n");
-
         /* Clear DMA Transfer Complete Flags */
         DMA_ClearFlag (DMA2_Stream7, DMA_FLAG_TCIF7);
-
-        logf("3\r\n");
-
-        /* Clear USART Transfer Complete Flags */
-        USART_ClearFlag (USART1, USART_FLAG_TC);
 
         logf("It worked, and didn't hanged\r\n");
 
