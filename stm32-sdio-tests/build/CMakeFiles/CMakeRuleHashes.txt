@@ -1,3 +1,0 @@
-# Hashes of file build rules.
-6f4e670385f0e8d873d537aa1d9d9103 CMakeFiles/i2c-test.bin
-bae69adcdee897e49ed832930dc03e38 CMakeFiles/i2c-test.hex

@@ -1,3 +1,0 @@
-/home/iwasz/workspace/i2c-test/build/CMakeFiles/i2c-test.bin.dir
-/home/iwasz/workspace/i2c-test/build/CMakeFiles/i2c-test.elf.dir
-/home/iwasz/workspace/i2c-test/build/CMakeFiles/i2c-test.hex.dir
