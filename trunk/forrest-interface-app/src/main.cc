@@ -9,11 +9,13 @@
 #include <iostream>
 #include <thread>
 #include <mutex>
+#include <atomic>
 #include <libusb.h>
 #include <signal.h>
 #include <gtk/gtk.h>
 #include <string.h>
 #include <boost/lexical_cast.hpp>
+#include <pqxx/pqxx>
 
 const int ISO_PACKET_SIZE = 64;
 const int ENCODERS_NUMBER = 32;
@@ -28,8 +30,27 @@ static libusb_device_handle *devh = NULL;
 static void LIBUSB_CALL cb_xfr (libusb_transfer *xfr);
 
 typedef uint8_t Buffer[ISO_PACKET_SIZE];
-Buffer buf;
+
+// Bufor na dane przychodzące z USB. Z niego będziemy kopiować do buf
+Buffer inputBuf;
+
+// Bufor dla danych wyjściowych do prezentacji na ekranie.
+std::vector <uint8_t> outputBuf (ISO_PACKET_SIZE);
 std::mutex bufferMutex;
+
+//const int DB_BUFFER_INITIAL_SIZE = ISO_PACKET_SIZE * 1024;
+std::vector <uint8_t> dbBuffer;
+std::mutex dbBufferMutex;
+
+std::atomic<bool> usbRunning (true);
+
+// tymczas, no nie
+pqxx::connection dbConnection ("dbname=forrestdkk user=iwasz");
+
+// Głowne okno;
+GObject *window = NULL;
+
+/*--------------------------------------------------------------------------*/
 
 void printDevs (libusb_device **devs)
 {
@@ -127,8 +148,7 @@ void initUsb ()
 //        libusb_fill_iso_transfer (xfr, devh, 0x81, buf, ISO_PACKET_SIZE, num_iso_pack, cb_xfr, NULL, 1000);
 //        libusb_set_iso_packet_lengths (xfr, ISO_PACKET_SIZE / num_iso_pack);
 
-        libusb_fill_interrupt_transfer(xfr, devh, 0x81, buf, sizeof(buf),
-                        cb_xfr, NULL, 100);
+        libusb_fill_interrupt_transfer(xfr, devh, 0x81, inputBuf, sizeof(inputBuf), cb_xfr, NULL, 100);
 
         int ret = libusb_submit_transfer(xfr);
         if (ret) {
@@ -176,10 +196,29 @@ void usbThread ()
                 int rc = libusb_handle_events(NULL);
 
                 if (rc != LIBUSB_SUCCESS) {
-                        std::cerr << "Problem with handling event from the USB!"
-                                        << std::endl;
+                        std::cerr << "Problem with handling event from the USB!" << std::endl;
                         break;
                 }
+        }
+}
+
+void playThread ()
+{
+        size_t numberOfFrames = dbBuffer.size () / ISO_PACKET_SIZE;
+
+        std::cerr << "Play buffer here. I have exactly # frames : " << numberOfFrames << std::endl;
+
+        auto it = dbBuffer.begin ();
+
+        for (size_t i = 0; i < numberOfFrames; ++i) {
+                {
+                        std::lock_guard < std::mutex > guard (bufferMutex);
+                        auto i = outputBuf.begin ();
+                        std::copy (it, it + ISO_PACKET_SIZE, i);
+//                        std::cerr << (int)*it << std::endl;
+                        it += ISO_PACKET_SIZE;
+                }
+                usleep (10 * 1000);
         }
 }
 
@@ -191,8 +230,8 @@ gboolean guiThread (gpointer user_data)
                 for (int i = 0; i < ENCODERS_NUMBER; ++i) {
                         int bufPos = i * 2;
                         int16_t val =
-                                        static_cast<int16_t>(buf[bufPos]
-                                                        | (static_cast<uint16_t>(buf[bufPos
+                                        static_cast<int16_t>(outputBuf[bufPos]
+                                                        | (static_cast<uint16_t>(outputBuf[bufPos
                                                                         + 1])
                                                                         << 8));
                         gtk_adjustment_set_value(adjustment[i], val);
@@ -214,6 +253,15 @@ gboolean guiThread (gpointer user_data)
 
 static void LIBUSB_CALL cb_xfr (libusb_transfer *xfr)
 {
+        if (!usbRunning.load ()) {
+                if (libusb_submit_transfer(xfr) < 0) {
+                        fprintf(stderr, "error re-submitting URB\n");
+                        exit(1);
+                }
+
+                return;
+        }
+
         int i;
         // Error checkin on whole transfer.
         if (xfr->status != LIBUSB_TRANSFER_COMPLETED) {
@@ -224,12 +272,10 @@ static void LIBUSB_CALL cb_xfr (libusb_transfer *xfr)
 
         // Error checking on every individual packet as suggested in the API docs.
         for (i = 0; i < xfr->num_iso_packets; i++) {
-                struct libusb_iso_packet_descriptor *pack =
-                                &xfr->iso_packet_desc[i];
+                struct libusb_iso_packet_descriptor *pack = &xfr->iso_packet_desc[i];
 
                 if (pack->status != LIBUSB_TRANSFER_COMPLETED) {
-                        fprintf(stderr, "Error: pack %u status %d\n", i,
-                                        pack->status);
+                        fprintf(stderr, "Error: pack %u status %d\n", i, pack->status);
                         exit(5);
                 }
 
@@ -282,8 +328,17 @@ static void LIBUSB_CALL cb_xfr (libusb_transfer *xfr)
 #endif
 
         if (xfr->actual_length == ISO_PACKET_SIZE) {
-                std::lock_guard < std::mutex > guard(bufferMutex);
-                memcpy(buf, xfr->buffer, ISO_PACKET_SIZE);
+                {
+                        std::lock_guard < std::mutex > guard (bufferMutex);
+                        // memcpy(outputBuf, xfr->buffer, ISO_PACKET_SIZE);
+                        auto i = outputBuf.begin ();
+                        std::copy (xfr->buffer, xfr->buffer + ISO_PACKET_SIZE, i);
+                }
+
+                {
+                        std::lock_guard < std::mutex > guard(dbBufferMutex);
+                        std::copy (xfr->buffer, xfr->buffer + ISO_PACKET_SIZE, std::back_inserter (dbBuffer));
+                }
         }
 
         if (libusb_submit_transfer(xfr) < 0) {
@@ -339,6 +394,88 @@ void zeroButtonClicked (GtkButton *button, gpointer user_data)
         }
 }
 
+void popupError (std::string const &str)
+{
+
+                GtkWidget *dialog = gtk_message_dialog_new (GTK_WINDOW (window),
+                                                 GTK_DIALOG_DESTROY_WITH_PARENT,
+                                                 GTK_MESSAGE_ERROR,
+                                                 GTK_BUTTONS_CLOSE,
+                                                 str.c_str ());
+
+                gtk_dialog_run (GTK_DIALOG (dialog));
+                gtk_widget_destroy (dialog);
+
+                return;
+
+}
+
+void saveButtonClicked (GtkButton *button, gpointer user_data)
+{
+        if (usbRunning.load ()) {
+                popupError ("Wyłącz USB najpierew!");
+        }
+
+        pqxx::work tx (dbConnection);
+        std::lock_guard < std::mutex > guard(dbBufferMutex);
+        tx.exec ("INSERT INTO examination (data) VALUES ('" + tx.esc_raw(dbBuffer.data (), dbBuffer.size ()) + "')");
+        tx.commit ();
+
+        dbBuffer.clear ();
+}
+
+void playButtonClicked (GtkButton *button, gpointer user_data)
+{
+        if (usbRunning.load ()) {
+                popupError ("Wyłącz USB najpierew!");
+        }
+
+        pqxx::work tx (dbConnection);
+
+        pqxx::result r = tx.exec("SELECT max (id) from examination");
+
+        if (r.size () != 1) {
+                popupError ("Nie udało sie counta zrobić!");
+                return;
+        }
+
+        int examinationId;
+
+        try {
+                examinationId = r[0][0].as<int> ();
+        }
+        catch (pqxx::conversion_error const &) {
+                popupError ("Nie ma nic w bazie!!!!!");
+                return;
+        }
+
+        r = tx.exec("SELECT data from examination where id = " + tx.quote(examinationId));
+
+        if (r.size () != 1) {
+                popupError ("Nie udało sie pobrać danych!");
+                return;
+        }
+
+        pqxx::binarystring blob(r[0][0]);
+        uint8_t const *ptr = static_cast <uint8_t const *> (blob.data());
+        size_t len = blob.size();
+
+        std::cout << "Size od data retrieved " << len << std::endl;
+
+        dbBuffer.clear ();
+        std::copy (ptr, ptr + len, std::back_inserter (dbBuffer));
+
+        std::thread t(playThread);
+        t.detach();
+}
+
+void usbButtonToggled (GtkToggleButton *button, gpointer user_data)
+{
+        bool state = gtk_toggle_button_get_active (button);
+        usbRunning.store (state);
+        std::cerr << "USB state : " << usbRunning.load () << std::endl;
+}
+
 void guiLoadTheme (const char *directory, const char *theme_name, GObject *toplevel)
 {
         GtkCssProvider *css_provider;
@@ -372,13 +509,17 @@ void guiLoadTheme (const char *directory, const char *theme_name, GObject *tople
         g_object_unref (css_provider);
 }
 
+/*--------------------------------------------------------------------------*/
+//globalsy globalsy
+
+/*--------------------------------------------------------------------------*/
+
 /**
  *
  */
 int main (int argc, char **argv)
 {
         GtkBuilder *builder;
-        GObject *window;
         GObject *quitButton;
 
         gtk_init(&argc, &argv);
@@ -399,17 +540,26 @@ int main (int argc, char **argv)
         GObject *zeroButton = gtk_builder_get_object(builder, "zero");
         g_signal_connect(zeroButton, "clicked", G_CALLBACK(zeroButtonClicked), NULL);
 
+        GObject *saveButton = gtk_builder_get_object(builder, "save");
+        g_signal_connect(saveButton, "clicked", G_CALLBACK(saveButtonClicked), NULL);
+
+        GObject *playButton = gtk_builder_get_object(builder, "play");
+        g_signal_connect(playButton, "clicked", G_CALLBACK(playButtonClicked), NULL);
+
+        GObject *usbCheckbox = gtk_builder_get_object(builder, "usbRunning");
+        g_signal_connect(usbCheckbox, "toggled", G_CALLBACK(usbButtonToggled), NULL);
+
         //        GtkScale *scale = GTK_SCALE (gtk_builder_get_object (builder, "scale1"));
         for (int i = 0; i < ENCODERS_NUMBER; ++i) {
                 adjustment[i] = GTK_ADJUSTMENT(gtk_builder_get_object(builder, (std::string("adjustment") + boost::lexical_cast <std::string> (i + 1)).c_str()));
         }
 
-//        std::thread t(usbThread);
-//        t.detach();
+        std::thread t(usbThread);
+        t.detach();
 
-//        g_idle_add(guiThread, NULL);
+        g_idle_add(guiThread, NULL);
         gtk_main();
-//        closeUsb();
+        closeUsb();
 
         return 0;
 }
