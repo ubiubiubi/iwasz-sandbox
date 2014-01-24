@@ -279,11 +279,6 @@ static void LIBUSB_CALL cb_xfr (libusb_transfer *xfr)
                         exit(5);
                 }
 
-//                uint8_t *buffer = libusb_get_iso_packet_buffer (xfr, 0);
-                // Both x86 and STM32 are little endian.
-//                uint16_t *angles = (uint16_t *)buffer;
-//                static uint8_t prev = 0;
-
 #if 0
                 printf("pack%u length:%u, actual_length:%u\n", i, pack->length, pack->actual_length);
 
@@ -293,16 +288,6 @@ static void LIBUSB_CALL cb_xfr (libusb_transfer *xfr)
                 }
                 printf("]\n");
 #endif
-
-//                if (pack->actual_length > 0) {
-//                        gtk_adjustment_set_value (adjustment, angles[0]);
-//                        std::cerr << angles[0] << std::endl;
-//
-//                        if ((buffer[0] - prev) > 1) {
-//                                std::cerr << (int)buffer[0] << ", prev=" << (int)prev << std::endl;
-//                        }
-//                        prev = buffer[0];
-//                }
         }
 
 #if 0
@@ -346,21 +331,6 @@ static void LIBUSB_CALL cb_xfr (libusb_transfer *xfr)
                 exit(1);
         }
 }
-
-//static void sig_hdlr(int signum)
-//{
-//        switch (signum) {
-//        case SIGINT:
-//                std::cerr << "SIGINT !!!!" << std::endl;
-//                doExit = true;
-//                break;
-//        }
-//}
-//
-//static void print_hello (GtkWidget *widget, gpointer data)
-//{
-//        g_print ("Hello World\n");
-//}
 
 void zeroButtonClicked (GtkButton *button, gpointer user_data)
 {

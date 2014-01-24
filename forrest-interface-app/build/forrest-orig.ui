@@ -2,8 +2,8 @@
 <interface>
   <!-- interface-requires gtk+ 3.0 -->
   <object class="GtkAdjustment" id="adjustment1">
-    <property name="lower">-200</property>
-    <property name="upper">200</property>
+    <property name="lower">-32768</property>
+    <property name="upper">32767</property>
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
   </object>
@@ -58,8 +58,8 @@
     <property name="page_increment">10</property>
   </object>
   <object class="GtkAdjustment" id="adjustment2">
-    <property name="lower">-200</property>
-    <property name="upper">200</property>
+    <property name="lower">-32768</property>
+    <property name="upper">32767</property>
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
   </object>
@@ -114,8 +114,8 @@
     <property name="page_increment">10</property>
   </object>
   <object class="GtkAdjustment" id="adjustment3">
-    <property name="lower">-200</property>
-    <property name="upper">200</property>
+    <property name="lower">-32768</property>
+    <property name="upper">32767</property>
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
   </object>
@@ -135,8 +135,8 @@
     <property name="page_increment">10</property>
   </object>
   <object class="GtkAdjustment" id="adjustment4">
-    <property name="lower">-200</property>
-    <property name="upper">200</property>
+    <property name="lower">-32768</property>
+    <property name="upper">32767</property>
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
   </object>
