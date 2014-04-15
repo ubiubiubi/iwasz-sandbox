@@ -119,8 +119,16 @@ void PendSV_Handler (void)
 
 uint32_t abC = 0;
 
-#define ADD_MASK 0x66666666
-#define SUB_MASK 0x99999999
+//#define ADD_MASK 0x66666666
+#define ADD1 0x22222222
+#define ADD2 0x44444444
+#define ADD3 0xbbbbbbbb
+#define ADD4 0xdddddddd
+
+#define SUB1 0x11111111
+#define SUB2 0x44444444
+#define SUB3 0xbbbbbbbb
+#define SUB4 0xdddddddd
 
 #if 1
 void SysTick_Handler (void)
@@ -133,7 +141,7 @@ void SysTick_Handler (void)
         abC <<= 2;
         abC &= 0xcccccccc;                                              // Clear 0b 1100110011001100
         abC |= ((gpioc & 0x3333) << 16) | ((gpioc & 0xcccc) >> 2) ;      // 0b 0011001100110011
-        uint32_t add = (abc & ADD_MASK) | (~abc & ADD_MASK);
+        uint32_t add = (abc & ADD1) | (abc & ADD2) | (abc & ADD3) | (abc & ADD4);
         uint32_t sub = (abc & SUB_MASK) | (~abc & SUB_MASK);
 
 /*
