@@ -18,8 +18,8 @@ SET(CMAKE_ASM_COMPILER ${TOOLCHAIN_BIN_DIR}/${TARGET_TRIPLET}-as)
 SET(CMAKE_OBJCOPY ${TOOLCHAIN_BIN_DIR}/${TARGET_TRIPLET}-objcopy)
 SET(CMAKE_OBJDUMP ${TOOLCHAIN_BIN_DIR}/${TARGET_TRIPLET}-objdump)
 
-SET(CMAKE_C_FLAGS   "-O0 -g -ggdb -std=gnu99 -ffunction-sections -fdata-sections -MD -Wall -pedantic " CACHE INTERNAL "c compiler flags")
-SET(CMAKE_CXX_FLAGS "-O0 -g -ggdb -std=c++11 -isystem ${TOOLCHAIN_INC_DIR} -Wall -fdata-sections -ffunction-sections -MD -Wall -pedantic" CACHE INTERNAL "cxx compiler flags")
+SET(CMAKE_C_FLAGS   "-std=gnu99 -ffunction-sections -fdata-sections -MD -Wall -pedantic -specs=tiva.specs" CACHE INTERNAL "c compiler flags")
+SET(CMAKE_CXX_FLAGS "-std=c++11 -isystem ${TOOLCHAIN_INC_DIR} -Wall -fdata-sections -ffunction-sections -MD -Wall -pedantic -specs=tiva.specs" CACHE INTERNAL "cxx compiler flags")
 
 SET(CMAKE_C_FLAGS_DEBUG "-O0 -g -ggdb -gstabs+" CACHE INTERNAL "c debug compiler flags")
 SET(CMAKE_CXX_FLAGS_DEBUG "-O0 -ggdb -g -gstabs+" CACHE INTERNAL "cxx debug compiler flags")
@@ -30,11 +30,8 @@ SET(CMAKE_C_FLAGS_RELEASE "-O3" CACHE INTERNAL "c release compiler flags")
 SET(CMAKE_CXX_FLAGS_RELEASE "-O3" CACHE INTERNAL "cxx release compiler flags")
 SET(CMAKE_ASM_FLAGS_RELEASE "" CACHE INTERNAL "asm release compiler flags")
 
-SET(CMAKE_EXE_LINKER_FLAGS "-T${CMAKE_CURRENT_BINARY_DIR}/tm4c123.ld  --entry ResetISR" CACHE INTERNAL "exe link flags")
 SET(CMAKE_MODULE_LINKER_FLAGS "-L${TOOLCHAIN_LIB_DIR}" CACHE INTERNAL "module link flags")
 SET(CMAKE_SHARED_LINKER_FLAGS "-L${TOOLCHAIN_LIB_DIR}" CACHE INTERNAL "shared link flags")
-#SET(CMAKE_C_LINK_EXECUTABLE "${TOOLCHAIN_PREFIX}/bin/${TARGET_TRIPLET}-ld")
-SET(CMAKE_LINKER "${TOOLCHAIN_PREFIX}/bin/${TARGET_TRIPLET}-ld")
 
 
 SET(CMAKE_FIND_ROOT_PATH ${TOOLCHAIN_PREFIX}/${TARGET_TRIPLET} CACHE INTERNAL "cross root directory")
