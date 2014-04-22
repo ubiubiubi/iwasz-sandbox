@@ -84,7 +84,7 @@ const uint8_t g_pui8HIDInterfaceString[] =
 //*****************************************************************************
 const uint8_t g_pui8ConfigString[] =
 {
-    (25 + 1) * 2,
+    (26 + 1) * 2,
     USB_DTYPE_STRING,
     'H', 0, 'I', 0, 'D', 0, ' ', 0, 'K', 0, 'e', 0, 'y', 0, 'b', 0,
     'o', 0, 'a', 0, 'r', 0, 'd', 0, ' ', 0, 'C', 0, 'o', 0, 'n', 0, 'f', 0,
@@ -130,7 +130,7 @@ const tUSBDHIDKeyboardDevice g_sKeyboardDevice = {
 //
 // The power consumption of your device in milliamps.
 //
-                100,
+                500,
 //
 // The value to be passed to the host in the USB configuration descriptor’s
 // bmAttributes field.
@@ -166,6 +166,16 @@ int main (void)
 {
         SysCtlClockSet (SYSCTL_SYSDIV_4 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN | SYSCTL_XTAL_16MHZ);
 
+        // Konfiguracja GPIO
+        //
+        // Enable the GPIO port that is used for the on-board LED.
+        //
+        SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
+        GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3);
+
+
+        // Konfiguracja USB
+
         // Enable the GPIO peripheral used for USB, and configure the USB
         // pins.
         //
@@ -173,27 +183,28 @@ int main (void)
         SysCtlGPIOAHBEnable(SYSCTL_PERIPH_GPIOD);
         GPIOPinTypeUSBAnalog(GPIO_PORTD_AHB_BASE, GPIO_PIN_4 | GPIO_PIN_5);
 
-//        ButtonsInit();
-
         //
         // Set the USB stack mode to Device mode.
         //
         USBStackModeSet(0, eUSBModeForceDevice, 0);
 
         tUSBDHIDKeyboardDevice *pvDevice = (tUSBDHIDKeyboardDevice *)USBDHIDKeyboardInit(0, (void *)&g_sKeyboardDevice);
+        GPIOPinWrite (GPIO_PORTF_BASE, GPIO_PIN_2, GPIO_PIN_2);
 
         if (!pvDevice) {
                 while (1);
         }
 
-        uint32_t ui32Loop;
+        GPIOPinWrite (GPIO_PORTF_BASE, GPIO_PIN_3, GPIO_PIN_3);
+
+//        uint32_t ui32Loop;
 
         while (1) {
-//                USBDHIDKeyboardKeyStateChange (pvDevice, 0, 0x04, true);
-
-                // DELAY
-                for(ui32Loop = 0; ui32Loop < 200000; ui32Loop++)
-                {
-                }
+////                USBDHIDKeyboardKeyStateChange (pvDevice, 0, 0x04, true);
+//
+//                // DELAY
+//                for(ui32Loop = 0; ui32Loop < 200000; ui32Loop++)
+//                {
+//                }
         }
 }
