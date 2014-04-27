@@ -3,6 +3,3 @@
 
 *lib:
 -lm -lc
-
-*startfile:
-
