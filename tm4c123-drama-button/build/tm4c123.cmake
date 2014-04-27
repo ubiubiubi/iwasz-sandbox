@@ -1,8 +1,8 @@
 # GCC toolchain prefix
 SET(TOOLCHAIN_PREFIX "/home/iwasz/local/share/arm-unknown-eabi-cortex-m4")
 SET(TARGET_TRIPLET "arm-unknown-eabi")
-#SET(TIVA_WARE_PATH "/home/iwasz/workspace/SW-TM4C-2.1.0.12573")
-SET(TIVA_WARE_PATH "/home/iwasz/Documents/workspace-CDT/SW-TM4C-2.1.0.12573")
+SET(TIVA_WARE_PATH "/home/iwasz/workspace/SW-TM4C-2.1.0.12573")
+#SET(TIVA_WARE_PATH "/home/iwasz/Documents/workspace-CDT/SW-TM4C-2.1.0.12573")
 ADD_DEFINITIONS (-DPART_TM4C123GH6PM)
 ADD_DEFINITIONS (-Dgcc)
 
@@ -22,8 +22,9 @@ SET(CMAKE_OBJDUMP ${TOOLCHAIN_BIN_DIR}/${TARGET_TRIPLET}-objdump)
 SET(CMAKE_C_FLAGS   "-std=gnu99 -ffunction-sections -fdata-sections -MD -Wall -pedantic -specs=tiva.specs" CACHE INTERNAL "c compiler flags")
 SET(CMAKE_CXX_FLAGS "-std=c++11 -isystem ${TOOLCHAIN_INC_DIR} -Wall -fdata-sections -ffunction-sections -MD -Wall -pedantic -specs=tiva.specs" CACHE INTERNAL "cxx compiler flags")
 
-SET(CMAKE_C_FLAGS_DEBUG "-O0 -g -ggdb -gstabs+" CACHE INTERNAL "c debug compiler flags")
-SET(CMAKE_CXX_FLAGS_DEBUG "-O0 -ggdb -g -gstabs+" CACHE INTERNAL "cxx debug compiler flags")
+#SET(CMAKE_C_FLAGS_DEBUG "-O0 -g -ggdb -gstabs+ -DDEBUG" CACHE INTERNAL "c debug compiler flags")
+SET(CMAKE_C_FLAGS_DEBUG "-mthumb -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard" CACHE INTERNAL "c debug compiler flags")
+SET(CMAKE_CXX_FLAGS_DEBUG "-O0 -ggdb -g -gstabs+ -DDEBUG" CACHE INTERNAL "cxx debug compiler flags")
 SET(CMAKE_ASM_FLAGS_DEBUG "-g -gstabs+" CACHE INTERNAL "asm debug compiler flags")
 
 # -flto powoduje problemy z funkcjami syscalls

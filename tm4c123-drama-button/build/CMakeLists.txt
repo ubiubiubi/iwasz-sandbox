@@ -3,7 +3,7 @@ SET (CMAKE_VERBOSE_MAKEFILE off)
 
 ADD_DEFINITIONS(-DTARGET_IS_TM4C123_RA1)
 
-PROJECT (tiva-usb-test)
+PROJECT (tm4c123-drama-button)
 include (tm4c123.cmake)
 
 INCLUDE_DIRECTORIES("../src/")

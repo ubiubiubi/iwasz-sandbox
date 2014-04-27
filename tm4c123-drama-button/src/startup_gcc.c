@@ -36,6 +36,10 @@ static void NmiSR(void);
 static void FaultISR(void);
 static void IntDefaultHandler(void);
 
+static void mpuFault (void);
+static void busFault (void);
+static void usageFault (void);
+
 //*****************************************************************************
 //
 // External declarations for the interrupt handlers used by the application.
@@ -72,9 +76,9 @@ void (* const g_pfnVectors[])(void) =
     ResetISR,                               // The reset handler
     NmiSR,                                  // The NMI handler
     FaultISR,                               // The hard fault handler
-    IntDefaultHandler,                      // The MPU fault handler
-    IntDefaultHandler,                      // The bus fault handler
-    IntDefaultHandler,                      // The usage fault handler
+    mpuFault,                               // The MPU fault handler
+    busFault,                               // The bus fault handler
+    usageFault,                             // The usage fault handler
     0,                                      // Reserved
     0,                                      // Reserved
     0,                                      // Reserved
@@ -330,6 +334,37 @@ FaultISR(void)
     {
     }
 }
+
+static void mpuFault (void)
+{
+    //
+    // Enter an infinite loop.
+    //
+    while(1)
+    {
+    }
+}
+
+static void busFault (void)
+{
+    //
+    // Enter an infinite loop.
+    //
+    while(1)
+    {
+    }
+}
+
+static void usageFault (void)
+{
+    //
+    // Enter an infinite loop.
+    //
+    while(1)
+    {
+    }
+}
+
 
 //*****************************************************************************
 //
