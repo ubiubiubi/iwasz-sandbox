@@ -164,7 +164,8 @@ tUSBDHIDDevice usbHIDDevice = {
         &hidDescriptor, // A pointer to the HID descriptor for the device.
         classDescriptors, // A pointer to the array of HID class descriptor pointers for this device. The number of elements in this array and their order must match the information in the HID descriptor provided above.
         stringDescriptors, // A pointer to your string table.
-        NUM_STRING_DESCRIPTORS // The number of entries in your string table. This must equal (1 + (5 * (num languages))).
+        NUM_STRING_DESCRIPTORS, // The number of entries in your string table. This must equal (1 + (5 * (num languages))).
+        0
 };
 
 /**
@@ -188,6 +189,7 @@ int main (void)
         USBStackModeSet(0, eUSBModeForceDevice, 0);
 
         tUSBDHIDDevice *device = (tUSBDHIDDevice *)USBDHIDInit (0, &usbHIDDevice);
+//        tUSBDHIDDevice *device = (tUSBDHIDDevice *)USBDHIDKeyboardInit (0, &usbHIDDevice);
         GPIOPinWrite (GPIO_PORTF_BASE, GPIO_PIN_2, GPIO_PIN_2);
 
         if (!device) {
