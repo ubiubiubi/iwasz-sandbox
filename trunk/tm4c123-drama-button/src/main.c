@@ -177,6 +177,81 @@ tUSBDHIDDevice usbHIDDevice = {
         0
 };
 
+static uint8_t g_pui8KeybDescriptor[] =
+{
+    //
+    // Configuration descriptor header.
+    //
+    9,                          // Size of the configuration descriptor.
+    USB_DTYPE_CONFIGURATION,    // Type of this descriptor.
+    USBShort(34),               // The total size of this full structure.
+    1,                          // The number of interfaces in this
+                                // configuration.
+    1,                          // The unique value for this configuration.
+    5,                          // The string identifier that describes this
+                                // configuration.
+    USB_CONF_ATTR_SELF_PWR,     // Bus Powered, Self Powered, remote wake up.
+    250,                        // The maximum power in 2mA increments.
+};
+
+
+void *lowLevelHIDInit (uint32_t ui32Index, tUSBDHIDDevice *psHIDDevice)
+{
+        tConfigDescriptor * pConfigDesc;
+
+        static tHIDKeyboardInstance privPsInst;
+        // TODO jedno tylko
+        tHIDKeyboardInstance *psInst = &privPsInst;
+        uint32_t ui32Loop;
+
+        //
+        // Initialize the various fields in our instance structure.
+        //
+        psInst->ui8USBConfigured = 0;
+        psInst->ui8Protocol = USB_HID_PROTOCOL_REPORT;
+        psInst->sReportIdle.ui8Duration4mS = 125;
+        psInst->sReportIdle.ui8ReportID = 0;
+        psInst->sReportIdle.ui32TimeSinceReportmS = 0;
+        psInst->sReportIdle.ui16TimeTillNextmS = 0;
+        psInst->ui8LEDStates = 0;
+        psInst->ui8KeyCount = 0;
+        for(ui32Loop = 0; ui32Loop < KEYB_MAX_CHARS_PER_REPORT; ui32Loop++)
+        {
+            psInst->pui8KeysPressed[ui32Loop] = HID_KEYB_USAGE_RESERVED;
+        }
+
+        psInst->eKeyboardState = HID_KEYBOARD_STATE_UNCONFIGURED;
+
+
+        void *pvRetcode = USBDHIDCompositeInit (ui32Index, psHIDDevice, 0);
+
+
+
+
+
+        pConfigDesc = (tConfigDescriptor *) g_pui8KeybDescriptor;
+        pConfigDesc->bmAttributes = psHIDDevice->ui8PwrAttributes;
+        pConfigDesc->bMaxPower = (uint8_t) (psHIDDevice->ui16MaxPowermA / 2);
+
+        //
+        // If we initialized the HID layer successfully, pass our device pointer
+        // back as the return code, otherwise return NULL to indicate an error.
+        //
+        if (pvRetcode) {
+                //
+                // Initialize the lower layer HID driver and pass it the various
+                // structures and descriptors necessary to declare that we are a
+                // keyboard.
+                //
+                pvRetcode = USBDHIDInit (ui32Index, psHIDDevice);
+
+                return ((void *) psHIDDevice);
+        }
+        else {
+                return ((void *) 0);
+        }
+}
+
 /**
  *
  */
@@ -197,8 +272,9 @@ int main (void)
         // Set the USB stack mode to Device mode.
         USBStackModeSet(0, eUSBModeForceDevice, 0);
 
-        tUSBDHIDDevice *device = (tUSBDHIDDevice *)USBDHIDInit (0, &usbHIDDevice);
+//        tUSBDHIDDevice *device = (tUSBDHIDDevice *)USBDHIDInit (0, &usbHIDDevice);
 //        tUSBDHIDDevice *device = (tUSBDHIDDevice *)USBDHIDKeyboardInit (0, &usbHIDDevice);
+        tUSBDHIDDevice *device = (tUSBDHIDDevice *)lowLevelHIDInit (0, &usbHIDDevice);
         GPIOPinWrite (GPIO_PORTF_BASE, GPIO_PIN_2, GPIO_PIN_2);
 
         if (!device) {
@@ -212,7 +288,7 @@ int main (void)
         while (1) {
                 uint8_t buf = 0x04;
 //                USBDHIDKeyboardKeyStateChange (device, 0, 0x04, true);
-                USBDHIDReportWrite (device, &buf, 1, false);
+//                USBDHIDReportWrite (device, &buf, 1, false);
 
                 // DELAY
                 for(ui32Loop = 0; ui32Loop < 200000; ui32Loop++)
