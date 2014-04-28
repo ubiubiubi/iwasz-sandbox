@@ -13,6 +13,15 @@
 #include "usblib/device/usbdhid.h"
 #include "usblib/device/usbdhidkeyb.h"
 
+#ifdef DEBUG
+void __error__ (char *pcFilename, unsigned long ulLine)
+{
+        while (1) {
+
+        }
+}
+#endif
+
 /**
  * The languages supported by this device.
  */

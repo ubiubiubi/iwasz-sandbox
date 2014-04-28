@@ -4,5 +4,5 @@
 *lib:
 -lm -lc
 
-*startfile:
+#*startfile:
 
