@@ -58,8 +58,8 @@ static uint8_t g_pui8HIDInterface[HIDINTERFACE_SIZE] =
     1,                          // The number of endpoints used by this
                                 // interface.
     USB_CLASS_HID,              // The interface class
-    USB_HID_SCLASS_BOOT,        // The interface sub-class.
-    USB_HID_PROTOCOL_KEYB,      // The interface protocol for the sub-class
+    USB_HID_SCLASS_NONE/*USB_HID_SCLASS_BOOT*/,        // The interface sub-class.
+    USB_HID_PROTOCOL_NONE/*USB_HID_PROTOCOL_KEYB*/,      // The interface protocol for the sub-class
                                 // specified above.
     4,                          // The string index for this interface.
 };

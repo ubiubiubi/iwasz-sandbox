@@ -30,7 +30,7 @@ extern uint8_t g_pui8KeybDescriptor[];
 
 #ifdef KEYB_IN_REPORT_SIZE
 #undef KEYB_IN_REPORT_SIZE
-#define KEYB_IN_REPORT_SIZE 8
+#define KEYB_IN_REPORT_SIZE 1
 #endif
 
 #ifdef KEYB_OUT_REPORT_SIZE
@@ -40,7 +40,7 @@ extern uint8_t g_pui8KeybDescriptor[];
 
 #ifdef KEYB_MAX_CHARS_PER_REPORT
 #undef KEYB_MAX_CHARS_PER_REPORT
-#define KEYB_MAX_CHARS_PER_REPORT 6
+#define KEYB_MAX_CHARS_PER_REPORT 5
 #endif
 
 extern uint8_t NUM_STRING_DESCRIPTORS;
