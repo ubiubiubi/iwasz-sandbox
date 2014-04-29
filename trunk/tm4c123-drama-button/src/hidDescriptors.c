@@ -115,101 +115,82 @@ const uint8_t reportDescriptor[]=
 //                0x81, 0x01, // Input (Constant)
 //                0xC0 // End Collection
 
-//        UsagePage(0x0C), // Usage Page (Consumer Devices)
-//        Usage(0x01),     // Usage (Consumer Control)
-//        Collection(USB_HID_APPLICATION),
-//                UsagePage(0x0C), // Usage Page (Consumer Devices)
-//                LogicalMinimum(0),
-//                LogicalMaximum(1),
-//                ReportSize(1),
-//                ReportCount(7),
-//                Usage (0xB5), // Usage (Scan Next Track)
-//                Usage (0xB6), // Usage (Scan Previous Track)
-//                Usage (0xB7), // Usage (Stop)
-//                Usage (0xcd), // Usage (Play / Pause)
-//                Usage (0xe2), // Usage (Mute)
-//                Usage (0xe9), // Usage (Volume Up)
-//                Usage (0xea), // Usage (Volume Down)
-//                Input (USB_HID_INPUT_DATA | USB_HID_INPUT_VARIABLE | USB_HID_INPUT_ABS),
-//                ReportCount(1),
-//                Input (USB_HID_INPUT_CONSTANT),
-//        EndCollection
+#if 1   // http://www.usblyzer.com/reports/usb-properties/usb-keyboard.html
+        UsagePage(0x0C), // Usage Page (Consumer Devices)
+        Usage(0x01),     // Usage (Consumer Control)
+        Collection(USB_HID_APPLICATION),
+                UsagePage(0x0C), // Usage Page (Consumer Devices)
+                LogicalMinimum(0),
+                LogicalMaximum(1),
+                ReportSize(1),
+                ReportCount(7),
+                Usage (0xB5), // Usage (Scan Next Track)
+                Usage (0xB6), // Usage (Scan Previous Track)
+                Usage (0xB7), // Usage (Stop)
+                Usage (0xcd), // Usage (Play / Pause)
+                Usage (0xe2), // Usage (Mute)
+                Usage (0xe9), // Usage (Volume Up)
+                Usage (0xea), // Usage (Volume Down)
+                Input (USB_HID_INPUT_DATA | USB_HID_INPUT_VARIABLE | USB_HID_INPUT_ABS),
+                ReportCount(1),
+                Input (USB_HID_INPUT_CONSTANT | USB_HID_INPUT_ARRAY | USB_HID_INPUT_ABS),
+        EndCollection
 
+#else
         UsagePage(USB_HID_GENERIC_DESKTOP),
         Usage(USB_HID_KEYBOARD),
         Collection(USB_HID_APPLICATION),
+                //
+                // Modifier keys.
+                // 8 - 1 bit values indicating the modifier keys (ctrl, shift...)
+                //
+                ReportSize(1),
+                ReportCount(8),
+                UsagePage(USB_HID_USAGE_KEYCODES),
+                UsageMinimum(224),
+                UsageMaximum(231),
+                LogicalMinimum(0),
+                LogicalMaximum(1),
+                Input(USB_HID_INPUT_DATA | USB_HID_INPUT_VARIABLE | USB_HID_INPUT_ABS),
 
-            //
-            // Modifier keys.
-            // 8 - 1 bit values indicating the modifier keys (ctrl, shift...)
-            //
-            ReportSize(1),
-            ReportCount(8),
-            UsagePage(USB_HID_USAGE_KEYCODES),
-            UsageMinimum(224),
-            UsageMaximum(231),
-            LogicalMinimum(0),
-            LogicalMaximum(1),
-            Input(USB_HID_INPUT_DATA | USB_HID_INPUT_VARIABLE | USB_HID_INPUT_ABS),
+                //
+                // One byte of rsvd data required by HID spec.
+                //
+                ReportCount(1),
+                ReportSize(8),
+                Input(USB_HID_INPUT_CONSTANT),
 
-            //
-            // One byte of rsvd data required by HID spec.
-            //
-            ReportCount(1),
-            ReportSize(8),
-            Input(USB_HID_INPUT_CONSTANT),
+                //
+                // Keyboard LEDs.
+                // 5 - 1 bit values.
+                //
+                ReportCount(5),
+                ReportSize(1),
+                UsagePage(USB_HID_USAGE_LEDS),
+                UsageMinimum(1),
+                UsageMaximum(5),
+                Output(USB_HID_OUTPUT_DATA | USB_HID_OUTPUT_VARIABLE | USB_HID_OUTPUT_ABS),
+                //
+                // 1 - 3 bit value to pad out to a full byte.
+                //
+                ReportCount(1),
+                ReportSize(3),
+                Output(USB_HID_OUTPUT_CONSTANT), //LED report padding
 
-            //
-            // Keyboard LEDs.
-            // 5 - 1 bit values.
-            //
-            ReportCount(5),
-            ReportSize(1),
-            UsagePage(USB_HID_USAGE_LEDS),
-            UsageMinimum(1),
-            UsageMaximum(5),
-            Output(USB_HID_OUTPUT_DATA | USB_HID_OUTPUT_VARIABLE |
-                   USB_HID_OUTPUT_ABS),
-            //
-            // 1 - 3 bit value to pad out to a full byte.
-            //
-            ReportCount(1),
-            ReportSize(3),
-            Output(USB_HID_OUTPUT_CONSTANT), //LED report padding
-
-            //
-            // The Key buffer.
-            // 6 - 8 bit values to store the current key state.
-            //
-            ReportCount(6),
-            ReportSize(8),
-            LogicalMinimum(0),
-            LogicalMaximum(101),
-            UsagePage(USB_HID_USAGE_KEYCODES),
-            UsageMinimum (0),
-            UsageMaximum (101),
-            Input(USB_HID_INPUT_DATA | USB_HID_INPUT_ARRAY),
+                //
+                // The Key buffer.
+                // 6 - 8 bit values to store the current key state.
+                //
+                ReportCount(6),
+                ReportSize(8),
+                LogicalMinimum(0),
+                LogicalMaximum(101),
+                UsagePage(USB_HID_USAGE_KEYCODES),
+                UsageMinimum (0),
+                UsageMaximum (101),
+                Input(USB_HID_INPUT_DATA | USB_HID_INPUT_ARRAY),
         EndCollection,
-
-//        UsagePage(0x0C), // Usage Page (Consumer Devices)
-//        Usage(0x01),     // Usage (Consumer Control)
-//        Collection(USB_HID_APPLICATION),
-//                UsagePage(0x0C), // Usage Page (Consumer Devices)
-//                LogicalMinimum(0),
-//                LogicalMaximum(1),
-//                ReportSize(1),
-//                ReportCount(7),
-//                Usage (0xB5), // Usage (Scan Next Track)
-//                Usage (0xB6), // Usage (Scan Previous Track)
-//                Usage (0xB7), // Usage (Stop)
-//                Usage (0xcd), // Usage (Play / Pause)
-//                Usage (0xe2), // Usage (Mute)
-//                Usage (0xe9), // Usage (Volume Up)
-//                Usage (0xea), // Usage (Volume Down)
-//                Input (USB_HID_INPUT_DATA | USB_HID_INPUT_VARIABLE | USB_HID_INPUT_ABS),
-//                ReportCount(1),
-//                Input (USB_HID_INPUT_CONSTANT),
-//        EndCollection
+#endif
 };
 
 /**

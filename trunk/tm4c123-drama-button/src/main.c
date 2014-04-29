@@ -26,6 +26,17 @@
 #include "rgb.h"
 #include "callbacks.h"
 
+/*
+ * https://www.microsoft.com/china/whdc/archive/w2kbd.mspx - here are instructions for HID keyboard design with additional miltimedia capabilities.
+ * Microsoft reccomends that there should be a tleast two USB interfaces in suach a device. One should implement a oridinary keyboard compatible
+ * with BOOT interface, so such keyboard would be operational during system startup, when there is no OS support yet, and another one would implement
+ * the rest of desired keys such as play/pause, volume up, down and so on. I saw quite a few USB interface layouts onforming to this recommendations
+ * over the net, including my own keyboard connected to my computer as I write this, so I assume this is the right way to do this.
+ *
+ * http://www.usblyzer.com/reports/usb-properties/usb-keyboard.html - this is an example of USB interface layout as mentioned earlier. HID reports are
+ * also provided.
+ */
+
 #ifdef DEBUG
 void __error__ (char *pcFilename, unsigned long ulLine)
 {
@@ -34,7 +45,6 @@ void __error__ (char *pcFilename, unsigned long ulLine)
         }
 }
 #endif
-
 
 /**
  * My initialization routine.
@@ -169,21 +179,20 @@ int main (void)
                         {
                                 RGBSet(color1, 0.01);
                                 RGBEnable();
-                                callbackDTO.pui8Report[0] = 0x00;
-                                callbackDTO.pui8Report[1] = 0x00;
-                                callbackDTO.pui8Report[2] = 0x04;
+//                                callbackDTO.pui8Report[0] = 0x00;
+//                                callbackDTO.pui8Report[1] = 0x00;
+//                                callbackDTO.pui8Report[2] = 0x04;
 
-//                                callbackDTO.pui8Report[8] = 0x08; // play / pause
-//                                //                                callbackDTO.pui8Report[0] = 0x10; // Vol up?
+                                callbackDTO.pui8Report[0] = 0x10;
                         }
                         else {
                                 RGBDisable ();
-//                                for (int i = 0; i < KEYB_IN_REPORT_SIZE; ++i) {
-//                                        callbackDTO.pui8Report[i] = 0x00;
-//                                }
-                                callbackDTO.pui8Report[0] = 0x00;
-                                callbackDTO.pui8Report[1] = 0x00;
-                                callbackDTO.pui8Report[2] = 0x00;
+                                for (int i = 0; i < KEYB_IN_REPORT_SIZE; ++i) {
+                                        callbackDTO.pui8Report[i] = 0x00;
+                                }
+//                                callbackDTO.pui8Report[0] = 0x00;
+//                                callbackDTO.pui8Report[1] = 0x00;
+//                                callbackDTO.pui8Report[2] = 0x00;
                         }
 
 
