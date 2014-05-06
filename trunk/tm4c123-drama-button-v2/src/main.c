@@ -106,8 +106,8 @@ static uint8_t configurationDescriptor[] =
     USBShort(34),               // The total size of this full structure.
     2,                          // The number of interfaces in this configuration.
     1,                          // The unique value for this configuration.
-    6,                          // The string identifier that describes this configuration.
-    USB_CONF_ATTR_SELF_PWR,     // Bus Powered, Self Powered, remote wake up.
+    5,                          // The string identifier that describes this configuration.
+    USB_CONF_ATTR_BUS_PWR,     // Bus Powered, Self Powered, remote wake up.
     125,                        // The maximum power in 2mA increments.
 };
 
@@ -277,7 +277,7 @@ static const uint8_t interfaceDescriptor2[] =
     //
     9,                          // Size of the interface descriptor.
     USB_DTYPE_INTERFACE,        // Type of this descriptor.
-    0,                          // The index for this interface.
+    1,                          // The index for this interface.
     0,                          // The alternate setting for this interface.
     1,                          // The number of endpoints used by this
                                 // interface.
@@ -285,7 +285,7 @@ static const uint8_t interfaceDescriptor2[] =
     USB_HID_SCLASS_NONE,        // The interface sub-class.
     USB_HID_PROTOCOL_NONE,      // The interface protocol for the sub-class
                                 // specified above.
-    5,                          // The string index for this interface.
+    4,                          // The string index for this interface.
 };
 
 static const uint8_t hideKeyboardDescriptor2[] =
@@ -474,10 +474,11 @@ const uint8_t * const stringDescriptors[] =
     g_pui8ProductString,
     g_pui8SerialNumberString,
     g_pui8HIDInterfaceString1,
-    g_pui8HIDInterfaceString2,
+//    g_pui8HIDInterfaceString2,
     g_pui8ConfigString
 };
 
+// -1 because first element is g_pui8LangDescriptor which is not a string.
 uint8_t NUM_STRING_DESCRIPTORS = sizeof(stringDescriptors) / sizeof(uint8_t *);
 
 /*##########################################################################*/
@@ -594,24 +595,28 @@ static void onGetDescriptor(void *userData, tUSBRequest *psUSBRequest)
         //
         case USB_HID_DTYPE_REPORT:
         {
-            //
-            // Find the index to the descriptor that is being queried.
-            //
-            ui32Size = sizeof (reportDescriptor1);
+                if (psUSBRequest->wIndex == 0) {
+                        ui32Size = sizeof(reportDescriptor1);
 
-            //
-            // If there is more data to send than the host requested then just
-            // send the requested amount of data.
-            //
-            if(ui32Size > psUSBRequest->wLength)
-            {
-                ui32Size = psUSBRequest->wLength;
-            }
+                        // If there is more data to send than the host requested then just send the requested amount of data.
+                        if (ui32Size > psUSBRequest->wLength) {
+                                ui32Size = psUSBRequest->wLength;
+                        }
 
-            //
-            // Send the data via endpoint 0.
-            //
-            USBDCDSendDataEP0(0, reportDescriptor1, sizeof (reportDescriptor1));
+                        // Send the data via endpoint 0.
+                        USBDCDSendDataEP0 (0, reportDescriptor1, sizeof(reportDescriptor1));
+                }
+                else if (psUSBRequest->wIndex == 1) {
+                        ui32Size = sizeof(reportDescriptor2);
+
+                        // If there is more data to send than the host requested then just send the requested amount of data.
+                        if (ui32Size > psUSBRequest->wLength) {
+                                ui32Size = psUSBRequest->wLength;
+                        }
+
+                        // Send the data via endpoint 0.
+                        USBDCDSendDataEP0 (0, reportDescriptor1, sizeof(reportDescriptor2));
+                }
             break;
         }
 
@@ -621,24 +626,23 @@ static void onGetDescriptor(void *userData, tUSBRequest *psUSBRequest)
         //
         case USB_HID_DTYPE_HID:
         {
-            //
-            // How big is the HID descriptor?
-            //
-            ui32Size = sizeof (hideKeyboardDescriptor1);
 
-            //
-            // If there is more data to send than the host requested then just
-            // send the requested amount of data.
-            //
-            if(ui32Size > psUSBRequest->wLength)
-            {
-                ui32Size = psUSBRequest->wLength;
-            }
+                if (psUSBRequest->wIndex == 0) {
+                        ui32Size = sizeof(hideKeyboardDescriptor1);
 
-            //
-            // Send the data via endpoint 0.
-            //
-            USBDCDSendDataEP0(0, hideKeyboardDescriptor1, ui32Size);
+                        if (ui32Size > psUSBRequest->wLength) {
+                                ui32Size = psUSBRequest->wLength;
+                        }
+                        USBDCDSendDataEP0 (0, hideKeyboardDescriptor1, ui32Size);
+                }
+                else if (psUSBRequest->wIndex == 1) {
+                        ui32Size = sizeof(hideKeyboardDescriptor2);
+
+                        if (ui32Size > psUSBRequest->wLength) {
+                                ui32Size = psUSBRequest->wLength;
+                        }
+                        USBDCDSendDataEP0 (0, hideKeyboardDescriptor2, ui32Size);
+                }
             break;
         }
 
