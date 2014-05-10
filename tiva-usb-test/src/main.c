@@ -13,6 +13,24 @@
 #include "usblib/device/usbdhid.h"
 #include "usblib/device/usbdhidkeyb.h"
 
+#include "driverlib/rom.h"
+#include "driverlib/interrupt.h"
+
+#ifdef DEBUG
+void
+__error__(char *pcFilename, unsigned long ulLine)
+{
+//
+// Something horrible happened! You need to look
+// at file "pcFilename" at line "ulLine" to see
+// what error is being reported.
+//
+        while(1)
+        {
+        }
+}
+#endif
+
 //****************************************************************************
 //
 // The languages supported by this device.
@@ -45,10 +63,10 @@ const uint8_t g_pui8ManufacturerString[] =
 //****************************************************************************
 const uint8_t g_pui8ProductString[] =
 {
-    (17 + 1) * 2,
+    (16 + 1) * 2,
     USB_DTYPE_STRING,
-    'E', 0, 'x', 0, 'a', 0, 'm', 0, 'p', 0, 'l', 0, 'e', 0, ' ', 0,
     'K', 0, 'e', 0, 'y', 0, 'b', 0, 'o', 0, 'a', 0, 'r', 0, 'd', 0, ' ', 0,
+    'E', 0, 'x', 0, 'a', 0, 'm', 0, 'p', 0, 'l', 0, 'e', 0
 };
 
 //****************************************************************************
@@ -73,8 +91,8 @@ const uint8_t g_pui8HIDInterfaceString[] =
     (22 + 1) * 2,
     USB_DTYPE_STRING,
     'H', 0, 'I', 0, 'D', 0, ' ', 0, 'K', 0, 'e', 0, 'y', 0, 'b', 0,
-    'o', 0, 'a', 0, 'r', 0, 'd', 0, ' ', 0, 'I', 0, 'n', 0, 't', 0, 'e', 0,
-    'r', 0, 'f', 0, 'a', 0, 'c', 0, 'e', 0
+    'o', 0, 'a', 0, 'r', 0, 'd', 0, ' ', 0, 'I', 0, 'n', 0, 't', 0,
+    'e', 0, 'r', 0, 'f', 0, 'a', 0, 'c', 0, 'e', 0
 };
 
 //*****************************************************************************
@@ -87,11 +105,10 @@ const uint8_t g_pui8ConfigString[] =
     (26 + 1) * 2,
     USB_DTYPE_STRING,
     'H', 0, 'I', 0, 'D', 0, ' ', 0, 'K', 0, 'e', 0, 'y', 0, 'b', 0,
-    'o', 0, 'a', 0, 'r', 0, 'd', 0, ' ', 0, 'C', 0, 'o', 0, 'n', 0, 'f', 0,
-    'i', 0, 'g', 0, 'u', 0, 'r', 0, 'a', 0, 't', 0, 'i', 0, 'o', 0,
-    'n', 0
+    'o', 0, 'a', 0, 'r', 0, 'd', 0, ' ', 0, 'C', 0, 'o', 0, 'n', 0,
+    'f', 0, 'i', 0, 'g', 0, 'u', 0, 'r', 0, 'a', 0, 't', 0, 'i', 0,
+    'o', 0, 'n', 0
 };
-
 //*****************************************************************************
 //
 // The descriptor string table.
@@ -110,7 +127,6 @@ const uint8_t * const g_ppui8StringDescriptors[] =
 #define NUM_STRING_DESCRIPTORS (sizeof(g_ppui8StringDescriptors) /            \
                                 sizeof(uint8_t *))
 
-
 #define VENDOR_ID 0x20a0
 #define PRODUCT_ID 0x41ff
 
@@ -118,48 +134,102 @@ const uint8_t * const g_ppui8StringDescriptors[] =
 uint32_t USBCallback (void *pvCBData, uint32_t ui32Event, uint32_t ui32MsgParam, void *pvMsgData);
 
 
-const tUSBDHIDKeyboardDevice g_sKeyboardDevice = {
-//
-// The Vendor ID you have been assigned by USB-IF.
-//
+tUSBDHIDKeyboardDevice g_sKeyboardDevice = {
                 VENDOR_ID,
-//
-// The product ID you have assigned for this device.
-//
                 PRODUCT_ID,
-//
-// The power consumption of your device in milliamps.
-//
-                500,
-//
-// The value to be passed to the host in the USB configuration descriptor’s
-// bmAttributes field.
-//
+                // The power consumption of your device in milliamps.
+                0,
+                // The value to be passed to the host in the USB configuration descriptor’s
+                // bmAttributes field.
                 USB_CONF_ATTR_SELF_PWR,
-//
-// A pointer to your keyboard callback event handler.
-//
+                // A pointer to your keyboard callback event handler.
                 USBCallback,
-//
-// A value that you want passed to the callback alongside every event.
-//
+                // A value that you want passed to the callback alongside every event.
                 (void *)&g_sKeyboardDevice,
-//
-// A pointer to your string table.
-//
+                // A pointer to your string table.
                 g_ppui8StringDescriptors,
-//
-// The number of entries in your string table. This must equal
-// (1 + (5 * (num languages))).
-//
+                // The number of entries in your string table. This must equal
+                // (1 + (5 * (num languages))).
                 NUM_STRING_DESCRIPTORS
 };
 
+
+
+
+
+
 uint32_t USBCallback (void *pvCBData, uint32_t ui32Event, uint32_t ui32MsgParam, void *pvMsgData)
 {
-        //?
-//        USBDHIDKeyboardKeyStateChange();
-        return 0;
+        switch (ui32Event)
+        {
+            //
+            // The host has connected to us and configured the device.
+            //
+            case USB_EVENT_CONNECTED:
+            {
+                break;
+            }
+
+            //
+            // The host has disconnected from us.
+            //
+            case USB_EVENT_DISCONNECTED:
+            {
+                break;
+            }
+
+            //
+            // We receive this event every time the host acknowledges transmission
+            // of a report. It is used here purely as a way of determining whether
+            // the host is still talking to us or not.
+            //
+            case USB_EVENT_TX_COMPLETE:
+            {
+                //
+                // Enter the idle state since we finished sending something.
+                //
+                break;
+            }
+
+            //
+            // This event indicates that the host has suspended the USB bus.
+            //
+            case USB_EVENT_SUSPEND:
+            {
+                break;
+            }
+
+            //
+            // This event signals that the host has resumed signalling on the bus.
+            //
+            case USB_EVENT_RESUME:
+            {
+                break;
+            }
+
+            //
+            // This event indicates that the host has sent us an Output or
+            // Feature report and that the report is now in the buffer we provided
+            // on the previous USBD_HID_EVENT_GET_REPORT_BUFFER callback.
+            //
+            case USBD_HID_KEYB_EVENT_SET_LEDS:
+            {
+                //
+                // Set the LED to match the current state of the caps lock LED.
+                //
+                break;
+            }
+
+            //
+            // We ignore all other events.
+            //
+            default:
+            {
+                break;
+            }
+        }
+
+        return(0);
 }
 
 int main (void)
@@ -188,7 +258,8 @@ int main (void)
         //
         USBStackModeSet(0, eUSBModeForceDevice, 0);
 
-        tUSBDHIDKeyboardDevice *pvDevice = (tUSBDHIDKeyboardDevice *)USBDHIDKeyboardInit(0, (void *)&g_sKeyboardDevice);
+
+        void *pvDevice = USBDHIDKeyboardInit(0, &g_sKeyboardDevice);
         GPIOPinWrite (GPIO_PORTF_BASE, GPIO_PIN_2, GPIO_PIN_2);
 
         if (!pvDevice) {
@@ -197,14 +268,14 @@ int main (void)
 
         GPIOPinWrite (GPIO_PORTF_BASE, GPIO_PIN_3, GPIO_PIN_3);
 
-//        uint32_t ui32Loop;
+        uint32_t ui32Loop;
 
         while (1) {
-////                USBDHIDKeyboardKeyStateChange (pvDevice, 0, 0x04, true);
-//
-//                // DELAY
-//                for(ui32Loop = 0; ui32Loop < 200000; ui32Loop++)
-//                {
-//                }
+                USBDHIDKeyboardKeyStateChange (pvDevice, 0, 0x04, true);
+
+                // DELAY
+                for(ui32Loop = 0; ui32Loop < 200000; ui32Loop++)
+                {
+                }
         }
 }
