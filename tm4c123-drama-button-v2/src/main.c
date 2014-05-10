@@ -8,6 +8,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include "inc/tm4c123gh6pm.h"
 #include "driverlib/sysctl.h"
 #include "driverlib/gpio.h"
@@ -27,6 +28,9 @@
 #include "buttons.h"
 #include "rgb.h"
 #include "callbacks.h"
+#include "utils/uartstdio.h"
+#include "driverlib/uart.h"
+#include "driverlib/pin_map.h"
 
 /*
  * https://www.microsoft.com/china/whdc/archive/w2kbd.mspx - here are instructions for HID keyboard design with additional miltimedia capabilities.
@@ -195,7 +199,7 @@ static const uint8_t interfaceDescriptor1[] =
     4                           // The string index for this interface.
 };
 
-static const uint8_t hideKeyboardDescriptor1[] =
+static const uint8_t hidKeyboardDescriptor1[] =
 {
         // HID Descriptor
         9, // bLength
@@ -288,7 +292,7 @@ static const uint8_t interfaceDescriptor2[] =
     4,                          // The string index for this interface.
 };
 
-static const uint8_t hideKeyboardDescriptor2[] =
+static const uint8_t hidKeyboardDescriptor2[] =
 {
         // HID Descriptor
         9, // bLength
@@ -327,10 +331,10 @@ static const tConfigSection interfaceSection1 =
     interfaceDescriptor1
 };
 
-static const tConfigSection hideKeyboardSection1 =
+static const tConfigSection hidKeyboardSection1 =
 {
-    sizeof(hideKeyboardDescriptor1),
-    hideKeyboardDescriptor1
+    sizeof(hidKeyboardDescriptor1),
+    hidKeyboardDescriptor1
 };
 
 static const tConfigSection endpointSection1 =
@@ -347,8 +351,8 @@ static const tConfigSection interfaceSection2 =
 
 static const tConfigSection hideKeyboardSection2 =
 {
-    sizeof(hideKeyboardDescriptor2),
-    hideKeyboardDescriptor2
+    sizeof(hidKeyboardDescriptor2),
+    hidKeyboardDescriptor2
 };
 
 static const tConfigSection endpointSection2 =
@@ -366,7 +370,7 @@ static const tConfigSection endpointSection2 =
 const tConfigSection *allConfigSections[] = {
         &configSection,
         &interfaceSection1,
-        &hideKeyboardSection1,
+        &hidKeyboardSection1,
         &endpointSection1,
         &interfaceSection2,
         &hideKeyboardSection2,
@@ -615,7 +619,7 @@ static void onGetDescriptor(void *userData, tUSBRequest *psUSBRequest)
                         }
 
                         // Send the data via endpoint 0.
-                        USBDCDSendDataEP0 (0, reportDescriptor1, sizeof(reportDescriptor2));
+                        USBDCDSendDataEP0 (0, reportDescriptor2, sizeof(reportDescriptor2));
                 }
             break;
         }
@@ -628,20 +632,20 @@ static void onGetDescriptor(void *userData, tUSBRequest *psUSBRequest)
         {
 
                 if (psUSBRequest->wIndex == 0) {
-                        ui32Size = sizeof(hideKeyboardDescriptor1);
+                        ui32Size = sizeof(hidKeyboardDescriptor1);
 
                         if (ui32Size > psUSBRequest->wLength) {
                                 ui32Size = psUSBRequest->wLength;
                         }
-                        USBDCDSendDataEP0 (0, hideKeyboardDescriptor1, ui32Size);
+                        USBDCDSendDataEP0 (0, hidKeyboardDescriptor1, ui32Size);
                 }
                 else if (psUSBRequest->wIndex == 1) {
-                        ui32Size = sizeof(hideKeyboardDescriptor2);
+                        ui32Size = sizeof(hidKeyboardDescriptor2);
 
                         if (ui32Size > psUSBRequest->wLength) {
                                 ui32Size = psUSBRequest->wLength;
                         }
-                        USBDCDSendDataEP0 (0, hideKeyboardDescriptor2, ui32Size);
+                        USBDCDSendDataEP0 (0, hidKeyboardDescriptor2, ui32Size);
                 }
             break;
         }
@@ -673,6 +677,13 @@ static void onGetDescriptor(void *userData, tUSBRequest *psUSBRequest)
 //*****************************************************************************
 static void onRequest(void *userData, tUSBRequest *psUSBRequest)
 {
+        printf ("onRequest bmRequestType:%x, bRequest:%x, wValue:%x, wIndex:%x, wLength:%x\r\n",
+                psUSBRequest->bmRequestType,
+                psUSBRequest->bRequest,
+                psUSBRequest->wValue,
+                psUSBRequest->wIndex,
+                psUSBRequest->wLength);
+
     tHIDInstance *psInst;
     uint8_t ui8Protocol;
     uint32_t ui32Size, ui32Timeout;
@@ -680,19 +691,23 @@ static void onRequest(void *userData, tUSBRequest *psUSBRequest)
 
     CallbackDTO *callbackDTO = (CallbackDTO *) userData;
 
+    printf ("1\r\n");
     ASSERT(callbackDTO);
 
-    //
-    // Make sure the request was for this interface.
-    //
-    if(psUSBRequest->wIndex != psInst->ui8Interface)
-    {
-        return;
-    }
+//    TODO
+//    //
+//    // Make sure the request was for this interface.
+//    //
+//    if(psUSBRequest->wIndex != psInst->ui8Interface)
+//    {
+//        return;
+//    }
 
     //
     // Determine the type of request.
     //
+    printf ("2\r\n");
+#if 0
     switch(psUSBRequest->bRequest)
     {
         //
@@ -701,6 +716,7 @@ static void onRequest(void *userData, tUSBRequest *psUSBRequest)
         //
         case USBREQ_GET_REPORT:
         {
+                printf ("set get report");
             //
             // Need to ACK the data on end point 0 in this case.
             //
@@ -722,19 +738,20 @@ static void onRequest(void *userData, tUSBRequest *psUSBRequest)
         // given report should be sent back to the host in the absence of any
         // change in state of the device.
         //
-//        case USBREQ_SET_IDLE:
-//        {
-//            //
-//            // Set the idle timeout for the requested report(s).
-//            //
+        case USBREQ_SET_IDLE:
+        {
+                printf ("set idle");
+            //
+            // Set the idle timeout for the requested report(s).
+            //
 //            SetIdleTimeout(psHIDDevice, psUSBRequest->wValue & 0xFF, (psUSBRequest->wValue >> 8) & 0xFF);
-//
-//            //
-//            // Need to ACK the data on end point 0 in this case.
-//            //
-//            USBDevEndpointDataAck(psInst->ui32USBBase, USB_EP_0, true);
-//            break;
-//        }
+
+            //
+            // Need to ACK the data on end point 0 in this case.
+            //
+            USBDevEndpointDataAck(psInst->ui32USBBase, USB_EP_0, true);
+            break;
+        }
 
         //
         // A get IDLE request has been made.  This request queries the current
@@ -844,10 +861,17 @@ static void onRequest(void *userData, tUSBRequest *psUSBRequest)
         //
         default:
         {
-            USBDCDStallEP0(0);
+                printf ("default");
+
+//            USBDCDStallEP0(0);
+                USBDevEndpointDataAck(psInst->ui32USBBase, USB_EP_0, true);
+
             break;
         }
     }
+#endif
+    USBDevEndpointDataAck(psInst->ui32USBBase, USB_EP_0, true);
+    printf ("3");
 }
 
 /*##########################################################################*/
@@ -916,6 +940,71 @@ static tDeviceInfo deviceInfo;
 //        }
 //}
 
+void
+UARTStdioConfig(uint32_t ui32PortNum, uint32_t ui32Baud, uint32_t ui32SrcClock)
+{
+    //
+    // Check the arguments.
+    //
+    ASSERT((ui32PortNum == 0) || (ui32PortNum == 1) ||
+           (ui32PortNum == 2));
+
+    //
+    // Check to make sure the UART peripheral is present.
+    //
+    if(!SysCtlPeripheralPresent(SYSCTL_PERIPH_UART0))
+    {
+        return;
+    }
+
+    //
+    // Enable the UART peripheral for use.
+    //
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_UART0);
+
+    //
+    // Configure the UART for 115200, n, 8, 1
+    //
+    UARTConfigSetExpClk(UART0_BASE, ui32SrcClock, ui32Baud,
+                            (UART_CONFIG_PAR_NONE | UART_CONFIG_STOP_ONE |
+                             UART_CONFIG_WLEN_8));
+
+    //
+    // Enable the UART operation.
+    //
+    UARTEnable(UART0_BASE);
+}
+
+void
+ConfigureUART(void)
+{
+    //
+    // Enable the GPIO Peripheral used by the UART.
+    //
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
+
+    //
+    // Enable UART0
+    //
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_UART0);
+
+    //
+    // Configure GPIO Pins for UART mode.
+    //
+    GPIOPinConfigure(GPIO_PA0_U0RX);
+    GPIOPinConfigure(GPIO_PA1_U0TX);
+    GPIOPinTypeUART(GPIO_PORTA_BASE, GPIO_PIN_0 | GPIO_PIN_1);
+
+    //
+    // Use the internal 16MHz oscillator as the UART clock source.
+    //
+    UARTClockSourceSet(UART0_BASE, UART_CLOCK_PIOSC);
+
+    //
+    // Initialize the UART for console I/O.
+    //
+    UARTStdioConfig(0, 115200, 16000000);
+}
 
 
 /**
@@ -924,6 +1013,9 @@ static tDeviceInfo deviceInfo;
 int main (void)
 {
         SysCtlClockSet (SYSCTL_SYSDIV_4 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN | SYSCTL_XTAL_16MHZ);
+
+        ConfigureUART ();
+        printf ("tm4c123-drama-button starts\r\n");
 
         // Enable the GPIO port that is used for the on-board LED.
         SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
