@@ -33,17 +33,6 @@
 #include "driverlib/pin_map.h"
 #include "rgb.h"
 
-/*
- * https://www.microsoft.com/china/whdc/archive/w2kbd.mspx - here are instructions for HID keyboard design with additional miltimedia capabilities.
- * Microsoft reccomends that there should be a tleast two USB interfaces in suach a device. One should implement a oridinary keyboard compatible
- * with BOOT interface, so such keyboard would be operational during system startup, when there is no OS support yet, and another one would implement
- * the rest of desired keys such as play/pause, volume up, down and so on. I saw quite a few USB interface layouts onforming to this recommendations
- * over the net, including my own keyboard connected to my computer as I write this, so I assume this is the right way to do this.
- *
- * http://www.usblyzer.com/reports/usb-properties/usb-keyboard.html - this is an example of USB interface layout as mentioned earlier. HID reports are
- * also provided.
- */
-
 #ifdef DEBUG
 void __error__ (char *pcFilename, unsigned long ulLine)
 {
@@ -62,7 +51,9 @@ struct CallbackDTO {
         tDeviceInfo *deviceInfo;
         uint8_t report1[REPORT1_SIZE];
         uint8_t report2[REPORT2_SIZE];
-        bool requestPending;
+        bool requestPending; // TODO Po co to
+        bool bSendInProgress; // TODO poco to
+        uint8_t iHIDTxState; // TODO obsługiwać. Te dwa powyżej dublują funkcjonalność tego (?).
 };
 
 typedef struct CallbackDTO CallbackDTO;
@@ -491,15 +482,9 @@ uint8_t NUM_STRING_DESCRIPTORS = sizeof(stringDescriptors) / sizeof(uint8_t *);
 
 static void onGetDescriptor(void *userData, tUSBRequest *psUSBRequest);
 static void onRequest(void *userData, tUSBRequest *psUSBRequest);
-//static void onConfigChange(void *pvHIDInstance, uint32_t ui32Info);
-//static void onEP0DataReceived(void *pvHIDInstance, uint32_t ui32Info);
-//static void onEP0DataSent(void *pvHIDInstance, uint32_t ui32Info);
-//static void onReset(void *pvHIDInstance);
-//static void onSuspend(void *pvHIDInstance);
-//static void onResume(void *pvHIDInstance);
-//static void onDisconnect(void *pvHIDInstance);
-//static void onEndpoints(void *pvHIDInstance, uint32_t ui32Status);
-//static void onDevice(void *pvHIDInstance, uint32_t ui32Request, void *pvRequestData);
+static void onEndpointsActivity (void *pvHIDInstance, uint32_t ui32Status);
+
+static int32_t scheduleReportTransmission (uint8_t *data, uint16_t len, uint32_t endpoint);
 
 //*****************************************************************************
 //
@@ -561,7 +546,7 @@ const tCustomHandlers handlers =
     //
     // EndpointHandler
     //
-    0/*onEndpoints*/, TODO
+    onEndpointsActivity,
 
     //
     // Device handler.
@@ -684,7 +669,6 @@ static void onRequest(void *userData, tUSBRequest *psUSBRequest)
                 psUSBRequest->wLength);
 
     CallbackDTO *callbackDTO = (CallbackDTO *) userData;
-
     ASSERT(callbackDTO);
 
     //
@@ -731,136 +715,268 @@ static void onRequest(void *userData, tUSBRequest *psUSBRequest)
     }
 }
 
+//*****************************************************************************
+//
+// Called by the USB stack for any activity involving one of our endpoints
+// other than EP0.  This function is a fan out that merely directs the call to
+// the correct handler depending upon the endpoint and transaction direction
+// signaled in ui32Status.
+//
+//*****************************************************************************
+static void onEndpointsActivity (void *userData, uint32_t ui32Status)
+{
+        printf ("onEndpointsActivity ui32Status : %x\r\n", ui32Status);
+
+        CallbackDTO *callbackDTO = (CallbackDTO *) userData;
+        ASSERT(callbackDTO);
+
+        //
+        // Handler for the interrupt IN data endpoint.
+        //
+//        if (ui32Status & (1 << USBEPToIndex(psInst->ui8INEndpoint))) {
+//                ProcessDataToHost(pvHIDInstance, ui32Status);
+//        }
+
+#define ENDPOINT_1_IN (1 << 1)
+#define ENDPOINT_2_IN (1 << 2)
+
+        if (ui32Status & ENDPOINT_1_IN) {
+//                ProcessDataToHost(callbackDTO, ui32Status);
+        }
+}
+
+//*****************************************************************************
+//
+// Receives notifications related to data sent to the host.
+//
+// \param psHIDDevice is the device instance whose endpoint is to be processed.
+// \param ui32Status is the USB interrupt status that caused this function to
+// be called.
+//
+// This function is called from HandleEndpoints for all interrupts originating
+// from the interrupt IN endpoint (in other words, whenever data has been
+// transmitted to the USB host).  We examine the cause of the interrupt and,
+// if due to completion of a transmission, notify the client.
+//
+// \return Returns \b true on success or \b false on failure.
+//
+//*****************************************************************************
+//static bool
+//ProcessDataToHost(CallbackDTO *callbackDTO, uint32_t ui32Status)
+//{
+//    tHIDInstance *psInst;
+//    uint32_t ui32EPStatus;
+//
+//    //
+//    // Get a pointer to our instance data.
+//    //
+//    psInst = &psHIDDevice->sPrivateData;
+//
+//    //
+//    // Get the endpoint status to see why we were called.
+//    //
+//        ui32EPStatus = USBEndpointStatus(psInst->ui32USBBase, psInst->ui8INEndpoint);
+//
+//    //
+//    // Clear the status bits.
+//    //
+//        USBDevEndpointStatusClear(psInst->ui32USBBase, psInst->ui8INEndpoint, ui32EPStatus);
+//
+//    //
+//    // Our last packet was transmitted successfully.  Is there any more data to
+//    // send or have we finished sending the whole report?  We know we finished
+//    // if the ui16InReportIndex has reached the ui16InReportSize value.
+//    //
+//    if(psInst->ui16InReportSize == psInst->ui16InReportIndex)
+//    {
+//        //
+//        // We finished sending the last report so are idle once again.
+//        //
+//        psInst->iHIDTxState = eHIDStateIdle;
+//
+//
+//
+////        //
+////        // Do we have any reports to send as a result of idle timer timeouts?
+////        //
+////        if(psInst->ui16DeferredOpFlags & (1 << HID_DO_SEND_IDLE_REPORT))
+////        {
+////            //
+////            // Yes - send reports for any timers that expired recently.
+////            //
+////            ProcessIdleTimers(psHIDDevice, 0);
+////        }
+//    }
+//    else
+//    {
+//        //
+//        // There must be more data or a zero length packet waiting to be sent
+//        // so go ahead and do this.
+//        //
+//        scheduleReportTransmission(psInst);
+//    }
+//
+//    return(true);
+//}
+
+//*****************************************************************************
+//
+// Schedule transmission of the next packet forming part of an input report.
+//
+// \param psHIDInst points to the HID device instance whose input report is to
+// be sent.
+//
+// This function is called to transmit the next packet of an input report
+// passed to the driver via a call to USBDHIDReportWrite.  If any data remains
+// to be sent, a USB packet is written to the FIFO and scheduled for
+// transmission to the host.  The function ensures that reports are sent as
+// a sequence of full packets followed by either a single int16_t packet or a
+// packet with no data to indicate the end of the transaction.
+//
+//*****************************************************************************
+static int32_t scheduleReportTransmission (uint8_t *data, uint16_t len, uint32_t endpoint)
+{
+        int32_t i32Retcode;
+
+        // Put the data in the correct FIFO.
+        i32Retcode = USBEndpointDataPut(USB0_BASE, endpoint, data, len);
+
+        if (i32Retcode != -1) {
+                // Send out the current data.
+                i32Retcode = USBEndpointDataSend(USB0_BASE, endpoint, USB_TRANS_IN);
+        }
+
+        //
+        // Tell the caller how we got on.
+        //
+        return (i32Retcode);
+}
+
+/**
+ *
+ */
+uint32_t reportWrite (CallbackDTO *callbackDTO, uint8_t *data, uint16_t length, uint32_t endpoint)
+{
+        ASSERT(callbackDTO);
+        printf ("reportWrite dataLen : %d, \r\n");
+
+        // Set a flag indicating that we are currently in the process of sending
+        // a packet.
+        callbackDTO->bSendInProgress = true;
+
+        //
+        // Can we send the data provided?
+        //
+        if (callbackDTO->iHIDTxState != eHIDStateIdle) {
+                //
+                // We are in the middle of sending another report.  Return 0 to
+                // indicate that we can't send this report until the previous one
+                // finishes.
+                //
+                callbackDTO->bSendInProgress = false;
+                return (0);
+        }
+
+//    //
+//    // Clear the elapsed time since this report was last sent.
+//    //
+//    if(ui32Length)
+//    {
+//        ClearReportTimer(pvHIDInstance, *data);
+//    }
+
+        //
+        // Schedule transmission of the first packet of the report.
+        //
+        callbackDTO->iHIDTxState = eHIDStateWaitData;
+        uint32_t i32Retcode = scheduleReportTransmission(data, length, endpoint);
+
+        //
+        // Clear the flag we use to indicate that we are in the midst of sending
+        // a packet.
+        //
+        callbackDTO->bSendInProgress = false;
+
+        //
+        // Did an error occur while trying to send the data?
+        //
+        if (i32Retcode != -1) {
+                //
+                // No - tell the caller we sent all the bytes provided.
+                //
+                return (length);
+        } else {
+                //
+                // Yes - tell the caller we could not send the data.
+                //
+                return (0);
+        }
+}
+
 /*##########################################################################*/
-
-
 
 static tDeviceInfo deviceInfo;
 
-
-
-
-
-
-
-///**
-// * My initialization routine.
-// */
-//void *lowLevelHIDInit (uint32_t ui32Index, tUSBDHIDDevice *psHIDDevice, CallbackDTO *callbackDTO)
-//{
-//        tConfigDescriptor * pConfigDesc;
-//
-//        uint32_t ui32Loop;
-//
-//        // Initialize the various fields in our instance structure.
-//        callbackDTO->ui8USBConfigured = 0;
-//        callbackDTO->ui8Protocol = USB_HID_PROTOCOL_REPORT;
-//        callbackDTO->sReportIdle.ui8Duration4mS = 125;
-//        callbackDTO->sReportIdle.ui8ReportID = 0;
-//        callbackDTO->sReportIdle.ui32TimeSinceReportmS = 0;
-//        callbackDTO->sReportIdle.ui16TimeTillNextmS = 0;
-//        callbackDTO->ui8LEDStates = 0;
-//        callbackDTO->ui8KeyCount = 0;
-//        callbackDTO->eKeyboardState = HID_KEYBOARD_STATE_UNCONFIGURED;
-//        callbackDTO->psHIDDevice = psHIDDevice;
-//
-//        for(ui32Loop = 0; ui32Loop < KEYB_MAX_CHARS_PER_REPORT; ui32Loop++)
-//        {
-//                callbackDTO->pui8KeysPressed[ui32Loop] = HID_KEYB_USAGE_RESERVED;
-//        }
-//
-//
-//        psHIDDevice->ppsConfigDescriptor = g_ppsHIDConfigDescriptors;
-//
-//        void *pvRetcode = USBDHIDCompositeInit (ui32Index, psHIDDevice, 0);
-//
-//        pConfigDesc = (tConfigDescriptor *) g_pui8KeybDescriptor;
-//        pConfigDesc->bmAttributes = psHIDDevice->ui8PwrAttributes;
-//        pConfigDesc->bMaxPower = (uint8_t) (psHIDDevice->ui16MaxPowermA / 2);
-//
-//        //
-//        // If we initialized the HID layer successfully, pass our device pointer
-//        // back as the return code, otherwise return NULL to indicate an error.
-//        //
-//        if (pvRetcode) {
-//                //
-//                // Initialize the lower layer HID driver and pass it the various
-//                // structures and descriptors necessary to declare that we are a
-//                // keyboard.
-//                //
-//                pvRetcode = USBDHIDInit (ui32Index, psHIDDevice);
-//
-//                return ((void *) psHIDDevice);
-//        }
-//        else {
-//                return ((void *) 0);
-//        }
-//}
-
-void
-UARTStdioConfig(uint32_t ui32PortNum, uint32_t ui32Baud, uint32_t ui32SrcClock)
+void UARTStdioConfig (uint32_t ui32PortNum, uint32_t ui32Baud, uint32_t ui32SrcClock)
 {
-    //
-    // Check the arguments.
-    //
-    ASSERT((ui32PortNum == 0) || (ui32PortNum == 1) ||
-           (ui32PortNum == 2));
+        //
+        // Check the arguments.
+        //
+        ASSERT((ui32PortNum == 0) || (ui32PortNum == 1) ||
+                        (ui32PortNum == 2));
 
-    //
-    // Check to make sure the UART peripheral is present.
-    //
-    if(!SysCtlPeripheralPresent(SYSCTL_PERIPH_UART0))
-    {
-        return;
-    }
+        //
+        // Check to make sure the UART peripheral is present.
+        //
+        if (!SysCtlPeripheralPresent(SYSCTL_PERIPH_UART0)) {
+                return;
+        }
 
-    //
-    // Enable the UART peripheral for use.
-    //
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_UART0);
+        //
+        // Enable the UART peripheral for use.
+        //
+        SysCtlPeripheralEnable(SYSCTL_PERIPH_UART0);
 
-    //
-    // Configure the UART for 115200, n, 8, 1
-    //
-    UARTConfigSetExpClk(UART0_BASE, ui32SrcClock, ui32Baud,
-                            (UART_CONFIG_PAR_NONE | UART_CONFIG_STOP_ONE |
-                             UART_CONFIG_WLEN_8));
+        //
+        // Configure the UART for 115200, n, 8, 1
+        //
+        UARTConfigSetExpClk(UART0_BASE, ui32SrcClock, ui32Baud, (UART_CONFIG_PAR_NONE | UART_CONFIG_STOP_ONE |
+        UART_CONFIG_WLEN_8));
 
-    //
-    // Enable the UART operation.
-    //
-    UARTEnable(UART0_BASE);
+        //
+        // Enable the UART operation.
+        //
+        UARTEnable(UART0_BASE);
 }
 
-void
-ConfigureUART(void)
+void ConfigureUART (void)
 {
-    //
-    // Enable the GPIO Peripheral used by the UART.
-    //
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
+        //
+        // Enable the GPIO Peripheral used by the UART.
+        //
+        SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
 
-    //
-    // Enable UART0
-    //
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_UART0);
+        //
+        // Enable UART0
+        //
+        SysCtlPeripheralEnable(SYSCTL_PERIPH_UART0);
 
-    //
-    // Configure GPIO Pins for UART mode.
-    //
-    GPIOPinConfigure(GPIO_PA0_U0RX);
-    GPIOPinConfigure(GPIO_PA1_U0TX);
-    GPIOPinTypeUART(GPIO_PORTA_BASE, GPIO_PIN_0 | GPIO_PIN_1);
+        //
+        // Configure GPIO Pins for UART mode.
+        //
+        GPIOPinConfigure(GPIO_PA0_U0RX);
+        GPIOPinConfigure(GPIO_PA1_U0TX);
+        GPIOPinTypeUART(GPIO_PORTA_BASE, GPIO_PIN_0 | GPIO_PIN_1);
 
-    //
-    // Use the internal 16MHz oscillator as the UART clock source.
-    //
-    UARTClockSourceSet(UART0_BASE, UART_CLOCK_PIOSC);
+        //
+        // Use the internal 16MHz oscillator as the UART clock source.
+        //
+        UARTClockSourceSet(UART0_BASE, UART_CLOCK_PIOSC);
 
-    //
-    // Initialize the UART for console I/O.
-    //
-    UARTStdioConfig(0, 115200, 16000000);
+        //
+        // Initialize the UART for console I/O.
+        //
+        UARTStdioConfig(0, 115200, 16000000);
 }
 
 
@@ -892,6 +1008,8 @@ int main (void)
         CallbackDTO callbackDTO;
         callbackDTO.deviceInfo = &deviceInfo;
         callbackDTO.requestPending = false;
+        callbackDTO.bSendInProgress = false;
+        callbackDTO.iHIDTxState = eHIDStateIdle; // TODO. To powinno być  na początku "unconfigured"
 
         deviceInfo.psCallbacks = &handlers; //???
         deviceInfo.pui8DeviceDescriptor = deviceDescriptor;
@@ -909,6 +1027,12 @@ int main (void)
         uint8_t ui8ButtonsChanged, ui8Buttons;
         uint32_t color1[3] = { 0xffffu, 0x0000u, 0x0000u };
         uint32_t color2[3] = { 0x0000u, 0xffffu, 0x0000u };
+
+        // Wait until device gets configured
+        for (int i = 0; i < 100000; ++i) {
+                ;
+        }
+
         while (1) {
                 ButtonsPoll(&ui8ButtonsChanged, &ui8Buttons);
 
@@ -930,11 +1054,11 @@ int main (void)
                         {
                                 RGBSet(color1, 0.01);
                                 RGBEnable();
-//                                callbackDTO.pui8Report[0] = 0x00;
-//                                callbackDTO.pui8Report[1] = 0x00;
-//                                callbackDTO.pui8Report[2] = 0x04;
+                                callbackDTO.report1[0] = 0x00;
+                                callbackDTO.report1[1] = 0x00;
+                                callbackDTO.report1[2] = 0x04;
 
-                                callbackDTO.report2[0] = 0x10;
+//                                callbackDTO.report2[0] = 0x10;
                         }
                         else {
                                 RGBDisable ();
@@ -948,22 +1072,25 @@ int main (void)
                         }
 
 
-                        if (USBDHIDTxPacketAvailable(device)) {
+                        if (callbackDTO.iHIDTxState == eHIDStateIdle) {
                                 // Send the report to the host.
-                                callbackDTO.eKeyboardState = HID_KEYBOARD_STATE_SEND;
-
-                                uint32_t ui32Count = USBDHIDReportWrite(device, callbackDTO.pui8Report, KEYB_IN_REPORT_SIZE, true);
+                                uint32_t ui32Count = reportWrite (&callbackDTO, callbackDTO.report1, REPORT1_SIZE, USB_EP_1);
 
                                 if (ui32Count != 0) {
-                                        callbackDTO.bChangeMade = false;
+//                                        callbackDTO.bChangeMade = false;
                                 }
                         }
                         else
                         {
                             // We can't send the report immediately so mark the instance so that
                             // it is sent next time the transmitter is free.
-                            callbackDTO.bChangeMade = true;
+//                            callbackDTO.bChangeMade = true;
                         }
                 }
+
+                for (int i = 0; i < 10000; ++i) {
+                        ;
+                }
+        }
 }
 
