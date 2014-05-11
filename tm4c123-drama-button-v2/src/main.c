@@ -31,6 +31,7 @@
 #include "utils/uartstdio.h"
 #include "driverlib/uart.h"
 #include "driverlib/pin_map.h"
+#include "rgb.h"
 
 /*
  * https://www.microsoft.com/china/whdc/archive/w2kbd.mspx - here are instructions for HID keyboard design with additional miltimedia capabilities.
@@ -61,6 +62,7 @@ struct CallbackDTO {
         tDeviceInfo *deviceInfo;
         uint8_t report1[REPORT1_SIZE];
         uint8_t report2[REPORT2_SIZE];
+        bool requestPending;
 };
 
 typedef struct CallbackDTO CallbackDTO;
@@ -559,7 +561,7 @@ const tCustomHandlers handlers =
     //
     // EndpointHandler
     //
-    0/*onEndpoints*/,
+    0/*onEndpoints*/, TODO
 
     //
     // Device handler.
@@ -585,9 +587,6 @@ static void onGetDescriptor(void *userData, tUSBRequest *psUSBRequest)
 {
     uint32_t ui32Size;
     ASSERT(userData);
-
-    // TODO here we have the interface number that the host is interested in. Probably.
-    // psUSBRequest->wIndex
 
     //
     // Which type of class descriptor are we being asked for?
@@ -684,194 +683,52 @@ static void onRequest(void *userData, tUSBRequest *psUSBRequest)
                 psUSBRequest->wIndex,
                 psUSBRequest->wLength);
 
-    tHIDInstance *psInst;
-    uint8_t ui8Protocol;
-    uint32_t ui32Size, ui32Timeout;
-    uint8_t *pui8Report;
-
     CallbackDTO *callbackDTO = (CallbackDTO *) userData;
 
-    printf ("1\r\n");
     ASSERT(callbackDTO);
-
-//    TODO
-//    //
-//    // Make sure the request was for this interface.
-//    //
-//    if(psUSBRequest->wIndex != psInst->ui8Interface)
-//    {
-//        return;
-//    }
 
     //
     // Determine the type of request.
     //
-    printf ("2\r\n");
-#if 0
     switch(psUSBRequest->bRequest)
     {
         //
         // A Get Report request is used by the host to poll a device for its
         // current state.
-        //
+        // The only required request.
         case USBREQ_GET_REPORT:
         {
                 printf ("set get report");
             //
             // Need to ACK the data on end point 0 in this case.
             //
-            USBDevEndpointDataAck(psInst->ui32USBBase, USB_EP_0, true);
+            USBDevEndpointDataAck(USB0_BASE, USB_EP_0, true);
 
             //
             // ..then send back the requested report.
             //
 
-//            TODO
-//            psInst->bGetRequestPending = true;
+            callbackDTO->requestPending = true;
 
-            USBDCDSendDataEP0 (0, callbackDTO->report1, REPORT1_SIZE);
+            if (psUSBRequest->wIndex == 1) {
+                USBDCDSendDataEP0 (0, callbackDTO->report1, REPORT1_SIZE);
+            }
+            if (psUSBRequest->wIndex == 2) {
+                USBDCDSendDataEP0 (0, callbackDTO->report2, REPORT2_SIZE);
+            }
+
             break;
         }
-
-        //
-        // A set IDLE request has been made.  This indicates to us how often a
-        // given report should be sent back to the host in the absence of any
-        // change in state of the device.
-        //
-        case USBREQ_SET_IDLE:
-        {
-                printf ("set idle");
-            //
-            // Set the idle timeout for the requested report(s).
-            //
-//            SetIdleTimeout(psHIDDevice, psUSBRequest->wValue & 0xFF, (psUSBRequest->wValue >> 8) & 0xFF);
-
-            //
-            // Need to ACK the data on end point 0 in this case.
-            //
-            USBDevEndpointDataAck(psInst->ui32USBBase, USB_EP_0, true);
-            break;
-        }
-
-        //
-        // A get IDLE request has been made.  This request queries the current
-        // idle timeout for a given report.
-        //
-//        case USBREQ_GET_IDLE:
-//        {
-//            //
-//            // Determine the timeout for the requested report.
-//            //
-//            ui32Timeout = GetIdleTimeout(psHIDDevice, psUSBRequest->wValue);
-//
-//            if(ui32Timeout != HID_NOT_FOUND)
-//            {
-//                //
-//                // Need to ACK the data on end point 0 in this case.
-//                //
-//                USBDevEndpointDataAck(psInst->ui32USBBase, USB_EP_0, true);
-//
-//                //
-//                // Send our response to the host.
-//                //
-//                USBDCDSendDataEP0(0, (uint8_t *)&ui32Timeout, 1);
-//            }
-//            else
-//            {
-//                //
-//                // The report ID was not found so stall the endpoint.
-//                //
-//                USBDCDStallEP0(0);
-//            }
-//            break;
-//        }
-
-        //
-        // Set either boot or report protocol for reports sent from the device.
-        // This is only supported by devices in the boot subclass.
-        //
-//        case USBREQ_SET_PROTOCOL:
-//        {
-//            if(psHIDDevice->ui8Subclass == USB_HID_SCLASS_BOOT)
-//            {
-//                //
-//                // We need to ACK the data on end point 0 in this case.
-//                //
-//                USBDevEndpointDataAck(psInst->ui32USBBase, USB_EP_0, true);
-//
-//                //
-//                // We are a boot subclass device so pass this on to the
-//                // application.
-//                //
-//                psHIDDevice->pfnRxCallback(psHIDDevice->pvRxCBData,
-//                                           USBD_HID_EVENT_SET_PROTOCOL,
-//                                           psUSBRequest->wValue,
-//                                           (void *)0);
-//            }
-//            else
-//            {
-//                //
-//                // This is not a boot subclass device so stall the endpoint to
-//                // show that we don't support this request.
-//                //
-//                USBDCDStallEP0(0);
-//            }
-//            break;
-//        }
-
-        //
-        // Inform the host of the protocol, boot or report, that is currently
-        // in use.  This is only supported by devices in the boot subclass.
-        //
-//        case USBREQ_GET_PROTOCOL:
-//        {
-//            if(psHIDDevice->ui8Subclass == USB_HID_SCLASS_BOOT)
-//            {
-//                //
-//                // We need to ACK the data on end point 0 in this case.
-//                //
-//                USBDevEndpointDataAck(psInst->ui32USBBase, USB_EP_0, true);
-//
-//                //
-//                // We are a boot subclass device so pass this on to the
-//                // application callback to get the answer.
-//                //
-//                ui8Protocol = (uint8_t)psHIDDevice->pfnRxCallback(
-//                    psHIDDevice->pvRxCBData, USBD_HID_EVENT_GET_PROTOCOL, 0,
-//                    (void *)0);
-//
-//                //
-//                // Send our response to the host.
-//                //
-//                USBDCDSendDataEP0(0, (uint8_t *)&ui8Protocol, 1);
-//            }
-//            else
-//            {
-//                //
-//                // This is not a boot subclass device so stall the endpoint to
-//                // show that we don't support this request.
-//                //
-//                USBDCDStallEP0(0);
-//            }
-//            break;
-//        }
 
         //
         // This request was not recognized so stall.
         //
         default:
         {
-                printf ("default");
-
-//            USBDCDStallEP0(0);
-                USBDevEndpointDataAck(psInst->ui32USBBase, USB_EP_0, true);
-
+            USBDCDStallEP0(0);
             break;
         }
     }
-#endif
-    USBDevEndpointDataAck(psInst->ui32USBBase, USB_EP_0, true);
-    printf ("3");
 }
 
 /*##########################################################################*/
@@ -1034,6 +891,7 @@ int main (void)
 
         CallbackDTO callbackDTO;
         callbackDTO.deviceInfo = &deviceInfo;
+        callbackDTO.requestPending = false;
 
         deviceInfo.psCallbacks = &handlers; //???
         deviceInfo.pui8DeviceDescriptor = deviceDescriptor;
@@ -1047,8 +905,65 @@ int main (void)
         USBDCDInit (0, &deviceInfo, &callbackDTO);
 //        GPIOPinWrite (GPIO_PORTF_BASE, GPIO_PIN_2, GPIO_PIN_2);
 
+        uint32_t ui32Loop;
+        uint8_t ui8ButtonsChanged, ui8Buttons;
+        uint32_t color1[3] = { 0xffffu, 0x0000u, 0x0000u };
+        uint32_t color2[3] = { 0x0000u, 0xffffu, 0x0000u };
         while (1) {
+                ButtonsPoll(&ui8ButtonsChanged, &ui8Buttons);
 
-        }
+
+//                if(ui8Buttons & RIGHT_BUTTON)
+//                {
+//                        RGBSet (color2, 0.01);
+//                        RGBEnable();
+//                }
+//                else {
+//                        RGBDisable ();
+//                }
+
+                if (ui8ButtonsChanged) {
+
+
+                        // TODO obdługa zupełnie inaczej.
+                        if(ui8Buttons & LEFT_BUTTON)
+                        {
+                                RGBSet(color1, 0.01);
+                                RGBEnable();
+//                                callbackDTO.pui8Report[0] = 0x00;
+//                                callbackDTO.pui8Report[1] = 0x00;
+//                                callbackDTO.pui8Report[2] = 0x04;
+
+                                callbackDTO.report2[0] = 0x10;
+                        }
+                        else {
+                                RGBDisable ();
+                                for (int i = 0; i < REPORT1_SIZE; ++i) {
+                                        callbackDTO.report1[i] = 0x00;
+                                }
+
+                                for (int i = 0; i < REPORT2_SIZE; ++i) {
+                                        callbackDTO.report2[i] = 0x00;
+                                }
+                        }
+
+
+                        if (USBDHIDTxPacketAvailable(device)) {
+                                // Send the report to the host.
+                                callbackDTO.eKeyboardState = HID_KEYBOARD_STATE_SEND;
+
+                                uint32_t ui32Count = USBDHIDReportWrite(device, callbackDTO.pui8Report, KEYB_IN_REPORT_SIZE, true);
+
+                                if (ui32Count != 0) {
+                                        callbackDTO.bChangeMade = false;
+                                }
+                        }
+                        else
+                        {
+                            // We can't send the report immediately so mark the instance so that
+                            // it is sent next time the transmitter is free.
+                            callbackDTO.bChangeMade = true;
+                        }
+                }
 }
 
