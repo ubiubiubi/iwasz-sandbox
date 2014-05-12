@@ -4,6 +4,11 @@
  *  ~~~~~~~~                                                                *
  *  License : see COPYING file for details.                                 *
  *  ~~~~~~~~~                                                               *
+ *                                                                          *
+ *  Lots of code taken from TI:                                             *
+ *  Copyright (c) 2012-2014 Texas Instruments Incorporated.                 *
+ *  All rights reserved.                                                    *
+ *                                                                          *
  ****************************************************************************/
 
 #include <stdint.h>
@@ -22,11 +27,8 @@
 #include "usblib/device/usbdevice.h"
 #include "usblib/device/usbdhid.h"
 #include "usblib/device/usbdhidkeyb.h"
-#include "hidDescriptors.h"
-#include "deviceDescriptors.h"
 #include "driverlib/debug.h"
 #include "buttons.h"
-#include "callbacks.h"
 #include "utils/uartstdio.h"
 #include "driverlib/uart.h"
 #include "driverlib/pin_map.h"
@@ -726,25 +728,17 @@ static void onEndpointsActivity (void *userData, uint32_t ui32Status)
         CallbackDTO *callbackDTO = (CallbackDTO *) userData;
         ASSERT(callbackDTO);
 
-        //
-        // Handler for the interrupt IN data endpoint.
-        //
-//        if (ui32Status & (1 << USBEPToIndex(psInst->ui8INEndpoint))) {
-//                ProcessDataToHost(pvHIDInstance, ui32Status);
-//        }
-
-        if (ui32Status & USB_EP_1) {
+        if (ui32Status & 1 << USBEPToIndex (USB_EP_1)) {
                 uint32_t ui32EPStatus = USBEndpointStatus (USB0_BASE, USB_EP_1);
                 USBDevEndpointStatusClear(USB0_BASE, USB_EP_1, ui32EPStatus);
                 callbackDTO->iHIDTxState1 = eHIDStateIdle;
         }
 
-        if (ui32Status & USB_EP_2) {
+        if (ui32Status & 1 << USBEPToIndex (USB_EP_2)) {
                 uint32_t ui32EPStatus = USBEndpointStatus (USB0_BASE, USB_EP_2);
                 USBDevEndpointStatusClear(USB0_BASE, USB_EP_2, ui32EPStatus);
                 callbackDTO->iHIDTxState2 = eHIDStateIdle;
         }
-
 }
 
 /**
@@ -844,8 +838,7 @@ void uartStdioConfig (uint32_t ui32PortNum, uint32_t ui32Baud, uint32_t ui32SrcC
         //
         // Check the arguments.
         //
-        ASSERT((ui32PortNum == 0) || (ui32PortNum == 1) ||
-                        (ui32PortNum == 2));
+        ASSERT((ui32PortNum == 0) || (ui32PortNum == 1) || (ui32PortNum == 2));
 
         //
         // Check to make sure the UART peripheral is present.
@@ -949,13 +942,15 @@ int main (void)
                 if (ui8ButtonsChanged) {
                         if(ui8Buttons & LEFT_BUTTON)
                         {
-//                                callbackDTO.report1[0] = 0x00;
-//                                callbackDTO.report1[1] = 0x00;
-//                                callbackDTO.report1[2] = 0x04;
+                                printf ("pressed\r\n");
+                                callbackDTO.report1[0] = 0x00;
+                                callbackDTO.report1[1] = 0x00;
+                                callbackDTO.report1[2] = 0x04;
 
                                 callbackDTO.report2[0] = 0x10;
                         }
                         else {
+                                printf ("released\r\n");
                                 for (int i = 0; i < REPORT1_SIZE; ++i) {
                                         callbackDTO.report1[i] = 0x00;
                                 }
@@ -965,9 +960,11 @@ int main (void)
                                 }
                         }
 
-                        if (callbackDTO.iHIDTxState1 == eHIDStateIdle) {
-                                // Send the report to the host.
+//                        if (callbackDTO.iHIDTxState1 == eHIDStateIdle) {
 //                                reportWrite (&callbackDTO, callbackDTO.report1, REPORT1_SIZE, USB_EP_1);
+//                        }
+
+                        if (callbackDTO.iHIDTxState2 == eHIDStateIdle) {
                                 reportWrite (&callbackDTO, callbackDTO.report2, REPORT2_SIZE, USB_EP_2);
                         }
                 }
