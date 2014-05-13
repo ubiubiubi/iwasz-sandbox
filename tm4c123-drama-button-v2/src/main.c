@@ -44,8 +44,21 @@ void __error__ (char *pcFilename, unsigned long ulLine)
 
 #define VENDOR_ID 0x20a0
 #define PRODUCT_ID 0x41ff
+
+/**
+ * Size of report on interface 1
+ */
 #define REPORT1_SIZE 8
+
+/**
+ * Size of report on interface 2
+ */
 #define REPORT2_SIZE 1
+
+/**
+ * Size od config data sent by the host.
+ */
+#define INCOMING_SETUP_DATA_SIZE 9
 
 struct CallbackDTO {
         tDeviceInfo *deviceInfo;
@@ -53,6 +66,7 @@ struct CallbackDTO {
         uint8_t report2[REPORT2_SIZE];
         uint8_t iHIDTxState1;
         uint8_t iHIDTxState2;
+        uint8_t incoming[INCOMING_SETUP_DATA_SIZE];
 };
 
 typedef struct CallbackDTO CallbackDTO;
@@ -483,6 +497,7 @@ static void onGetDescriptor(void *userData, tUSBRequest *psUSBRequest);
 static void onRequest(void *userData, tUSBRequest *psUSBRequest);
 static void onEndpointsActivity (void *pvHIDInstance, uint32_t ui32Status);
 static void onConfigChange (void *pvHIDInstance, uint32_t ui32Info);
+static void onDataReceivedEP0 (void *userData, uint32_t ui32Info);
 
 static int32_t scheduleReportTransmission (uint8_t *data, uint16_t len, uint32_t endpoint);
 
@@ -516,7 +531,7 @@ const tCustomHandlers handlers =
     //
     // DataReceived
     //
-    0/*onEP0DataReceived*/,
+    onDataReceivedEP0,
 
     //
     // DataSentCallback
@@ -668,49 +683,67 @@ static void onRequest(void *userData, tUSBRequest *psUSBRequest)
                 psUSBRequest->wIndex,
                 psUSBRequest->wLength);
 
-    CallbackDTO *callbackDTO = (CallbackDTO *) userData;
-    ASSERT(callbackDTO);
+        CallbackDTO *callbackDTO = (CallbackDTO *) userData;
+        ASSERT(callbackDTO);
 
-    //
-    // Determine the type of request.
-    //
-    switch(psUSBRequest->bRequest)
-    {
-        //
-        // A Get Report request is used by the host to poll a device for its
-        // current state.
-        // The only required request.
-        case USBREQ_GET_REPORT:
-        {
-                printf ("set get report");
-            //
-            // Need to ACK the data on end point 0 in this case.
-            //
-            USBDevEndpointDataAck(USB0_BASE, USB_EP_0, true);
-
-            //
-            // ..then send back the requested report.
-            //
-
-            if (psUSBRequest->wIndex == 1) {
-                USBDCDSendDataEP0 (0, callbackDTO->report1, REPORT1_SIZE);
-            }
-            if (psUSBRequest->wIndex == 2) {
-                USBDCDSendDataEP0 (0, callbackDTO->report2, REPORT2_SIZE);
-            }
-
-            break;
+        if (psUSBRequest->bmRequestType & USB_RTYPE_VENDOR &&
+            psUSBRequest->bmRequestType & USB_RTYPE_INTERFACE) {
+//                printf ("+Waiting for data\r\n");
+                // This first parameter is asserted to always be 0. This is a bug in the TI's usblib i think.
+                USBDCDRequestDataEP0 (0, callbackDTO->incoming, INCOMING_SETUP_DATA_SIZE);
+                USBDevEndpointDataAck(USB0_BASE, USB_EP_0, false);
+                return;
         }
 
-        //
+        switch (psUSBRequest->bRequest) {
+        /*
+         * A Get Report request is used by the host to poll a device for its
+         * current state. The only required request.
+         */
+        case USBREQ_GET_REPORT: {
+                // Need to ACK the data on end point 0 in this case.
+                USBDevEndpointDataAck(USB0_BASE, USB_EP_0, true);
+
+                // ..then send back the requested report.
+                if (psUSBRequest->wIndex == 1) {
+                        USBDCDSendDataEP0(0, callbackDTO->report1, REPORT1_SIZE);
+                }
+                if (psUSBRequest->wIndex == 2) {
+                        USBDCDSendDataEP0(0, callbackDTO->report2, REPORT2_SIZE);
+                }
+
+                break;
+        }
+
         // This request was not recognized so stall.
-        //
-        default:
-        {
-            USBDCDStallEP0(0);
-            break;
+        default: {
+                USBDCDStallEP0(0);
+                break;
         }
-    }
+        }
+}
+
+/**
+ * Gets called when data from host to the device has arrived after USBDCDRequestDataEP0
+ * has been called.
+ */
+static void onDataReceivedEP0 (void *userData, uint32_t ui32Info)
+{
+
+        CallbackDTO *callbackDTO = (CallbackDTO *) userData;
+        ASSERT(callbackDTO);
+
+#if 1
+        printf ("onDataReceivedEP0 len (%u) [", (unsigned int)ui32Info);
+
+        for (int i = 0; i < INCOMING_SETUP_DATA_SIZE; ++i) {
+                printf ("%d, ", callbackDTO->incoming[i]);
+        }
+
+        printf ("]\r\n");
+#endif
+
+        USBDevEndpointDataAck(USB0_BASE, USB_EP_0, true);
 }
 
 //*****************************************************************************
@@ -723,7 +756,7 @@ static void onRequest(void *userData, tUSBRequest *psUSBRequest)
 //*****************************************************************************
 static void onEndpointsActivity (void *userData, uint32_t ui32Status)
 {
-        printf ("onEndpointsActivity ui32Status : %x\r\n", ui32Status);
+        printf ("onEndpointsActivity ui32Status : %x\r\n", (unsigned int)ui32Status);
 
         CallbackDTO *callbackDTO = (CallbackDTO *) userData;
         ASSERT(callbackDTO);
