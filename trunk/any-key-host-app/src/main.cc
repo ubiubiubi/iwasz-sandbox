@@ -13,6 +13,8 @@
 #include <cstring>
 #include <boost/lexical_cast.hpp>
 
+#define OUTGOING_SETUP_DATA_SIZE 9
+
 const int ISO_PACKET_SIZE = 64;
 const int ENCODERS_NUMBER = 32;
 bool doExit = false;
@@ -332,9 +334,11 @@ static void /*LIBUSB_CALL*/ cb_xfr (libusb_transfer *xfr)
 
 void zeroButtonClicked (GtkButton *button, gpointer user_data)
 {
+        static uint8_t buffer[OUTGOING_SETUP_DATA_SIZE] = { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'j' };
+
         int ret = libusb_control_transfer(devh,
                         LIBUSB_RECIPIENT_INTERFACE | LIBUSB_REQUEST_TYPE_VENDOR,
-                        0x00, 0x00, 0x00, NULL, 0x00, 500);
+                        0x00, 0x00, 0x00, buffer, OUTGOING_SETUP_DATA_SIZE, 500);
 
         if (ret >= 0) {
                 return;
@@ -485,8 +489,8 @@ int main (int argc, char **argv)
 //        g_idle_add(guiThread, NULL);
         initUsb();
         zeroButtonClicked (NULL, 0);
-        gtk_widget_show_all (GTK_WIDGET (window));
-        gtk_main();
+//        gtk_widget_show_all (GTK_WIDGET (window));
+//        gtk_main();
         closeUsb();
 
         return 0;
