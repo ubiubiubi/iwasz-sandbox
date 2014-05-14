@@ -10,17 +10,24 @@
 #define USBSERVICE_H_
 
 #include <exception>
+#include <vector>
+#include <cstdint>
 // TODO BOOST_LOG
 #include <iostream>
 
 /**
- * USB stuff.
+ * USB stuff for anyKey.
  */
-class UsbService {
+class AnyKeyUsbService {
 public:
 
-        UsbService ();
-        ~UsbService ();
+        typedef std::vector <uint8_t> Buffer;
+
+        AnyKeyUsbService ();
+        ~AnyKeyUsbService ();
+
+        AnyKeyUsbService (AnyKeyUsbService const &) = delete;
+        AnyKeyUsbService &operator= (AnyKeyUsbService const &) = delete;
 
         /**
          * Connects to the device, and claims its interface.
@@ -36,6 +43,15 @@ public:
          * Prints all the available USB devices connected to the host we are running on.
          */
         void printDevs ();
+
+        /**
+         * USB event loop.
+         */
+        void loop ();
+
+        void transmitConfiguration (Buffer const &buf);
+        void receiveConfiguration_deprecated () const;
+        Buffer receiveConfiguration () const;
 
 private:
 

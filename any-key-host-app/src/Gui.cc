@@ -33,6 +33,12 @@ Gui::~Gui ()
 
 void Gui::init (int argc, char **argv)
 {
+        auto &service = guard.service;
+        service.transmitConfiguration ({1, 2, 3, 4, 5, 6, 7, 8, 9});
+        service.receiveConfiguration ();
+//        service.loop ();
+        return;
+
         GObject *quitButton;
 
         gtk_init (&argc, &argv);
