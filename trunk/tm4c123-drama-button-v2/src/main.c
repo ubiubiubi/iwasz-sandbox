@@ -14,6 +14,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <string.h>
 #include "inc/tm4c123gh6pm.h"
 #include "driverlib/sysctl.h"
 #include "driverlib/gpio.h"
@@ -32,6 +33,7 @@
 #include "utils/uartstdio.h"
 #include "driverlib/uart.h"
 #include "driverlib/pin_map.h"
+#include "driverlib/eeprom.h"
 
 #ifdef DEBUG
 void __error__ (char *pcFilename, unsigned long ulLine)
@@ -56,17 +58,48 @@ void __error__ (char *pcFilename, unsigned long ulLine)
 #define REPORT2_SIZE 1
 
 /**
- * Size od config data sent by the host.
+ * Remember to set this to max (REPORT1_SIZE, REPORT2_SIZE)
  */
-#define INCOMING_SETUP_DATA_SIZE 9
+#define REPORT_BUFFER_SIZE REPORT1_SIZE
+
+#define B_REQUEST_SET_ANY_KEY_SETUP 0x00
+#define B_REQUEST_GET_ANY_KEY_SETUP 0x01
+
+/**
+ * Infromation regaring report to be sent on every keypress. This structure is
+ * sent directly from the host-application (on EP0), stored in the EEprom here
+ * in the device, and resubmited to the host (on EP1 or EP2) after every button
+ * press.
+ */
+struct ReportConfig {
+        /**
+         * Which interface chould send the report? This should be the same value
+         * as interface index provided in the interface descriptor. We have 2 interfaces
+         * here : 0 is the ordinary keyboard (like QWERTY keyboards), and the second
+         * interface (index 1) is responsible for "multimedia" buttons.
+         */
+        uint8_t interface;
+
+        uint8_t report[REPORT_BUFFER_SIZE];
+};
+
+typedef struct ReportConfig ReportConfig;
+
+/**
+ * Size od config data sent by the host.
+ * http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0067d/Babjddhe.html :
+ * "A field with a char type is aligned to the next available byte."
+ */
+#define ANY_KEY_SETUP_DATA_SIZE sizeof (ReportConfig)
 
 struct CallbackDTO {
         tDeviceInfo *deviceInfo;
-        uint8_t report1[REPORT1_SIZE];
-        uint8_t report2[REPORT2_SIZE];
+//        uint8_t report1[REPORT1_SIZE];
+//        uint8_t report2[REPORT2_SIZE];
+        ReportConfig reportConfig;
         uint8_t iHIDTxState1;
         uint8_t iHIDTxState2;
-        uint8_t incoming[INCOMING_SETUP_DATA_SIZE];
+        uint8_t incoming[ANY_KEY_SETUP_DATA_SIZE];
 };
 
 typedef struct CallbackDTO CallbackDTO;
@@ -688,17 +721,26 @@ static void onRequest(void *userData, tUSBRequest *psUSBRequest)
 
         if (psUSBRequest->bmRequestType & USB_RTYPE_VENDOR &&
             psUSBRequest->bmRequestType & USB_RTYPE_INTERFACE) {
-//                printf ("+Waiting for data\r\n");
-                // This first parameter is asserted to always be 0. This is a bug in the TI's usblib i think.
-                USBDCDRequestDataEP0 (0, callbackDTO->incoming, INCOMING_SETUP_DATA_SIZE);
-                USBDevEndpointDataAck(USB0_BASE, USB_EP_0, false);
+                if (psUSBRequest->bRequest == B_REQUEST_SET_ANY_KEY_SETUP) {
+                        // This first parameter is asserted to always be 0. This is a bug in the TI's usblib i think.
+                        USBDCDRequestDataEP0 (0, callbackDTO->incoming, ANY_KEY_SETUP_DATA_SIZE);
+                        USBDevEndpointDataAck(USB0_BASE, USB_EP_0, false);
+                }
+                else if (psUSBRequest->bRequest == B_REQUEST_GET_ANY_KEY_SETUP) {
+                        printf ("Sending the configuration back to the host\r\n");
+                        USBDevEndpointDataAck(USB0_BASE, USB_EP_0, true);
+                        uint8_t buffer[REPORT1_SIZE + REPORT2_SIZE] = { 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x99, 0x88, 0x77 };
+//                        memcpy (buffer, callbackDTO->report1, REPORT1_SIZE);
+//                        memcpy (buffer + REPORT1_SIZE, callbackDTO->report2, REPORT2_SIZE);
+                        USBDCDSendDataEP0 (0, buffer, sizeof (buffer));
+                }
                 return;
         }
 
         switch (psUSBRequest->bRequest) {
         /*
          * A Get Report request is used by the host to poll a device for its
-         * current state. The only required request.
+         * current state. The only required request for non boot-device.
          */
         case USBREQ_GET_REPORT: {
                 // Need to ACK the data on end point 0 in this case.
@@ -711,6 +753,9 @@ static void onRequest(void *userData, tUSBRequest *psUSBRequest)
                 if (psUSBRequest->wIndex == 2) {
                         USBDCDSendDataEP0(0, callbackDTO->report2, REPORT2_SIZE);
                 }
+
+
+//                USBDCDSendDataEP0(0, callbackDTO->reportConfig.report, REPORT2_SIZE);
 
                 break;
         }
@@ -736,7 +781,7 @@ static void onDataReceivedEP0 (void *userData, uint32_t ui32Info)
 #if 1
         printf ("onDataReceivedEP0 len (%u) [", (unsigned int)ui32Info);
 
-        for (int i = 0; i < INCOMING_SETUP_DATA_SIZE; ++i) {
+        for (int i = 0; i < ANY_KEY_SETUP_DATA_SIZE; ++i) {
                 printf ("%d, ", callbackDTO->incoming[i]);
         }
 
@@ -927,6 +972,38 @@ void configureUART (void)
         uartStdioConfig(0, 115200, 16000000);
 }
 
+/*##########################################################################*/
+
+void initEeprom (void)
+{
+        SysCtlPeripheralEnable (SYSCTL_PERIPH_EEPROM0);
+        uint32_t ret = EEPROMInit ();
+
+        if (ret != EEPROM_INIT_OK) {
+#ifdef DEBUG
+                printf ("initEeprom failed. Error code %d which translates to : ");
+
+                switch (ret) {
+                case EEPROM_INIT_RETRY:
+                        printf ("EEPROM_INIT_RETRY\r\n");
+                        break;
+
+                case EEPROM_INIT_ERROR:
+                        printf ("EEPROM_INIT_ERROR\r\n");
+                        break;
+                }
+#endif
+                return;
+        }
+
+        printf ("EEprom init OK. Size : %d B\r\n", EEPROMSizeGet());
+}
+
+/*##########################################################################*/
+
+
+
+//EEPROMRead().
 /**
  *
  */
@@ -935,7 +1012,7 @@ int main (void)
         SysCtlClockSet (SYSCTL_SYSDIV_4 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN | SYSCTL_XTAL_16MHZ);
 
         configureUART ();
-        printf ("tm4c123-drama-button starts\r\n");
+        printf ("Any key device starts. tm4c123 micro.\r\n");
 
         // Enable the GPIO port that is used for the on-board LED.
         SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
@@ -948,6 +1025,7 @@ int main (void)
         GPIOPinTypeUSBAnalog(GPIO_PORTD_AHB_BASE, GPIO_PIN_4 | GPIO_PIN_5);
 
         ButtonsInit();
+        initEeprom ();
 
         /****************************************************************************/
 
