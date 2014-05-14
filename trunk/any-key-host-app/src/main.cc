@@ -174,22 +174,6 @@ void initUsb ()
         }
 }
 
-void closeUsb ()
-{
-        if (!libusb_release_interface(devh, 0)) {
-                std::cerr << "Interface released." << std::endl;
-        } else {
-                std::cerr << "Error releasing interface." << std::endl;
-        }
-
-        if (devh) {
-                libusb_close(devh);
-                std::cerr << "Device closed" << std::endl;
-        }
-
-        libusb_exit (NULL);
-}
-
 void usbThread ()
 {
         initUsb();
@@ -203,55 +187,6 @@ void usbThread ()
                 }
         }
 }
-
-//void playThread ()
-//{
-//        size_t numberOfFrames = dbBuffer.size () / ISO_PACKET_SIZE;
-//
-//        std::cerr << "Play buffer here. I have exactly # frames : " << numberOfFrames << std::endl;
-//
-//        auto it = dbBuffer.begin ();
-//
-//        for (size_t i = 0; i < numberOfFrames; ++i) {
-//                {
-//                        std::lock_guard < std::mutex > guard (bufferMutex);
-//                        auto i = outputBuf.begin ();
-//                        std::copy (it, it + ISO_PACKET_SIZE, i);
-////                        std::cerr << (int)*it << std::endl;
-//                        it += ISO_PACKET_SIZE;
-//                }
-//                usleep (10 * 1000);
-//        }
-//}
-
-//gboolean guiThread (gpointer user_data)
-//{
-//        {
-//                std::lock_guard < std::mutex > guard(bufferMutex);
-//
-//                for (int i = 0; i < ENCODERS_NUMBER; ++i) {
-//                        int bufPos = i * 2;
-//                        int16_t val =
-//                                        static_cast<int16_t>(outputBuf[bufPos]
-//                                                        | (static_cast<uint16_t>(outputBuf[bufPos
-//                                                                        + 1])
-//                                                                        << 8));
-//                        gtk_adjustment_set_value(adjustment[i], val);
-//                }
-//
-////                        printf ("[");
-////                        for (unsigned int i = 0; i < ISO_PACKET_SIZE; ++i) {
-////                                printf("%02x", buf[i]);
-////                        }
-////                        printf("]%d %d\n", buf[16], buf[17]);
-//        }
-//
-////                for (int i = 0; i < ENCODERS_NUMBER; ++i) {
-////                        gtk_adjustment_set_value (adjustment, buffer[0]);
-////                }
-//
-//        return G_SOURCE_CONTINUE;
-//}
 
 static void /*LIBUSB_CALL*/ cb_xfr (libusb_transfer *xfr)
 {
@@ -334,37 +269,6 @@ static void /*LIBUSB_CALL*/ cb_xfr (libusb_transfer *xfr)
         }
 }
 
-void zeroButtonClicked (GtkButton *button, gpointer user_data)
-{
-        static uint8_t buffer[OUTGOING_SETUP_DATA_SIZE] = { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'j' };
-
-        int ret = libusb_control_transfer(devh,
-                        LIBUSB_RECIPIENT_INTERFACE | LIBUSB_REQUEST_TYPE_VENDOR,
-                        0x00, 0x00, 0x00, buffer, OUTGOING_SETUP_DATA_SIZE, 500);
-
-        if (ret >= 0) {
-                return;
-        }
-
-        switch (ret) {
-        case LIBUSB_ERROR_TIMEOUT:
-                std::cerr << "Timeout reached when setting HUB to zero" << std::endl;
-                break;
-
-        case LIBUSB_ERROR_PIPE:
-                std::cerr << "The control request was not supported by the device" << std::endl;
-                break;
-
-        case LIBUSB_ERROR_NO_DEVICE:
-                std::cerr << "The device has been disconnected" << std::endl;
-                break;
-
-        default:
-                std::cerr << "Undefined error : " << ret << std::endl;
-                break;
-        }
-}
-
 void popupError (std::string const &str)
 {
 
@@ -381,121 +285,21 @@ void popupError (std::string const &str)
 
 }
 
-//void saveButtonClicked (GtkButton *button, gpointer user_data)
-//{
-//        if (usbRunning.load ()) {
-//                popupError ("Wyłącz USB najpierew!");
-//        }
-//
-//        pqxx::work tx (dbConnection);
-//        std::lock_guard < std::mutex > guard(dbBufferMutex);
-//        tx.exec ("INSERT INTO examination (data) VALUES ('" + tx.esc_raw(dbBuffer.data (), dbBuffer.size ()) + "')");
-//        tx.commit ();
-//
-//        dbBuffer.clear ();
-//}
-
-//void playButtonClicked (GtkButton *button, gpointer user_data)
-//{
-//        if (usbRunning.load ()) {
-//                popupError ("Wyłącz USB najpierew!");
-//        }
-//
-//        pqxx::work tx (dbConnection);
-//
-//        pqxx::result r = tx.exec("SELECT max (id) from examination");
-//
-//        if (r.size () != 1) {
-//                popupError ("Nie udało sie counta zrobić!");
-//                return;
-//        }
-//
-//        int examinationId;
-//
-//        try {
-//                examinationId = r[0][0].as<int> ();
-//        }
-//        catch (pqxx::conversion_error const &) {
-//                popupError ("Nie ma nic w bazie!!!!!");
-//                return;
-//        }
-//
-//        r = tx.exec("SELECT data from examination where id = " + tx.quote(examinationId));
-//
-//        if (r.size () != 1) {
-//                popupError ("Nie udało sie pobrać danych!");
-//                return;
-//        }
-//
-//        pqxx::binarystring blob(r[0][0]);
-//        uint8_t const *ptr = static_cast <uint8_t const *> (blob.data());
-//        size_t len = blob.size();
-//
-//        std::cout << "Size od data retrieved " << len << std::endl;
-//
-//        dbBuffer.clear ();
-//        std::copy (ptr, ptr + len, std::back_inserter (dbBuffer));
-//
-//        std::thread t(playThread);
-//        t.detach();
-//}
-
-void usbButtonToggled (GtkToggleButton *button, gpointer user_data)
-{
-        bool state = gtk_toggle_button_get_active (button);
-//        usbRunning.store (state);
-//        std::cerr << "USB state : " << usbRunning.load () << std::endl;
-}
-
 /**
  *
  */
 int main (int argc, char **argv)
 {
-//        GtkBuilder *builder;
-//        GObject *quitButton;
-//
-//        gtk_init(&argc, &argv);
-//
-//        /* Construct a GtkBuilder instance and load our UI description */
-//        builder = gtk_builder_new();
-//        gtk_builder_add_from_file(builder, "keyboard.ui", NULL);
-//
-//        /* Connect signal handlers to the constructed widgets. */
-//        window = gtk_builder_get_object(builder, "window");
-//        g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
-//
-////        quitButton = gtk_builder_get_object(builder, "quit");
-////        g_signal_connect(quitButton, "clicked", G_CALLBACK(gtk_main_quit), NULL);
-////
-////        GObject *zeroButton = gtk_builder_get_object(builder, "zero");
-////        g_signal_connect(zeroButton, "clicked", G_CALLBACK(zeroButtonClicked), NULL);
-////
-////        GObject *saveButton = gtk_builder_get_object(builder, "save");
-////        g_signal_connect(saveButton, "clicked", G_CALLBACK(saveButtonClicked), NULL);
-////
-////        GObject *playButton = gtk_builder_get_object(builder, "play");
-////        g_signal_connect(playButton, "clicked", G_CALLBACK(playButtonClicked), NULL);
-////
-////        GObject *usbCheckbox = gtk_builder_get_object(builder, "usbRunning");
-////        g_signal_connect(usbCheckbox, "toggled", G_CALLBACK(usbButtonToggled), NULL);
-//
-//        //        GtkScale *scale = GTK_SCALE (gtk_builder_get_object (builder, "scale1"));
-////        for (int i = 0; i < ENCODERS_NUMBER; ++i) {
-////                adjustment[i] = GTK_ADJUSTMENT(gtk_builder_get_object(builder, (std::string("adjustment") + boost::lexical_cast <std::string> (i + 1)).c_str()));
-////        }
-//
-////        std::thread t(usbThread);
-////        t.detach();
-////
-////        g_idle_add(guiThread, NULL);
-//        initUsb();
-//        zeroButtonClicked (NULL, 0);
-////        gtk_widget_show_all (GTK_WIDGET (window));
-////        gtk_main();
-//        closeUsb();
+        try {
+                Gui gui;
+                gui.init (argc, argv);
+        }
+        catch (std::exception const &e) {
+                std::cerr << "An exception has occured in ~UsbServiceGuard. Message : " << e.what () << std::endl;
+        }
+        catch (...) {
+                std::cerr << "Unknown exception has occured in ~UsbServiceGuard." << std::endl;
+        }
 
-        Gui gui;
-        gui.init (argc, argv);
         return 0;
 }

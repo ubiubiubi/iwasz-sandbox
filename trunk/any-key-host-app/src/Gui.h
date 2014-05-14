@@ -9,7 +9,7 @@
 #ifndef GUI_H_
 #define GUI_H_
 
-#include "UsbService.h"
+#include "AnyKeyUsbService.h"
 
 class Gui {
 public:
@@ -21,7 +21,7 @@ private:
 
         struct Impl;
         Impl *impl;
-        UsbServiceGuard <UsbService> service;
+        UsbServiceGuard <AnyKeyUsbService> guard;
 };
 
 #endif /* GUI_H_ */
