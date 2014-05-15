@@ -10,6 +10,8 @@
 #include "Constants.h"
 #include <gtk/gtk.h>
 #include <algorithm>
+#include "AnyKeyUsbService.h"
+#include <boost/lexical_cast.hpp>
 
 const unsigned int MAX_PRESSED_KEYS = 6;
 const unsigned int MAX_PRESSED_MODIFIERS = 8;
@@ -45,15 +47,18 @@ struct Gui::Impl {
         void clearModifiers ();
         void clearMultimedia ();
         void setActiveManual (GtkToggleButton *togglebutton, bool on);
+        AnyKeyUsbService::Buffer prepareMultimediaBuffer ();
+        AnyKeyUsbService::Buffer prepareNormBuffer ();
+        void restoreKeyboardConfig ();
 
         // cat keyboard.ui | grep "0_" | grep -v "0_22[0-9]" | sed 's/<object class="GtkToggleButton" id="//g; s/">//g; s/ //g' | sort | awk -- '{ print "\"" $0 "\","; }'
         KeyVector KEYS = {
-                        {"0_04"},
-                        {"0_05"},
-                        {"0_06"},
-                        {"0_07"},
-                        {"0_08"},
-                        {"0_09"},
+                        {"0_4"},
+                        {"0_5"},
+                        {"0_6"},
+                        {"0_7"},
+                        {"0_8"},
+                        {"0_9"},
                         {"0_10"},
                         {"0_101"},
                         {"0_11"},
@@ -171,6 +176,7 @@ struct Gui::Impl {
         KeyVector activeKeys;
         KeyVector activeModifiers;
         Key const *activeMultimedia = nullptr;
+        UsbServiceGuard <AnyKeyUsbService> guard;
 };
 
 /****************************************************************************/
@@ -195,7 +201,7 @@ void Gui::Impl::onClicked (GtkButton *button, gpointer userData)
         Impl *impl = static_cast <Impl *> (userData);
         std::string pressedName = gtk_buildable_get_name (GTK_BUILDABLE (togglebutton));
         bool pressedState = gtk_toggle_button_get_active (togglebutton);
-        std::cerr << "Button : " << pressedName << " state : " << pressedState << std::endl;
+//        std::cerr << "Button : " << pressedName << " state : " << pressedState << std::endl;
 
         Key const *foundKey = nullptr;
         enum KeyType { TYPE_KEY, TYPE_MODIFIER, TYPE_MULTIMEDIA };
@@ -279,28 +285,13 @@ void Gui::Impl::onClicked (GtkButton *button, gpointer userData)
 
         // Construct reportConfig to be sent to the device.
         // Send it.
-        if (impl->activeMultimedia) {
-                std::cerr << "Multimedia button : " << impl->activeMultimedia->name << std::endl;
+        if (foundType == TYPE_MULTIMEDIA) {
+                impl->guard.service.transmitConfiguration (impl->prepareMultimediaBuffer ());
         }
         else {
-                std::cerr << "Modifiers : ";
-                for (Key &key : impl->activeModifiers) {
-                        std::cerr << key.name << " ";
-                }
-
-                std::cerr << "Keys : ";
-                for (Key &key : impl->activeKeys) {
-                        std::cerr << key.name << " ";
-                }
-
-                std::cerr << std::endl;
+                impl->guard.service.transmitConfiguration (impl->prepareNormBuffer ());
         }
 
-
-}
-
-void Gui::Impl::setButtonState (std::string const &name, bool state)
-{
 
 }
 
@@ -337,14 +328,65 @@ void Gui::Impl::setActiveManual (GtkToggleButton *togglebutton, bool on)
         g_signal_handlers_unblock_by_func (togglebutton, reinterpret_cast <void *> (&Gui::Impl::onClicked), this);
 }
 
+/**
+ * Returns buffer with configurationdata for the device.
+ */
+AnyKeyUsbService::Buffer Gui::Impl::prepareMultimediaBuffer ()
+{
+        AnyKeyUsbService::Buffer buffer (ANY_KEY_SETUP_DATA_SIZE);
+        // Interface 1
+        buffer[0] = 1;
+
+        if (activeMultimedia) {
+                std::string desiredCode = activeMultimedia->name;
+
+                auto i = std::find_if (MULTIMEDIA.begin (), MULTIMEDIA.end (), [&desiredCode] (Key const &key) {
+                        return key.name == desiredCode;
+                });
+
+                if (i != MULTIMEDIA.end ()) {
+                        int offset = std::distance (MULTIMEDIA.begin (), i);
+                        buffer[1] = 1 << offset;
+                }
+        }
+
+        return buffer;
+}
+
+/**
+ *
+ */
+AnyKeyUsbService::Buffer Gui::Impl::prepareNormBuffer ()
+{
+        AnyKeyUsbService::Buffer buffer (ANY_KEY_SETUP_DATA_SIZE);
+        // Interface 0
+        buffer[0] = 0;
+
+        for (Key const &modifier : activeModifiers) {
+                std::string desiredCode = modifier.name;
+
+                auto i = std::find_if (MODIFIERS.begin (), MODIFIERS.end (), [&desiredCode] (Key const &key) {
+                        return key.name == desiredCode;
+                });
+
+                if (i != MODIFIERS.end ()) {
+                        int offset = std::distance (MODIFIERS.begin (), i);
+                        buffer[1] |= 1 << offset;
+                }
+        }
+
+        int cnt = 0;
+        for (Key const &key : activeKeys) {
+                uint8_t keycode = boost::lexical_cast <unsigned int> (key.name.substr (2, -1));
+                buffer[3 + cnt++] = keycode;
+        }
+
+        return buffer;
+}
 /****************************************************************************/
 
 void Gui::init (int argc, char **argv)
 {
-//        auto &service = guard.service;
-//        service.transmitConfiguration ({0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00});
-//        service.receiveConfiguration ();
-
         gtk_init (&argc, &argv);
 
         impl->builder = gtk_builder_new_from_file ("keyboard.ui");
@@ -352,8 +394,7 @@ void Gui::init (int argc, char **argv)
         for (Key &key : impl->KEYS) {
                 GtkToggleButton *button = GTK_TOGGLE_BUTTON (gtk_builder_get_object(impl->builder, key.name.c_str ()));
                 key.widget = button;
-                int handlerId = g_signal_connect (button, "clicked", G_CALLBACK (&Gui::Impl::onClicked), impl);
-                std::cerr << handlerId << std::endl;
+                g_signal_connect (button, "clicked", G_CALLBACK (&Gui::Impl::onClicked), impl);
         }
 
         for (Key &key : impl->MODIFIERS) {
@@ -372,8 +413,55 @@ void Gui::init (int argc, char **argv)
         impl->window = GTK_WINDOW (gtk_builder_get_object(impl->builder, "window"));
         g_signal_connect(impl->window, "destroy", G_CALLBACK (gtk_main_quit), NULL);
 
+        impl->restoreKeyboardConfig ();
         gtk_widget_show_all (GTK_WIDGET (impl->window));
         gtk_main();
-//        closeUsb();
 }
 
+/****************************************************************************/
+
+void Gui::Impl::restoreKeyboardConfig ()
+{
+        AnyKeyUsbService::Buffer buffer = guard.service.receiveConfiguration ();
+
+        for (int i = 0; i < buffer.size(); ++i) {
+                printf ("%02x ", buffer[i]);
+        }
+        std::cerr  << std::endl;
+
+        // Norm
+        if (buffer[0] == 0) {
+                uint8_t modifiers = buffer[1];
+
+                int cnt = 0;
+                for (Key const &key : MODIFIERS) {
+                        setActiveManual (key.widget, (modifiers & (1 < cnt)));
+                        activeModifiers.push_back (key);
+                }
+
+                for (unsigned int i = 0; i < MAX_NORMAL_KEYS; ++i) {
+                        std::string keyName = "0_" + boost::lexical_cast <std::string> ((int)buffer[i + 2]);
+
+                        auto j = std::find_if (KEYS.begin (), KEYS.end (), [&keyName] (Key const &key) {
+                                return key.name == keyName;
+                        });
+
+                        if (j != KEYS.end ()) {
+                                setActiveManual (j->widget, true);
+                                activeKeys.push_back (*j);
+                        }
+                }
+        }
+        // Multimedia
+        else if (buffer[0] == 1) {
+                uint8_t code = buffer[1];
+
+                int cnt = 0;
+                for (Key &key : MULTIMEDIA) {
+                        if (code & (1 << cnt++)) {
+                                setActiveManual (key.widget, true);
+                                activeMultimedia = &key;
+                        }
+                }
+        }
+}
