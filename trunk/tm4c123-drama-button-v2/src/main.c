@@ -229,20 +229,20 @@ const uint8_t reportDescriptor1[]=
 //*****************************************************************************
 static const uint8_t interfaceDescriptor1[] =
 {
-    //
-    // HID Device Class Interface Descriptor.
-    //
-    9,                          // Size of the interface descriptor.
-    USB_DTYPE_INTERFACE,        // Type of this descriptor.
-    0,                          // The index for this interface.
-    0,                          // The alternate setting for this interface.
-    1,                          // The number of endpoints used by this
-                                // interface.
-    USB_CLASS_HID,              // The interface class
-    USB_HID_SCLASS_BOOT,        // The interface sub-class.
-    USB_HID_PROTOCOL_KEYB,      // The interface protocol for the sub-class
-                                // specified above.
-    4                           // The string index for this interface.
+        //
+        // HID Device Class Interface Descriptor.
+        //
+        9,                          // Size of the interface descriptor.
+        USB_DTYPE_INTERFACE,        // Type of this descriptor.
+        0,                          // The index for this interface.
+        0,                          // The alternate setting for this interface.
+        1,                          // The number of endpoints used by this
+                                    // interface.
+        USB_CLASS_HID,              // The interface class
+        USB_HID_SCLASS_BOOT,        // The interface sub-class.
+        USB_HID_PROTOCOL_KEYB,      // The interface protocol for the sub-class
+                                    // specified above.
+        4                           // The string index for this interface.
 };
 
 static const uint8_t hidKeyboardDescriptor1[] =
@@ -737,10 +737,7 @@ static void onRequest(void *userData, tUSBRequest *psUSBRequest)
                 else if (psUSBRequest->bRequest == B_REQUEST_GET_ANY_KEY_SETUP) {
                         printf ("Sending the configuration back to the host\r\n");
                         USBDevEndpointDataAck(USB0_BASE, USB_EP_0, true);
-                        uint8_t buffer[REPORT0_SIZE + REPORT1_SIZE] = { 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x99, 0x88, 0x77 };
-//                        memcpy (buffer, callbackDTO->report1, REPORT1_SIZE);
-//                        memcpy (buffer + REPORT1_SIZE, callbackDTO->report2, REPORT2_SIZE);
-                        USBDCDSendDataEP0 (0, buffer, sizeof (buffer));
+                        USBDCDSendDataEP0 (0, (uint8_t)&callbackDTO->reportConfigTemplate, sizeof (ReportConfig));
                 }
                 return;
         }
@@ -1071,10 +1068,6 @@ int main (void)
         callbackDTO.iHIDTxState0 = eHIDStateUnconfigured;
         callbackDTO.iHIDTxState1 = eHIDStateUnconfigured;
 
-//        callbackDTO.reportConfigTemplate.report[0] = 0x00;
-//        callbackDTO.reportConfigTemplate.report[1] = 0x00;
-//        callbackDTO.reportConfigTemplate.report[2] = 0x04;
-//        callbackDTO.reportConfigTemplate.interface = 0;
         readEeprom (&callbackDTO.reportConfigTemplate);
 
         deviceInfo.psCallbacks = &handlers;
@@ -1111,14 +1104,6 @@ int main (void)
                         else if (callbackDTO.report.interface == 1) {
                                 reportWrite (&callbackDTO, callbackDTO.report.report, REPORT1_SIZE, USB_EP_2);
                         }
-
-//                        if (callbackDTO.iHIDTxState1 == eHIDStateIdle) {
-//                                reportWrite (&callbackDTO, callbackDTO.report1, REPORT1_SIZE, USB_EP_1);
-//                        }
-
-//                        if (callbackDTO.iHIDTxState2 == eHIDStateIdle) {
-//                                reportWrite (&callbackDTO, callbackDTO.report2, REPORT2_SIZE, USB_EP_2);
-//                        }
                 }
         }
 }
