@@ -50,17 +50,17 @@ void __error__ (char *pcFilename, unsigned long ulLine)
 /**
  * Size of report on interface 1
  */
-#define REPORT1_SIZE 8
+#define REPORT0_SIZE 8
 
 /**
  * Size of report on interface 2
  */
-#define REPORT2_SIZE 1
+#define REPORT1_SIZE 1
 
 /**
  * Remember to set this to max (REPORT1_SIZE, REPORT2_SIZE)
  */
-#define REPORT_BUFFER_SIZE REPORT1_SIZE
+#define REPORT_BUFFER_SIZE REPORT0_SIZE
 
 #define B_REQUEST_SET_ANY_KEY_SETUP 0x00
 #define B_REQUEST_GET_ANY_KEY_SETUP 0x01
@@ -80,6 +80,9 @@ struct ReportConfig {
          */
         uint8_t interface;
 
+        /**
+         * Report that would be sent when key is pressed (array of zeros otherwise).
+         */
         uint8_t report[REPORT_BUFFER_SIZE];
 };
 
@@ -94,15 +97,19 @@ typedef struct ReportConfig ReportConfig;
 
 struct CallbackDTO {
         tDeviceInfo *deviceInfo;
-//        uint8_t report1[REPORT1_SIZE];
-//        uint8_t report2[REPORT2_SIZE];
-        ReportConfig reportConfig;
+        /// Report template.
+        ReportConfig reportConfigTemplate;
+        /// Actual report.
+        ReportConfig report;
+        uint8_t iHIDTxState0;
         uint8_t iHIDTxState1;
-        uint8_t iHIDTxState2;
         uint8_t incoming[ANY_KEY_SETUP_DATA_SIZE];
 };
 
 typedef struct CallbackDTO CallbackDTO;
+
+void readEeprom (ReportConfig *reportConfig);
+void saveEeprom (ReportConfig const *reportConfig);
 
 /*##########################################################################*/
 
@@ -297,6 +304,7 @@ const uint8_t reportDescriptor2[]=
                 LogicalMaximum(1),
                 ReportSize(1),
                 ReportCount(7),
+                Usage (0x30), // Usage (Power)
                 Usage (0xB5), // Usage (Scan Next Track)
                 Usage (0xB6), // Usage (Scan Previous Track)
                 Usage (0xB7), // Usage (Stop)
@@ -640,7 +648,7 @@ static void onGetDescriptor(void *userData, tUSBRequest *psUSBRequest)
                         }
 
                         // Send the data via endpoint 0.
-                        USBDCDSendDataEP0 (0, reportDescriptor1, sizeof(reportDescriptor1));
+                        USBDCDSendDataEP0 (0, (uint8_t *)reportDescriptor1, sizeof(reportDescriptor1));
                 }
                 else if (psUSBRequest->wIndex == 1) {
                         ui32Size = sizeof(reportDescriptor2);
@@ -651,7 +659,7 @@ static void onGetDescriptor(void *userData, tUSBRequest *psUSBRequest)
                         }
 
                         // Send the data via endpoint 0.
-                        USBDCDSendDataEP0 (0, reportDescriptor2, sizeof(reportDescriptor2));
+                        USBDCDSendDataEP0 (0, (uint8_t *)reportDescriptor2, sizeof(reportDescriptor2));
                 }
             break;
         }
@@ -669,7 +677,7 @@ static void onGetDescriptor(void *userData, tUSBRequest *psUSBRequest)
                         if (ui32Size > psUSBRequest->wLength) {
                                 ui32Size = psUSBRequest->wLength;
                         }
-                        USBDCDSendDataEP0 (0, hidKeyboardDescriptor1, ui32Size);
+                        USBDCDSendDataEP0 (0, (uint8_t *)hidKeyboardDescriptor1, ui32Size);
                 }
                 else if (psUSBRequest->wIndex == 1) {
                         ui32Size = sizeof(hidKeyboardDescriptor2);
@@ -677,7 +685,7 @@ static void onGetDescriptor(void *userData, tUSBRequest *psUSBRequest)
                         if (ui32Size > psUSBRequest->wLength) {
                                 ui32Size = psUSBRequest->wLength;
                         }
-                        USBDCDSendDataEP0 (0, hidKeyboardDescriptor2, ui32Size);
+                        USBDCDSendDataEP0 (0, (uint8_t *)hidKeyboardDescriptor2, ui32Size);
                 }
             break;
         }
@@ -729,7 +737,7 @@ static void onRequest(void *userData, tUSBRequest *psUSBRequest)
                 else if (psUSBRequest->bRequest == B_REQUEST_GET_ANY_KEY_SETUP) {
                         printf ("Sending the configuration back to the host\r\n");
                         USBDevEndpointDataAck(USB0_BASE, USB_EP_0, true);
-                        uint8_t buffer[REPORT1_SIZE + REPORT2_SIZE] = { 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x99, 0x88, 0x77 };
+                        uint8_t buffer[REPORT0_SIZE + REPORT1_SIZE] = { 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x99, 0x88, 0x77 };
 //                        memcpy (buffer, callbackDTO->report1, REPORT1_SIZE);
 //                        memcpy (buffer + REPORT1_SIZE, callbackDTO->report2, REPORT2_SIZE);
                         USBDCDSendDataEP0 (0, buffer, sizeof (buffer));
@@ -746,16 +754,20 @@ static void onRequest(void *userData, tUSBRequest *psUSBRequest)
                 // Need to ACK the data on end point 0 in this case.
                 USBDevEndpointDataAck(USB0_BASE, USB_EP_0, true);
 
-                // ..then send back the requested report.
-                if (psUSBRequest->wIndex == 1) {
-                        USBDCDSendDataEP0(0, callbackDTO->report1, REPORT1_SIZE);
-                }
-                if (psUSBRequest->wIndex == 2) {
-                        USBDCDSendDataEP0(0, callbackDTO->report2, REPORT2_SIZE);
-                }
+//                // ..then send back the requested report.
+//                if (psUSBRequest->wIndex == 1) {
+//                        USBDCDSendDataEP0(0, callbackDTO->report1, REPORT1_SIZE);
+//                }
+//                if (psUSBRequest->wIndex == 2) {
+//                        USBDCDSendDataEP0(0, callbackDTO->report2, REPORT2_SIZE);
+//                }
 
-
-//                USBDCDSendDataEP0(0, callbackDTO->reportConfig.report, REPORT2_SIZE);
+                if (callbackDTO->report.interface == 0) {
+                        USBDCDSendDataEP0 (0, callbackDTO->report.report, REPORT0_SIZE);
+                }
+                else if (callbackDTO->report.interface == 1) {
+                        USBDCDSendDataEP0 (0, callbackDTO->report.report, REPORT1_SIZE);
+                }
 
                 break;
         }
@@ -788,6 +800,10 @@ static void onDataReceivedEP0 (void *userData, uint32_t ui32Info)
         printf ("]\r\n");
 #endif
 
+        ReportConfig *rc = &callbackDTO->reportConfigTemplate;
+        rc->interface = callbackDTO->incoming[0];
+        memcpy (rc->report, callbackDTO->incoming + 1, sizeof (ReportConfig) - 1);
+        saveEeprom (rc);
         USBDevEndpointDataAck(USB0_BASE, USB_EP_0, true);
 }
 
@@ -809,13 +825,13 @@ static void onEndpointsActivity (void *userData, uint32_t ui32Status)
         if (ui32Status & 1 << USBEPToIndex (USB_EP_1)) {
                 uint32_t ui32EPStatus = USBEndpointStatus (USB0_BASE, USB_EP_1);
                 USBDevEndpointStatusClear(USB0_BASE, USB_EP_1, ui32EPStatus);
-                callbackDTO->iHIDTxState1 = eHIDStateIdle;
+                callbackDTO->iHIDTxState0 = eHIDStateIdle;
         }
 
         if (ui32Status & 1 << USBEPToIndex (USB_EP_2)) {
                 uint32_t ui32EPStatus = USBEndpointStatus (USB0_BASE, USB_EP_2);
                 USBDevEndpointStatusClear(USB0_BASE, USB_EP_2, ui32EPStatus);
-                callbackDTO->iHIDTxState2 = eHIDStateIdle;
+                callbackDTO->iHIDTxState1 = eHIDStateIdle;
         }
 }
 
@@ -829,8 +845,8 @@ static void onConfigChange (void *userData, uint32_t ui32Info)
         CallbackDTO *callbackDTO = (CallbackDTO *) userData;
         ASSERT (callbackDTO);
 
+        callbackDTO->iHIDTxState0 = eHIDStateIdle;
         callbackDTO->iHIDTxState1 = eHIDStateIdle;
-        callbackDTO->iHIDTxState2 = eHIDStateIdle;
 }
 
 //*****************************************************************************
@@ -877,8 +893,8 @@ uint32_t reportWrite (CallbackDTO *callbackDTO, uint8_t *data, uint16_t length, 
         //
         // Can we send the data provided?
         //
-        if ((endpoint == USB_EP_1 && callbackDTO->iHIDTxState1 != eHIDStateIdle) ||
-            (endpoint == USB_EP_2 && callbackDTO->iHIDTxState2 != eHIDStateIdle)) {
+        if ((endpoint == USB_EP_1 && callbackDTO->iHIDTxState0 != eHIDStateIdle) ||
+            (endpoint == USB_EP_2 && callbackDTO->iHIDTxState1 != eHIDStateIdle)) {
                 // We are in the middle of sending another report.  Return 0 to
                 // indicate that we can't send this report until the previous one
                 // finishes.
@@ -887,10 +903,10 @@ uint32_t reportWrite (CallbackDTO *callbackDTO, uint8_t *data, uint16_t length, 
 
         // Schedule transmission of the first packet of the report.
         if (endpoint == USB_EP_1) {
-                callbackDTO->iHIDTxState1 = eHIDStateWaitData;
+                callbackDTO->iHIDTxState0 = eHIDStateWaitData;
         }
         else if (endpoint == USB_EP_2) {
-                callbackDTO->iHIDTxState2 = eHIDStateWaitData;
+                callbackDTO->iHIDTxState1 = eHIDStateWaitData;
         }
 
         uint32_t i32Retcode = scheduleReportTransmission(data, length, endpoint);
@@ -981,7 +997,7 @@ void initEeprom (void)
 
         if (ret != EEPROM_INIT_OK) {
 #ifdef DEBUG
-                printf ("initEeprom failed. Error code %d which translates to : ");
+                printf ("initEeprom failed. Error code %u which translates to : ", (unsigned int)ret);
 
                 switch (ret) {
                 case EEPROM_INIT_RETRY:
@@ -996,14 +1012,35 @@ void initEeprom (void)
                 return;
         }
 
-        printf ("EEprom init OK. Size : %d B\r\n", EEPROMSizeGet());
+        printf ("EEprom init OK. Size : %u B\r\n", (unsigned int)EEPROMSizeGet());
+}
+
+/**
+ *
+ */
+void readEeprom (ReportConfig *reportConfig)
+{
+        size_t rcSize = sizeof (ReportConfig);
+        uint8_t buffer[rcSize];
+        EEPROMRead ((uint32_t *)buffer, 0, rcSize);
+        reportConfig->interface = buffer[0];
+        memcpy (reportConfig->report, buffer + 1, rcSize - 1);
+}
+
+/**
+ *
+ */
+void saveEeprom (ReportConfig const *reportConfig)
+{
+        printf ("Saving config to EEPROM.");
+        uint32_t ret = EEPROMProgram ((uint32_t *)reportConfig, 0, sizeof (ReportConfig));
+        ASSERT (ret == 0);
 }
 
 /*##########################################################################*/
 
 
 
-//EEPROMRead().
 /**
  *
  */
@@ -1031,8 +1068,14 @@ int main (void)
 
         CallbackDTO callbackDTO;
         callbackDTO.deviceInfo = &deviceInfo;
+        callbackDTO.iHIDTxState0 = eHIDStateUnconfigured;
         callbackDTO.iHIDTxState1 = eHIDStateUnconfigured;
-        callbackDTO.iHIDTxState2 = eHIDStateUnconfigured;
+
+//        callbackDTO.reportConfigTemplate.report[0] = 0x00;
+//        callbackDTO.reportConfigTemplate.report[1] = 0x00;
+//        callbackDTO.reportConfigTemplate.report[2] = 0x04;
+//        callbackDTO.reportConfigTemplate.interface = 0;
+        readEeprom (&callbackDTO.reportConfigTemplate);
 
         deviceInfo.psCallbacks = &handlers;
         deviceInfo.pui8DeviceDescriptor = deviceDescriptor;
@@ -1040,7 +1083,6 @@ int main (void)
         deviceInfo.ppui8StringDescriptors = stringDescriptors;
         deviceInfo.ui32NumStringDescriptors = NUM_STRING_DESCRIPTORS;
         USBDCDDeviceInfoInit (0, &deviceInfo);
-//        InternalUSBTickInit();
 
         USBStackModeSet(0, eUSBModeForceDevice, 0);
         USBDCDInit (0, &deviceInfo, &callbackDTO);
@@ -1054,30 +1096,29 @@ int main (void)
                         if(ui8Buttons & LEFT_BUTTON)
                         {
                                 printf ("pressed\r\n");
-                                callbackDTO.report1[0] = 0x00;
-                                callbackDTO.report1[1] = 0x00;
-                                callbackDTO.report1[2] = 0x04;
-
-                                callbackDTO.report2[0] = 0x10;
+                                memcpy (callbackDTO.report.report, callbackDTO.reportConfigTemplate.report, REPORT_BUFFER_SIZE);
                         }
                         else {
                                 printf ("released\r\n");
-                                for (int i = 0; i < REPORT1_SIZE; ++i) {
-                                        callbackDTO.report1[i] = 0x00;
-                                }
+                                memset (callbackDTO.report.report, '\0', REPORT_BUFFER_SIZE);
+                        }
 
-                                for (int i = 0; i < REPORT2_SIZE; ++i) {
-                                        callbackDTO.report2[i] = 0x00;
-                                }
+                        callbackDTO.report.interface = callbackDTO.reportConfigTemplate.interface;
+
+                        if (callbackDTO.report.interface == 0) {
+                                reportWrite (&callbackDTO, callbackDTO.report.report, REPORT0_SIZE, USB_EP_1);
+                        }
+                        else if (callbackDTO.report.interface == 1) {
+                                reportWrite (&callbackDTO, callbackDTO.report.report, REPORT1_SIZE, USB_EP_2);
                         }
 
 //                        if (callbackDTO.iHIDTxState1 == eHIDStateIdle) {
 //                                reportWrite (&callbackDTO, callbackDTO.report1, REPORT1_SIZE, USB_EP_1);
 //                        }
 
-                        if (callbackDTO.iHIDTxState2 == eHIDStateIdle) {
-                                reportWrite (&callbackDTO, callbackDTO.report2, REPORT2_SIZE, USB_EP_2);
-                        }
+//                        if (callbackDTO.iHIDTxState2 == eHIDStateIdle) {
+//                                reportWrite (&callbackDTO, callbackDTO.report2, REPORT2_SIZE, USB_EP_2);
+//                        }
                 }
         }
 }
