@@ -9,8 +9,6 @@
 #ifndef GUI_H_
 #define GUI_H_
 
-#include "AnyKeyUsbService.h"
-
 class Gui {
 public:
         Gui ();
@@ -21,7 +19,6 @@ private:
 
         struct Impl;
         Impl *impl;
-        UsbServiceGuard <AnyKeyUsbService> guard;
 };
 
 #endif /* GUI_H_ */

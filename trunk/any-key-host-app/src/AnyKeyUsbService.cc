@@ -155,12 +155,14 @@ AnyKeyUsbService::Buffer AnyKeyUsbService::receiveConfiguration () const
                 }
         }
 
-        std::cerr << ret << std::endl;
         for (int i = 0; i < ret; ++i) {
                 printf ("%02x ", configTransferBuffer[i]);
         }
+        std::cerr << ret << std::endl;
 
-        Buffer buffer (ANY_KEY_SETUP_DATA_SIZE);
+        Buffer buffer;
+        buffer.reserve(ANY_KEY_SETUP_DATA_SIZE);
+        std::copy (configTransferBuffer, configTransferBuffer + ANY_KEY_SETUP_DATA_SIZE, std::back_inserter (buffer));
         return buffer;
 }
 
@@ -231,26 +233,6 @@ void AnyKeyUsbService::Impl::onControlTransferCompletion (libusb_transfer *xfr)
 //        std::cerr << "Length received : " << xfr->actual_length << std::endl;
 #endif
 
-#if 0
-        if (xfr->actual_length == ISO_PACKET_SIZE) {
-                {
-//                        std::lock_guard < std::mutex > guard (bufferMutex);
-//                        // memcpy(outputBuf, xfr->buffer, ISO_PACKET_SIZE);
-//                        auto i = outputBuf.begin ();
-//                        std::copy (xfr->buffer, xfr->buffer + ISO_PACKET_SIZE, i);
-                }
-
-                {
-//                        std::lock_guard < std::mutex > guard(dbBufferMutex);
-//                        std::copy (xfr->buffer, xfr->buffer + ISO_PACKET_SIZE, std::back_inserter (dbBuffer));
-                }
-        }
-
-        if (libusb_submit_transfer(xfr) < 0) {
-                fprintf(stderr, "error re-submitting URB\n");
-                exit(1);
-        }
-#endif
         libusb_free_transfer(xfr);
 }
 

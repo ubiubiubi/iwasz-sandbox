@@ -5,13 +5,14 @@ if(COMMAND cmake_policy)
     cmake_policy(SET CMP0003 NEW)
 endif(COMMAND cmake_policy)
 
-SET(CMAKE_C_FLAGS_DEBUG "" CACHE INTERNAL "c debug compiler flags")
+SET(CMAKE_C_FLAGS_DEBUG "-g -O0" CACHE INTERNAL "c debug compiler flags")
 SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -std=c++11 " CACHE INTERNAL "cxx debug compiler flags")
 
-SET (CMAKE_C_FLAGS_RELEASE "-ffast-math -DNDEBUG" CACHE STRING "")
+SET (CMAKE_C_FLAGS_RELEASE "-O3 -ffast-math -DNDEBUG" CACHE STRING "")
 SET (CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -std=c++11" CACHE STRING "")
  
 ADD_DEFINITIONS (-Wl,-z,defs -fPIC -Wall -Winvalid-pch -ffunction-sections -fdata-sections -pthread)
+SET (CMAKE_VERBOSE_MAKEFILE 0)
 
 #Boost
 find_package (Boost REQUIRED)
