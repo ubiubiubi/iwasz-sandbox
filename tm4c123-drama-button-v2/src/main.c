@@ -751,14 +751,6 @@ static void onRequest(void *userData, tUSBRequest *psUSBRequest)
                 // Need to ACK the data on end point 0 in this case.
                 USBDevEndpointDataAck(USB0_BASE, USB_EP_0, true);
 
-//                // ..then send back the requested report.
-//                if (psUSBRequest->wIndex == 1) {
-//                        USBDCDSendDataEP0(0, callbackDTO->report1, REPORT1_SIZE);
-//                }
-//                if (psUSBRequest->wIndex == 2) {
-//                        USBDCDSendDataEP0(0, callbackDTO->report2, REPORT2_SIZE);
-//                }
-
                 if (callbackDTO->report.interface == 0) {
                         USBDCDSendDataEP0 (0, callbackDTO->report.report, REPORT0_SIZE);
                 }
