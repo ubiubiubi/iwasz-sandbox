@@ -20,7 +20,7 @@ using std::exception;
  */
 struct AnyKeyUsbService::Impl {
         libusb_device_handle *device = nullptr;
-        static void onControlTransferCompletion (libusb_transfer *xfr);
+//        static void onControlTransferCompletion (libusb_transfer *xfr);
 };
 
 /*--------------------------------------------------------------------------*/
@@ -106,6 +106,14 @@ void AnyKeyUsbService::transmitConfiguration (Buffer const &buf)
                 throw ("AnyKeyUsbService::transmitConfiguration : wrong buffer size.");
         }
 
+#if 1
+        std::cerr  << "Transmiting : ";
+        for (unsigned int i = 0; i < buf.size(); ++i) {
+                std::cerr << std::hex << (int)buf[i] << " ";
+        }
+        std::cerr  << std::endl;
+#endif
+
         int ret = libusb_control_transfer (impl->device,
                         LIBUSB_ENDPOINT_OUT | LIBUSB_RECIPIENT_INTERFACE | LIBUSB_REQUEST_TYPE_VENDOR,
                         B_REQUEST_SET_ANY_KEY_SETUP, 0x00, 0x00, const_cast <uint8_t *> (&*buf.begin ()), buf.size (), 500);
@@ -167,7 +175,7 @@ AnyKeyUsbService::Buffer AnyKeyUsbService::receiveConfiguration () const
 }
 
 /*--------------------------------------------------------------------------*/
-
+#if 0
 void AnyKeyUsbService::receiveConfiguration_deprecated () const
 {
         libusb_transfer *xfr = libusb_alloc_transfer (0);
@@ -248,7 +256,7 @@ void AnyKeyUsbService::loop ()
                 }
         }
 }
-
+#endif
 /*--------------------------------------------------------------------------*/
 
 void AnyKeyUsbService::printDevs ()
