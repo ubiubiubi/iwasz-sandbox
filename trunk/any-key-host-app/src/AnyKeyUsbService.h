@@ -44,14 +44,11 @@ public:
          */
         void printDevs ();
 
-        /**
-         * USB event loop.
-         */
-        void loop ();
-
         void transmitConfiguration (Buffer const &buf);
-        void receiveConfiguration_deprecated () const;
         Buffer receiveConfiguration () const;
+
+//        void receiveConfiguration_deprecated () const;
+//        void loop ();
 
 private:
 

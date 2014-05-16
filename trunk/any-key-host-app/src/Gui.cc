@@ -201,7 +201,7 @@ void Gui::Impl::onClicked (GtkButton *button, gpointer userData)
         Impl *impl = static_cast <Impl *> (userData);
         std::string pressedName = gtk_buildable_get_name (GTK_BUILDABLE (togglebutton));
         bool pressedState = gtk_toggle_button_get_active (togglebutton);
-//        std::cerr << "Button : " << pressedName << " state : " << pressedState << std::endl;
+        std::cerr << "Button : " << pressedName << " state : " << pressedState << ", " << impl->activeModifiers.size () << std::endl;
 
         Key const *foundKey = nullptr;
         enum KeyType { TYPE_KEY, TYPE_MODIFIER, TYPE_MULTIMEDIA };
@@ -334,6 +334,7 @@ void Gui::Impl::setActiveManual (GtkToggleButton *togglebutton, bool on)
 AnyKeyUsbService::Buffer Gui::Impl::prepareMultimediaBuffer ()
 {
         AnyKeyUsbService::Buffer buffer (ANY_KEY_SETUP_DATA_SIZE);
+        std::fill (buffer.begin (), buffer.end (), 0);
         // Interface 1
         buffer[0] = 1;
 
@@ -359,6 +360,7 @@ AnyKeyUsbService::Buffer Gui::Impl::prepareMultimediaBuffer ()
 AnyKeyUsbService::Buffer Gui::Impl::prepareNormBuffer ()
 {
         AnyKeyUsbService::Buffer buffer (ANY_KEY_SETUP_DATA_SIZE);
+        std::fill (buffer.begin (), buffer.end (), 0);
         // Interface 0
         buffer[0] = 0;
 
@@ -424,10 +426,13 @@ void Gui::Impl::restoreKeyboardConfig ()
 {
         AnyKeyUsbService::Buffer buffer = guard.service.receiveConfiguration ();
 
+#if 1
+        std::cerr << "Received : ";
         for (int i = 0; i < buffer.size(); ++i) {
-                printf ("%02x ", buffer[i]);
+                std::cerr << std::hex << (unsigned int)buffer[i] << " ";
         }
         std::cerr  << std::endl;
+#endif
 
         // Norm
         if (buffer[0] == 0) {
@@ -435,18 +440,23 @@ void Gui::Impl::restoreKeyboardConfig ()
 
                 int cnt = 0;
                 for (Key const &key : MODIFIERS) {
-                        setActiveManual (key.widget, (modifiers & (1 < cnt)));
-                        activeModifiers.push_back (key);
+                        bool modifierActive = (modifiers & (1 << cnt++));
+                        setActiveManual (key.widget, modifierActive);
+
+                        if (modifierActive) {
+                                activeModifiers.push_back (key);
+                        }
                 }
 
                 for (unsigned int i = 0; i < MAX_NORMAL_KEYS; ++i) {
-                        std::string keyName = "0_" + boost::lexical_cast <std::string> ((int)buffer[i + 2]);
+                        std::string keyName = "0_" + boost::lexical_cast <std::string> ((int)buffer[i + 3]);
 
                         auto j = std::find_if (KEYS.begin (), KEYS.end (), [&keyName] (Key const &key) {
                                 return key.name == keyName;
                         });
 
                         if (j != KEYS.end ()) {
+//                                std::cerr << "foud : " << std::endl;
                                 setActiveManual (j->widget, true);
                                 activeKeys.push_back (*j);
                         }
