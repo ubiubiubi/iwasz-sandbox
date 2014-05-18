@@ -737,7 +737,7 @@ static void onRequest(void *userData, tUSBRequest *psUSBRequest)
                 else if (psUSBRequest->bRequest == B_REQUEST_GET_ANY_KEY_SETUP) {
                         printf ("Sending the configuration back to the host\r\n");
                         USBDevEndpointDataAck(USB0_BASE, USB_EP_0, true);
-                        USBDCDSendDataEP0 (0, (uint8_t)&callbackDTO->reportConfigTemplate, sizeof (ReportConfig));
+                        USBDCDSendDataEP0 (0, (uint8_t *)&callbackDTO->reportConfigTemplate, sizeof (ReportConfig));
                 }
                 return;
         }
