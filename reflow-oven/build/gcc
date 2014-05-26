@@ -1,0 +1,39 @@
+tiva
+~~~~
+
+arm-unknown-eabi-gcc -mthumb -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -ffunction-sections -fdata-sections -MD -std=c99 -Wall -pedantic -DPART_TM4C123GH6PM -c -Os -I../../../.. -Dgcc -o gcc/blinky.o blinky.c
+
+arm-unknown-eabi-gcc -mthumb -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -ffunction-sections -fdata-sections -MD -std=c99 -Wall -pedantic -DPART_TM4C123GH6PM -c -Os -I../../../.. -Dgcc -o gcc/startup_gcc.o startup_gcc.c
+
+arm-unknown-eabi-ld 
+-T blinky.ld 
+--entry ResetISR 
+--gc-sections 
+-o gcc/blinky.axf 
+
+gcc/blinky.o 
+gcc/startup_gcc.o 
+/home/iwasz/local/share/arm-unknown-eabi-cortex-m4/bin/../lib/gcc/arm-unknown-eabi/4.7.3/../../../../arm-unknown-eabi/lib/libm.a 
+/home/iwasz/local/share/arm-unknown-eabi-cortex-m4/bin/../lib/gcc/arm-unknown-eabi/4.7.3/../../../../arm-unknown-eabi/lib/libc.a 
+/home/iwasz/local/share/arm-unknown-eabi-cortex-m4/bin/../lib/gcc/arm-unknown-eabi/4.7.3/libgcc.a
+
+
+JA
+~~
+/home/iwasz/local/share/arm-unknown-eabi-cortex-m4/bin/arm-unknown-eabi-gcc  -DPART_TM4C123GH6PM -Dgcc -O0 -g -ggdb -std=gnu99 -ffunction-sections -fdata-sections -MD -Wall -pedantic  -I/home/iwasz/workspace/SW-TM4C-2.1.0.12573 -I/home/iwasz/workspace/tiva-usb-test/build/../src    -o CMakeFiles/tiva-usb-test.axf.dir/home/iwasz/workspace/tiva-usb-test/src/syscalls.c.o   -c /home/iwasz/workspace/tiva-usb-test/src/syscalls.c
+
+/home/iwasz/local/share/arm-unknown-eabi-cortex-m4/bin/arm-unknown-eabi-gcc  -DPART_TM4C123GH6PM -O0 -g -ggdb -std=gnu99 -ffunction-sections -fdata-sections -MD -Wall -pedantic  -I/home/iwasz/workspace/SW-TM4C-2.1.0.12573 -I/home/iwasz/workspace/tiva-usb-test/build/../src    -o CMakeFiles/tiva-usb-test.axf.dir/home/iwasz/workspace/tiva-usb-test/src/main.c.o   -c /home/iwasz/workspace/tiva-usb-test/src/main.c
+
+/home/iwasz/local/share/arm-unknown-eabi-cortex-m4/bin/arm-unknown-eabi-gcc  -DPART_TM4C123GH6PM -Dgcc -O0 -g -ggdb -std=gnu99 -ffunction-sections -fdata-sections -MD -Wall -pedantic  -I/home/iwasz/workspace/SW-TM4C-2.1.0.12573 -I/home/iwasz/workspace/tiva-usb-test/build/../src    -o CMakeFiles/tiva-usb-test.axf.dir/home/iwasz/workspace/tiva-usb-test/src/startup_gcc.c.o   -c /home/iwasz/workspace/tiva-usb-test/src/startup_gcc.c
+
+LINK : 
+
+arm-unknown-eabi-gcc  -O0 -g -ggdb -std=gnu99 -ffunction-sections -fdata-sections -MD -Wall -pedantic   -T/home/iwasz/workspace/tiva-usb-test/build/tm4c123.ld  --entry ResetISR CMakeFiles/tiva-usb-test.axf.dir/home/iwasz/workspace/tiva-usb-test/src/syscalls.c.o CMakeFiles/tiva-usb-test.axf.dir/home/iwasz/workspace/tiva-usb-test/src/main.c.o CMakeFiles/tiva-usb-test.axf.dir/home/iwasz/workspace/tiva-usb-test/src/startup_gcc.c.o  -o tiva-usb-test.axf  /home/iwasz/local/share/arm-unknown-eabi-cortex-m4/bin/../lib/gcc/arm-unknown-eabi/4.7.3/libgcc.a 
+
+
+
+
+To wykonuje GCC przy linkowaniu:
+
+ /home/iwasz/local/share/arm-unknown-eabi-cortex-m4/bin/../libexec/gcc/arm-unknown-eabi/4.7.3/collect2 --sysroot=/home/iwasz/local/share/arm-unknown-eabi-cortex-m4/bin/../arm-unknown-eabi/sysroot -X -o tiva-usb-test.axf -e ResetISR /home/iwasz/local/share/arm-unknown-eabi-cortex-m4/bin/../lib/gcc/arm-unknown-eabi/4.7.3/crti.o /home/iwasz/local/share/arm-unknown-eabi-cortex-m4/bin/../lib/gcc/arm-unknown-eabi/4.7.3/crtbegin.o /home/iwasz/local/share/arm-unknown-eabi-cortex-m4/bin/../lib/gcc/arm-unknown-eabi/4.7.3/../../../../arm-unknown-eabi/lib/crt0.o -L/home/iwasz/local/share/arm-unknown-eabi-cortex-m4/bin/../lib/gcc/arm-unknown-eabi/4.7.3 -L/home/iwasz/local/share/arm-unknown-eabi-cortex-m4/bin/../lib/gcc -L/home/iwasz/local/share/arm-unknown-eabi-cortex-m4/bin/../lib/gcc/arm-unknown-eabi/4.7.3/../../../../arm-unknown-eabi/lib -L/home/iwasz/local/share/arm-unknown-eabi-cortex-m4/bin/../arm-unknown-eabi/sysroot/lib -L/home/iwasz/local/share/arm-unknown-eabi-cortex-m4/bin/../arm-unknown-eabi/sysroot/usr/lib CMakeFiles/tiva-usb-test.axf.dir/home/iwasz/workspace/tiva-usb-test/src/syscalls.c.o CMakeFiles/tiva-usb-test.axf.dir/home/iwasz/workspace/tiva-usb-test/src/main.c.o CMakeFiles/tiva-usb-test.axf.dir/home/iwasz/workspace/tiva-usb-test/src/startup_gcc.c.o --start-group -lgcc -lg -lc --end-group /home/iwasz/local/share/arm-unknown-eabi-cortex-m4/bin/../lib/gcc/arm-unknown-eabi/4.7.3/crtend.o /home/iwasz/local/share/arm-unknown-eabi-cortex-m4/bin/../lib/gcc/arm-unknown-eabi/4.7.3/crtn.o -T /home/iwasz/workspace/tiva-usb-test/build/tm4c123.ld
+
