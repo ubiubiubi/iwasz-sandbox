@@ -33,6 +33,7 @@
 #include "utils/uartstdio.h"
 #include "driverlib/uart.h"
 #include "driverlib/pin_map.h"
+#include "driverlib/ssi.h"
 #include "driverlib/eeprom.h"
 
 #ifdef DEBUG
@@ -1029,7 +1030,6 @@ void saveEeprom (ReportConfig const *reportConfig)
 /*##########################################################################*/
 
 
-
 /**
  *
  */
@@ -1038,29 +1038,57 @@ int main (void)
         SysCtlClockSet (SYSCTL_SYSDIV_4 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN | SYSCTL_XTAL_16MHZ);
 
         configureUART ();
-        printf ("Any key device starts. tm4c123 micro.\r\n");
+        printf ("Reflow-oven driver starts. tm4c123 micro.\r\n");
 
         // Enable the GPIO port that is used for the on-board LED.
-        SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
-        GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3);
-
-
-        // USB config : Enable the GPIO peripheral used for USB, and configure the USB pins.
-        SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOD);
-        SysCtlGPIOAHBEnable(SYSCTL_PERIPH_GPIOD);
-        GPIOPinTypeUSBAnalog(GPIO_PORTD_AHB_BASE, GPIO_PIN_4 | GPIO_PIN_5);
-
-        ButtonsInit();
-        initEeprom ();
+//        SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
+//        GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3);
+//
+//        // USB config : Enable the GPIO peripheral used for USB, and configure the USB pins.
+//        SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOD);
+//        SysCtlGPIOAHBEnable(SYSCTL_PERIPH_GPIOD);
+//        GPIOPinTypeUSBAnalog(GPIO_PORTD_AHB_BASE, GPIO_PIN_4 | GPIO_PIN_5);
+//
+//        ButtonsInit();
 
         /****************************************************************************/
 
+        SysCtlPeripheralEnable(SYSCTL_PERIPH_SSI0);
+        SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
+        GPIOPinConfigure(GPIO_PA2_SSI0CLK);
+        GPIOPinConfigure(GPIO_PA3_SSI0FSS);
+        GPIOPinConfigure(GPIO_PA4_SSI0RX);
+        GPIOPinConfigure(GPIO_PA5_SSI0TX);
+        GPIOPinTypeSSI (GPIO_PORTA_BASE, GPIO_PIN_5 | GPIO_PIN_4 | GPIO_PIN_3 | GPIO_PIN_2);
+
+        SSIConfigSetExpClk (SSI0_BASE, SysCtlClockGet (), SSI_FRF_MOTO_MODE_0, SSI_MODE_MASTER, 1000, 14);
+        SSIEnable(SSI0_BASE);
+
+        uint32_t word;
+
+        // Clear shift registers
+        while(SSIDataGetNonBlocking(SSI0_BASE, &word))
+                ;
+
+        while (1) {
+                SSIDataPut(SSI0_BASE, '0');
+
+                SSIDataGet (SSI0_BASE, &word);
+                printf ("Byte : %x\r\n", (unsigned int)(word));
+
+                // Delay
+                for (int i = 0; i < 100000; ++i)
+                        ;
+        }
+
+        /****************************************************************************/
+
+
+#if 0
         CallbackDTO callbackDTO;
         callbackDTO.deviceInfo = &deviceInfo;
         callbackDTO.iHIDTxState0 = eHIDStateUnconfigured;
         callbackDTO.iHIDTxState1 = eHIDStateUnconfigured;
-
-        readEeprom (&callbackDTO.reportConfigTemplate);
 
         deviceInfo.psCallbacks = &handlers;
         deviceInfo.pui8DeviceDescriptor = deviceDescriptor;
@@ -1098,5 +1126,6 @@ int main (void)
                         }
                 }
         }
+#endif
 }
 
