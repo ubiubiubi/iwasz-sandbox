@@ -96,7 +96,7 @@ ButtonsPoll(uint8_t *pui8Delta, uint8_t *pui8RawState)
     ui32Data = (ROM_GPIOPinRead(BUTTONS_GPIO_BASE, ALL_BUTTONS));
     if(pui8RawState)
     {
-        *pui8RawState = (uint8_t)~ui32Data;
+        *pui8RawState = (uint8_t)ui32Data;
     }
 
     //
@@ -178,8 +178,7 @@ ButtonsInit(void)
     // Set each of the button GPIO pins as an input with a pull-up.
     //
     ROM_GPIODirModeSet(BUTTONS_GPIO_BASE, ALL_BUTTONS, GPIO_DIR_MODE_IN);
-    MAP_GPIOPadConfigSet(BUTTONS_GPIO_BASE, ALL_BUTTONS,
-                         GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPU);
+    MAP_GPIOPadConfigSet(BUTTONS_GPIO_BASE, ALL_BUTTONS, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPD);
 
     //
     // Initialize the debounced button state with the current state read from

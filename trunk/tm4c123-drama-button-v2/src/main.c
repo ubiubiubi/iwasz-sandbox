@@ -1035,7 +1035,7 @@ void saveEeprom (ReportConfig const *reportConfig)
  */
 int main (void)
 {
-        SysCtlClockSet (SYSCTL_SYSDIV_4 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN | SYSCTL_XTAL_16MHZ);
+        SysCtlClockSet (SYSCTL_SYSDIV_4 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN | SYSCTL_XTAL_8MHZ);
 
         configureUART ();
         printf ("Any key device starts. tm4c123 micro.\r\n");
