@@ -38,6 +38,8 @@
 
 #include "config.h"
 #include "motor.h"
+#include "head.h"
+#include "inputs.h"
 
 #ifdef DEBUG
 void __error__ (char *pcFilename, unsigned long ulLine)
@@ -115,6 +117,25 @@ int main (void)
 //        GPIOPinTypeUSBAnalog(GPIO_PORTD_AHB_BASE, GPIO_PIN_4 | GPIO_PIN_5);
 
         ButtonsInit();
+
+        motorInit ();
+        headInit ();
+        inputsInit ();
+
+        motorRun (40);
+        motorRun (-40);
+
+        uint8_t line1[HEAD_BYTES_IN_LINE];
+        memset (line1, 0xaa, HEAD_BYTES_IN_LINE);
+        headCtrl (false);
+        SysCtlDelay (HEAD_DATA_CLOCK_SCD);
+        headTransferLine1Bit (line1);
+        SysCtlDelay (HEAD_DATA_CLOCK_SCD);
+        headLatch ();
+        SysCtlDelay (HEAD_DATA_CLOCK_SCD);
+        headTransferBdat (0xff);
+        SysCtlDelay (HEAD_DATA_CLOCK_SCD);
+        headHeatPulse ();
 
         /****************************************************************************/
 
