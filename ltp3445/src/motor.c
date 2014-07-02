@@ -17,7 +17,7 @@
 #include "config.h"
 #include "motor.h"
 
-static uint16_t motorGetAdditionalDelay (uint16_t step);
+static uint32_t motorGetAdditionalDelay (uint16_t step);
 static void motorExcite (uint8_t motorState);
 
 /**
@@ -132,7 +132,7 @@ void motorStopStep (void)
 /**
  * Additional delays for accelerating the motor. 5V assumed.
  */
-static uint16_t motorGetAdditionalDelay (uint16_t step)
+static uint32_t motorGetAdditionalDelay (uint16_t step)
 {
         switch (step) {
         case 0:
@@ -154,7 +154,7 @@ static uint16_t motorGetAdditionalDelay (uint16_t step)
                 return DELAY_COEFFICIENT_SCD / 408 - MOTOR_MAX_T_SCD;
 
         default:
-                return 0;
+                return 1;
         }
 }
 
@@ -168,3 +168,11 @@ static void motorExcite (uint8_t motorState)
         SysCtlDelay(MOTOR_MAX_T_SCD);
         GPIOPinWrite(GPIO_PORT_MOTOR_BASE, GPIO_PIN_MOTOR_AENABLE | GPIO_PIN_MOTOR_BENABLE, 0x00);
 }
+
+///**
+// * Turn off the windings. Prevent overheating.
+// */
+//static void motorPause (uint8_t motorState)
+//{
+//        GPIOPinWrite(GPIO_PORT_MOTOR_BASE, GPIO_PIN_MOTOR_AENABLE | GPIO_PIN_MOTOR_BENABLE, 0x00);
+//}
