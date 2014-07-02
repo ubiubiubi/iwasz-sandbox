@@ -13,7 +13,7 @@
 /* Common constants                                                         */
 /****************************************************************************/
 
-#define DELAY_COEFFICIENT_SCD 1000000
+#define DELAY_COEFFICIENT_SCD 30000000
 
 /****************************************************************************/
 /* Head constants                                                           */
@@ -60,8 +60,8 @@
 /****************************************************************************/
 
 // GPIO port for motor.
-#define SYSCTL_PERIPH_GPIO_MOTOR SYSCTL_PERIPH_GPIOA
-#define GPIO_PORT_MOTOR_BASE GPIO_PORTA_BASE
+#define SYSCTL_PERIPH_GPIO_MOTOR SYSCTL_PERIPH_GPIOD
+#define GPIO_PORT_MOTOR_BASE GPIO_PORTD_BASE
 
 #define GPIO_PIN_MOTOR_APHASE GPIO_PIN_0
 #define GPIO_PIN_MOTOR_AENABLE GPIO_PIN_1
