@@ -116,40 +116,31 @@ int main (void)
 //        SysCtlGPIOAHBEnable(SYSCTL_PERIPH_GPIOD);
 //        GPIOPinTypeUSBAnalog(GPIO_PORTD_AHB_BASE, GPIO_PIN_4 | GPIO_PIN_5);
 
-        ButtonsInit();
-        printf ("Buttons OK.\r\n");
+//        ButtonsInit();
+//        printf ("Buttons OK.\r\n");
 
         motorInit ();
         printf ("Motor initialized.\r\n");
 
-//        while (1) {
-//                GPIOPinWrite (GPIO_PORT_MOTOR_BASE, GPIO_PIN_MOTOR_APHASE, 0xff);
-//                SysCtlDelay (1000);
-//                GPIOPinWrite (GPIO_PORT_MOTOR_BASE, GPIO_PIN_MOTOR_APHASE, 0x00);
-//                SysCtlDelay (1000);
-//        }
-
         headInit ();
         printf ("Head initialized.\r\n");
 
-        inputsInit ();
-        printf ("Inputs initialized.\r\n");
-
-        motorStartStep ();
-        motorForward1Step ();
-        motorForward1Step ();
-
-        while (1) {
-
-        }
-
+//        inputsInit ();
+//        printf ("Inputs initialized.\r\n");
 
         printf ("Test sequence : +40 steps.\r\n");
         motorRun (40);
-
         printf ("Test sequence : -40 steps.\r\n");
         motorRun (-40);
         printf ("Test sequence : OK.\r\n");
+        SysCtlDelay (DELAY_COEFFICIENT_SCD / 10);
+
+        while (1) {
+                GPIOPinWrite (GPIO_PORT_HEAD_BASE, GPIO_PIN_HEAD_ALL, 0xff);
+                SysCtlDelay (10000);
+                GPIOPinWrite (GPIO_PORT_HEAD_BASE, GPIO_PIN_HEAD_ALL, 0x00);
+                SysCtlDelay (10000);
+        }
 
 //        uint8_t line1[HEAD_BYTES_IN_LINE];
 //        memset (line1, 0xaa, HEAD_BYTES_IN_LINE);
