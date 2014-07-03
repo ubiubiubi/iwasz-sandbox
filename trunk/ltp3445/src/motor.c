@@ -36,7 +36,11 @@ void motorInit (void)
 {
         motorState = 0;
         SysCtlPeripheralEnable (SYSCTL_PERIPH_GPIO_MOTOR);
-        GPIOPinTypeGPIOOutput (GPIO_PORT_MOTOR_BASE, GPIO_PIN_MOTOR_APHASE | GPIO_PIN_MOTOR_AENABLE | GPIO_PIN_MOTOR_BPHASE | GPIO_PIN_MOTOR_BENABLE);
+        GPIODirModeSet (GPIO_PORT_MOTOR_BASE, GPIO_PIN_MOTOR_APHASE | GPIO_PIN_MOTOR_AENABLE | GPIO_PIN_MOTOR_BPHASE | GPIO_PIN_MOTOR_BENABLE, GPIO_DIR_MODE_OUT);
+
+        GPIOPadConfigSet (GPIO_PORT_MOTOR_BASE, GPIO_PIN_MOTOR_APHASE | GPIO_PIN_MOTOR_AENABLE | GPIO_PIN_MOTOR_BPHASE | GPIO_PIN_MOTOR_BENABLE,
+                          GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD);
+
         GPIOPinWrite (GPIO_PORT_MOTOR_BASE, GPIO_PIN_MOTOR_APHASE | GPIO_PIN_MOTOR_AENABLE | GPIO_PIN_MOTOR_BPHASE | GPIO_PIN_MOTOR_BENABLE, 0x00);
 }
 
@@ -72,17 +76,17 @@ void motorForward1Step (void)
 {
         switch (motorState) {
         case 0:
-                motorState = GPIO_PIN_MOTOR_APHASE;
+                motorState = GPIO_PIN_MOTOR_BPHASE;
                 break;
         case GPIO_PIN_MOTOR_APHASE:
-                motorState = GPIO_PIN_MOTOR_APHASE | GPIO_PIN_MOTOR_BPHASE;
+                motorState = 0;
                 break;
         case GPIO_PIN_MOTOR_APHASE | GPIO_PIN_MOTOR_BPHASE:
-                motorState = GPIO_PIN_MOTOR_BPHASE;
+                motorState = GPIO_PIN_MOTOR_APHASE;
                 break;
         case GPIO_PIN_MOTOR_BPHASE:
         default:
-                motorState = 0;
+                motorState = GPIO_PIN_MOTOR_APHASE | GPIO_PIN_MOTOR_BPHASE;
                 break;
         }
 
@@ -96,17 +100,17 @@ void motorBackward1Step (void)
 {
         switch (motorState) {
         case 0:
-                motorState = GPIO_PIN_MOTOR_BPHASE;
+                motorState = GPIO_PIN_MOTOR_APHASE;
                 break;
         case GPIO_PIN_MOTOR_APHASE:
-                motorState = 0;
+                motorState = GPIO_PIN_MOTOR_APHASE | GPIO_PIN_MOTOR_BPHASE;
                 break;
         case GPIO_PIN_MOTOR_APHASE | GPIO_PIN_MOTOR_BPHASE:
-                motorState = GPIO_PIN_MOTOR_APHASE;
+                motorState = GPIO_PIN_MOTOR_BPHASE;
                 break;
         case GPIO_PIN_MOTOR_BPHASE:
         default:
-                motorState = GPIO_PIN_MOTOR_APHASE | GPIO_PIN_MOTOR_BPHASE;
+                motorState = 0;
                 break;
         }
 
