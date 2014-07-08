@@ -23,14 +23,14 @@
 #define SYSCTL_PERIPH_GPIO_HEAD SYSCTL_PERIPH_GPIOB
 #define GPIO_PORT_HEAD_BASE GPIO_PORTB_BASE
 
-#define GPIO_PIN_HEAD_DST   GPIO_PIN_0 // 8  Thermal head print activation instruction signal
-#define GPIO_PIN_HEAD_BCLR  GPIO_PIN_1 // 10 Block select all clear
-#define GPIO_PIN_HEAD_BDAT  GPIO_PIN_2 // 11 Block select data input (serial input)
-#define GPIO_PIN_HEAD_BCLK  GPIO_PIN_3 // 12 Block select data transfer synchronization signal
-#define GPIO_PIN_HEAD_CTRL  GPIO_PIN_4 // 13 History control signal
-#define GPIO_PIN_HEAD_HDAT  GPIO_PIN_5 // 14 Print data input (serial input)
-#define GPIO_PIN_HEAD_LATCH GPIO_PIN_6 // 17 Print data latch (memory storage)
-#define GPIO_PIN_HEAD_HCLK  GPIO_PIN_7 // 18 Synchronizing signal for data transfer
+#define GPIO_PIN_HEAD_CTRL  GPIO_PIN_0 // 13 History control signal
+#define GPIO_PIN_HEAD_HCLK  GPIO_PIN_1 // 18 Synchronizing signal for data transfer
+#define GPIO_PIN_HEAD_HDAT  GPIO_PIN_2 // 14 Print data input (serial input)
+#define GPIO_PIN_HEAD_LATCH GPIO_PIN_3 // 17 Print data latch (memory storage)
+#define GPIO_PIN_HEAD_DST   GPIO_PIN_4 // 8  Thermal head print activation instruction signal
+#define GPIO_PIN_HEAD_BCLK  GPIO_PIN_5 // 12 Block select data transfer synchronization signal
+#define GPIO_PIN_HEAD_BDAT  GPIO_PIN_6 // 11 Block select data input (serial input)
+#define GPIO_PIN_HEAD_BCLR  GPIO_PIN_7 // 10 Block select all clear
 
 #define GPIO_PIN_HEAD_ALL (   \
         GPIO_PIN_HEAD_DST   | \
@@ -45,7 +45,7 @@
 
 #define HEAD_PIXELS_IN_LINE 832
 #define HEAD_BYTES_IN_LINE (HEAD_PIXELS_IN_LINE / 8)
-#define HEAD_DATA_CLOCK_HZ 1000000
+#define HEAD_DATA_CLOCK_HZ 4000000
 // TODO make sure it divides OK.
 #define HEAD_DATA_CLOCK_SCD (DELAY_COEFFICIENT_SCD / HEAD_DATA_CLOCK_HZ)
 // TODO make sure it divides OK.

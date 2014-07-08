@@ -39,6 +39,9 @@ void headLatch ()
 
 void headTransferLine1Bit (uint8_t *data)
 {
+//        GPIOPinWrite (GPIO_PORT_HEAD_BASE, GPIO_PIN_HEAD_HCLK, 0xff);
+//        SysCtlDelay (HEAD_DATA_CLOCK_SCD*14);
+
         for (int i = 0; i < HEAD_BYTES_IN_LINE; ++i) {
                 for (int j = 7; j >= 0; --j) {
                         GPIOPinWrite (GPIO_PORT_HEAD_BASE, GPIO_PIN_HEAD_HCLK, 0x00);
@@ -49,7 +52,11 @@ void headTransferLine1Bit (uint8_t *data)
                         GPIOPinWrite (GPIO_PORT_HEAD_BASE, GPIO_PIN_HEAD_HCLK, GPIO_PIN_HEAD_HCLK);
                         SysCtlDelay (HEAD_DATA_CLOCK_SCD_2);
                 }
+                // TODO wywal
+//                SysCtlDelay (HEAD_DATA_CLOCK_SCD*14);
         }
+
+        GPIOPinWrite (GPIO_PORT_HEAD_BASE, GPIO_PIN_HEAD_HCLK | GPIO_PIN_HEAD_HDAT, 0x00);
 }
 
 /**
@@ -66,11 +73,13 @@ void headTransferBdat (uint16_t pages)
                 GPIOPinWrite (GPIO_PORT_HEAD_BASE, GPIO_PIN_HEAD_BCLK, GPIO_PIN_HEAD_BCLK);
                 SysCtlDelay (HEAD_DATA_CLOCK_SCD_2);
         }
+
+        GPIOPinWrite (GPIO_PORT_HEAD_BASE, GPIO_PIN_HEAD_BCLK | GPIO_PIN_HEAD_BDAT, 0x00);
 }
 
 void headHeatPulse (void)
 {
         GPIOPinWrite (GPIO_PORT_HEAD_BASE, GPIO_PIN_HEAD_DST, 0xff);
-        SysCtlDelay (HEAD_DATA_CLOCK_SCD);
+        SysCtlDelay (7000);
         GPIOPinWrite (GPIO_PORT_HEAD_BASE, GPIO_PIN_HEAD_DST, 0x00);
 }
