@@ -129,30 +129,54 @@ int main (void)
 //        printf ("Inputs initialized.\r\n");
 
         printf ("Test sequence : +40 steps.\r\n");
-        motorRun (40);
+//        motorRun (40);
         printf ("Test sequence : -40 steps.\r\n");
-        motorRun (-40);
+//        motorRun (-40);
         printf ("Test sequence : OK.\r\n");
         SysCtlDelay (DELAY_COEFFICIENT_SCD / 10);
 
-        while (1) {
-                GPIOPinWrite (GPIO_PORT_HEAD_BASE, GPIO_PIN_HEAD_ALL, 0xff);
-                SysCtlDelay (10000);
-                GPIOPinWrite (GPIO_PORT_HEAD_BASE, GPIO_PIN_HEAD_ALL, 0x00);
-                SysCtlDelay (10000);
+//        while (1) {
+//                GPIOPinWrite (GPIO_PORT_HEAD_BASE, GPIO_PIN_HEAD_ALL, 0xff);
+//                SysCtlDelay (10000);
+//                GPIOPinWrite (GPIO_PORT_HEAD_BASE, GPIO_PIN_HEAD_ALL, 0x00);
+//                SysCtlDelay (10000);
+//        }
+
+        uint8_t line1[HEAD_BYTES_IN_LINE];
+        memset (line1, 0x00, HEAD_BYTES_IN_LINE);
+        line1[0] = 0xff;
+        headCtrl (false);
+        SysCtlDelay (HEAD_DATA_CLOCK_SCD);
+        headTransferLine1Bit (line1);
+        SysCtlDelay (HEAD_DATA_CLOCK_SCD);
+        headLatch ();
+        SysCtlDelay (HEAD_DATA_CLOCK_SCD);
+
+        for (int i = 0; i < 40; ++i) {
+                headTransferBdat (0xffff);
+                SysCtlDelay (HEAD_DATA_CLOCK_SCD);
+                headHeatPulse ();
+                SysCtlDelay (HEAD_DATA_CLOCK_SCD);
+
+                headTransferBdat (0xffff);
+                SysCtlDelay (HEAD_DATA_CLOCK_SCD);
+                headHeatPulse ();
+                SysCtlDelay (HEAD_DATA_CLOCK_SCD);
+
+                headTransferBdat (0xffff);
+                SysCtlDelay (HEAD_DATA_CLOCK_SCD);
+                headHeatPulse ();
+                SysCtlDelay (HEAD_DATA_CLOCK_SCD);
+
+                headTransferBdat (0xffff);
+                SysCtlDelay (HEAD_DATA_CLOCK_SCD);
+                headHeatPulse ();
+                SysCtlDelay (HEAD_DATA_CLOCK_SCD);
+
+                motorRun (1);
         }
 
-//        uint8_t line1[HEAD_BYTES_IN_LINE];
-//        memset (line1, 0xaa, HEAD_BYTES_IN_LINE);
-//        headCtrl (false);
-//        SysCtlDelay (HEAD_DATA_CLOCK_SCD);
-//        headTransferLine1Bit (line1);
-//        SysCtlDelay (HEAD_DATA_CLOCK_SCD);
-//        headLatch ();
-//        SysCtlDelay (HEAD_DATA_CLOCK_SCD);
-//        headTransferBdat (0xff);
-//        SysCtlDelay (HEAD_DATA_CLOCK_SCD);
-//        headHeatPulse ();
+
 
         /****************************************************************************/
 
