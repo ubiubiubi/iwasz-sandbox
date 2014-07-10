@@ -144,13 +144,13 @@ int main (void)
 
         uint8_t line1[HEAD_BYTES_IN_LINE];
         memset (line1, 0x00, HEAD_BYTES_IN_LINE);
-        line1[0] = 0xff;
+        memset (line1, 0xaa, 24);
         headCtrl (false);
-        SysCtlDelay (HEAD_DATA_CLOCK_SCD);
+        SysCtlDelay (HEAD_DATA_CLOCK_SCD * 5);
         headTransferLine1Bit (line1);
-        SysCtlDelay (HEAD_DATA_CLOCK_SCD);
+        SysCtlDelay (HEAD_DATA_CLOCK_SCD * 5);
         headLatch ();
-        SysCtlDelay (HEAD_DATA_CLOCK_SCD);
+        SysCtlDelay (HEAD_DATA_CLOCK_SCD * 5);
 
         for (int i = 0; i < 40; ++i) {
                 headTransferBdat (0xffff);
