@@ -80,6 +80,7 @@ void headTransferBdat (uint16_t pages)
 void headHeatPulse (void)
 {
         GPIOPinWrite (GPIO_PORT_HEAD_BASE, GPIO_PIN_HEAD_DST, 0xff);
-        SysCtlDelay (7000);
+//        SysCtlDelay (150000);
+        SysCtlDelay (40000);
         GPIOPinWrite (GPIO_PORT_HEAD_BASE, GPIO_PIN_HEAD_DST, 0x00);
 }
