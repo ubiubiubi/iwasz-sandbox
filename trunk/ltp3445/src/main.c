@@ -143,8 +143,8 @@ int main (void)
 //        }
 
         uint8_t line1[HEAD_BYTES_IN_LINE];
-        memset (line1, 0x00, HEAD_BYTES_IN_LINE);
-        memset (line1, 0xaa, 24);
+        memset (line1, 0xaa, HEAD_BYTES_IN_LINE);
+//        memset (line1, 0xaa, 12);
         headCtrl (false);
         SysCtlDelay (HEAD_DATA_CLOCK_SCD * 5);
         headTransferLine1Bit (line1);
@@ -152,31 +152,44 @@ int main (void)
         headLatch ();
         SysCtlDelay (HEAD_DATA_CLOCK_SCD * 5);
 
+
+
         for (int i = 0; i < 40; ++i) {
-                headTransferBdat (0xffff);
-                SysCtlDelay (HEAD_DATA_CLOCK_SCD);
-                headHeatPulse ();
-                SysCtlDelay (HEAD_DATA_CLOCK_SCD);
 
-                headTransferBdat (0xffff);
-                SysCtlDelay (HEAD_DATA_CLOCK_SCD);
-                headHeatPulse ();
-                SysCtlDelay (HEAD_DATA_CLOCK_SCD);
+                for (int j = 0; j < 13; ++j) {
+                        headTransferBdat (1 << j);
+                        SysCtlDelay (HEAD_DATA_CLOCK_SCD);
+                        headHeatPulse ();
+                        SysCtlDelay (HEAD_DATA_CLOCK_SCD);
+                }
 
-                headTransferBdat (0xffff);
-                SysCtlDelay (HEAD_DATA_CLOCK_SCD);
-                headHeatPulse ();
-                SysCtlDelay (HEAD_DATA_CLOCK_SCD);
+//                headTransferBdat (0xffff);
+//                SysCtlDelay (HEAD_DATA_CLOCK_SCD);
+//                headHeatPulse ();
+//                SysCtlDelay (HEAD_DATA_CLOCK_SCD);
 
-                headTransferBdat (0xffff);
-                SysCtlDelay (HEAD_DATA_CLOCK_SCD);
-                headHeatPulse ();
-                SysCtlDelay (HEAD_DATA_CLOCK_SCD);
+//                headTransferBdat (0xffff);
+//                SysCtlDelay (HEAD_DATA_CLOCK_SCD);
+//                headHeatPulse ();
+//                SysCtlDelay (HEAD_DATA_CLOCK_SCD);
+//
+//                headTransferBdat (0xffff);
+//                SysCtlDelay (HEAD_DATA_CLOCK_SCD);
+//                headHeatPulse ();
+//                SysCtlDelay (HEAD_DATA_CLOCK_SCD);
+//
+//                headTransferBdat (0xffff);
+//                SysCtlDelay (HEAD_DATA_CLOCK_SCD);
+//                headHeatPulse ();
+//                SysCtlDelay (HEAD_DATA_CLOCK_SCD);
+//
+//                headTransferBdat (0xffff);
+//                SysCtlDelay (HEAD_DATA_CLOCK_SCD);
+//                headHeatPulse ();
+//                SysCtlDelay (HEAD_DATA_CLOCK_SCD);
 
                 motorRun (1);
         }
-
-
 
         /****************************************************************************/
 

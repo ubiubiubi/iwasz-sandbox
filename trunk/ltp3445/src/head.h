@@ -14,6 +14,7 @@
 
 /**
  * Initialize all stuff for head management (pins etc.)
+ * Use least signifficant bits.
  */
 extern void headInit (void);
 
