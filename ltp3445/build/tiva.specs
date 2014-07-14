@@ -1,5 +1,5 @@
 *link:
--T tm4c123.ld --entry ResetISR --gc-sections 
+-T tm4c12x.ld --entry ResetISR --gc-sections 
 
 *lib:
 -lm -lc

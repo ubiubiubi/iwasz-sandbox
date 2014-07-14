@@ -54,6 +54,10 @@
 #define HEAD_DATA_CLOCK_SCD_4 (HEAD_DATA_CLOCK_SCD / 4)
 
 #define HEAD_NUMBER_OF_PAGES 13
+#define HEAD_VOLTAGE 7.2
+#define HEAD_TEMPERATURE_COEFFICIENT_2PLY 0.00448
+#define HEAD_TEMPERATURE_COEFFICIENT_1PLY 0.00352
+#define HEAD_TEMPERATURE_COEFFICIENT HEAD_TEMPERATURE_COEFFICIENT_1PLY
 
 /****************************************************************************/
 /* Motor constants                                                          */
@@ -67,6 +71,8 @@
 #define GPIO_PIN_MOTOR_AENABLE GPIO_PIN_3
 #define GPIO_PIN_MOTOR_BPHASE GPIO_PIN_4
 #define GPIO_PIN_MOTOR_BENABLE GPIO_PIN_5
+
+#define MOTOR_VOLTAGE 7.2
 
 /// Maximum motor speed (steps per second) 5 * 160 - 352
 #define MOTOR_MAX_PPS 448
@@ -91,9 +97,11 @@
 /// Maximum time (in custom units suitable for SysCtlDelay) that the motor can be excited without overheating.
 #define MOTOR_MAX_T_SCD (DELAY_COEFFICIENT_SCD / 448)
 
-#define HEAD_RESISTANCE_B_OHM 170
-#define HEAD_RESISTANCE_C_OHM 153 // *
-
+#define HEAD_RESISTANCE_B_OHM 178.0
+#define HEAD_RESISTANCE_C_OHM 161.0
+#define HEAD_RESISTANCE_OHM HEAD_RESISTANCE_C_OHM
+// TODO check!
+#define HEAD_WIRING_RESISTANCE_OHM 1.0
 
 //#define APPLIED_VOLTAGE (5 * 1.26 - 2.46)
 //const static uint16_t HEAD_MAIN_PULSE_WIDTH_MS = ENERGY * HEAD_RESISTANCE_C_OHM

@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <math.h>
 #include "inc/tm4c123gh6pm.h"
 #include "driverlib/sysctl.h"
 #include "driverlib/gpio.h"
@@ -83,4 +84,31 @@ void headHeatPulse (void)
 //        SysCtlDelay (150000);
         SysCtlDelay (40000);
         GPIOPinWrite (GPIO_PORT_HEAD_BASE, GPIO_PIN_HEAD_DST, 0x00);
+}
+
+float headThermistorCelsius ()
+{
+        return 40.0;
+}
+
+float headPulseWidthLTP3445SCD (uint16_t dotsNum)
+{
+        float e = (0.32 - HEAD_TEMPERATURE_COEFFICIENT * (headThermistorCelsius () - 25)) * 1.0;
+        // TODO const static or define.
+        float va = (HEAD_VOLTAGE > 5) ? (HEAD_VOLTAGE - 0.9) : (HEAD_VOLTAGE * 1.26 - 2.46);
+
+        float r = pow ((HEAD_RESISTANCE_OHM + 60 + (0.1 + HEAD_WIRING_RESISTANCE_OHM) * dotsNum), 2) / HEAD_RESISTANCE_OHM;
+
+        // TODO rather actual pps than max pps should be here:
+        float w = 2000.0 / MOTOR_MAX_PPS;
+
+        float cm = (1 - 3.5) / (3.5 + w);
+        float ca = (cm >= 0.75) ? (1) : (cm + 0.25);
+
+
+        // Main and preheat head pulse combined width in ms (because I'm using ca which is cm + cs).
+        float tms = (e * r * ca) / (va * va);
+
+        // ?
+        return tms * DELAY_COEFFICIENT_SCD;
 }

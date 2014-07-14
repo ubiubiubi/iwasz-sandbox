@@ -33,6 +33,20 @@ extern void headLatch (void);
  */
 extern void headTransferBdat (uint16_t pages);
 
+/**
+ * Read the thermistor and return the temperature of head's heat sink in Celsius.
+ */
+extern float headThermistorCelsius ();
+
+/**
+ * Calculate and return the length of the DST (heat) pulse in units suitable for SysCtlDelay.
+ * \param dotsNum Number of dots driven at the same time
+ */
+extern float headPulseWidthLTP3445SCD (uint16_t dotsNum);
+
+/**
+ * Invoke the pulse.
+ */
 extern void headHeatPulse (void);
 
 #endif /* HEAD_H_ */
