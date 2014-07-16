@@ -38,11 +38,8 @@ void headLatch ()
         GPIOPinWrite (GPIO_PORT_HEAD_BASE, GPIO_PIN_HEAD_LATCH, 0xff);
 }
 
-void headTransferLine1Bit (uint8_t *data)
+void headTransferLine1Bit (uint8_t const *data)
 {
-//        GPIOPinWrite (GPIO_PORT_HEAD_BASE, GPIO_PIN_HEAD_HCLK, 0xff);
-//        SysCtlDelay (HEAD_DATA_CLOCK_SCD*14);
-
         for (int i = 0; i < HEAD_BYTES_IN_LINE; ++i) {
                 for (int j = 7; j >= 0; --j) {
                         GPIOPinWrite (GPIO_PORT_HEAD_BASE, GPIO_PIN_HEAD_HCLK, 0x00);
@@ -53,8 +50,6 @@ void headTransferLine1Bit (uint8_t *data)
                         GPIOPinWrite (GPIO_PORT_HEAD_BASE, GPIO_PIN_HEAD_HCLK, GPIO_PIN_HEAD_HCLK);
                         SysCtlDelay (HEAD_DATA_CLOCK_SCD_2);
                 }
-                // TODO wywal
-//                SysCtlDelay (HEAD_DATA_CLOCK_SCD*14);
         }
 
         GPIOPinWrite (GPIO_PORT_HEAD_BASE, GPIO_PIN_HEAD_HCLK | GPIO_PIN_HEAD_HDAT, 0x00);
@@ -65,7 +60,7 @@ void headTransferLine1Bit (uint8_t *data)
  */
 void headTransferBdat (uint16_t pages)
 {
-        for (int j = HEAD_NUMBER_OF_PAGES; j >= 0; --j) {
+        for (int j = HEAD_NUMBER_OF_PAGES - 1; j >= 0; --j) {
                 GPIOPinWrite (GPIO_PORT_HEAD_BASE, GPIO_PIN_HEAD_BCLK, 0x00);
                 SysCtlDelay (HEAD_DATA_CLOCK_SCD_4);
                 uint8_t currentState = (pages & (1 << j)) ? GPIO_PIN_HEAD_BDAT : 0x00;
@@ -78,12 +73,25 @@ void headTransferBdat (uint16_t pages)
         GPIOPinWrite (GPIO_PORT_HEAD_BASE, GPIO_PIN_HEAD_BCLK | GPIO_PIN_HEAD_BDAT, 0x00);
 }
 
-void headHeatPulse (void)
+void headHeatPulse (uint32_t scdDelay)
 {
+        if (scdDelay > 100000) {
+                GPIOPinWrite (GPIO_PORT_HEAD_BASE, GPIO_PIN_HEAD_DST, 0x00);
+                return;
+        }
+
         GPIOPinWrite (GPIO_PORT_HEAD_BASE, GPIO_PIN_HEAD_DST, 0xff);
-//        SysCtlDelay (150000);
-        SysCtlDelay (40000);
+        SysCtlDelay (30000);
         GPIOPinWrite (GPIO_PORT_HEAD_BASE, GPIO_PIN_HEAD_DST, 0x00);
+
+//        for (int i = 0; i < 20; ++i) {
+//                GPIOPinWrite (GPIO_PORT_HEAD_BASE, GPIO_PIN_HEAD_DST, 0xff);
+//                SysCtlDelay (1500);
+//                GPIOPinWrite (GPIO_PORT_HEAD_BASE, GPIO_PIN_HEAD_DST, 0x00);
+//                SysCtlDelay (1500);
+//        }
+//
+//        GPIOPinWrite (GPIO_PORT_HEAD_BASE, GPIO_PIN_HEAD_DST, 0x00);
 }
 
 float headThermistorCelsius ()

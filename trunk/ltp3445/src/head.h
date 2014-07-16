@@ -22,7 +22,7 @@ extern void headInit (void);
  * Submit 1 line (832 pixels) of data. 1bit color depth.
  * Data must be no shorter than 104 bytes.
  */
-extern void headTransferLine1Bit (uint8_t *data);
+extern void headTransferLine1Bit (uint8_t const *data);
 
 extern void headCtrl (bool bit);
 
@@ -47,6 +47,6 @@ extern float headPulseWidthLTP3445SCD (uint16_t dotsNum);
 /**
  * Invoke the pulse.
  */
-extern void headHeatPulse (void);
+extern void headHeatPulse (uint32_t scdDelay);
 
 #endif /* HEAD_H_ */

@@ -6,7 +6,6 @@ SET(TARGET_TRIPLET "arm-unknown-eabi")
 #SET(TIVA_WARE_PATH "/home/iwasz/Documents/workspace-CDT/SW-TM4C-2.1.0.12573")
 SET (TIVA_WARE_PATH "" CACHE STRING "Path to Texas Instruments Tiva Ware root sirectry")
 
-ADD_DEFINITIONS (-DPART_TM4C123GH6PM)
 ADD_DEFINITIONS (-Dgcc)
 
 SET(TOOLCHAIN_BIN_DIR ${TOOLCHAIN_PREFIX}/bin)
