@@ -40,6 +40,7 @@
 #include "motor.h"
 #include "head.h"
 #include "inputs.h"
+#include "franek.h"
 
 #ifdef DEBUG
 void __error__ (char *pcFilename, unsigned long ulLine)
@@ -139,58 +140,22 @@ int main (void)
         printf ("Test sequence : OK.\r\n");
         SysCtlDelay (DELAY_COEFFICIENT_SCD / 10);
 
-//        while (1) {
-//                GPIOPinWrite (GPIO_PORT_HEAD_BASE, GPIO_PIN_HEAD_ALL, 0xff);
-//                SysCtlDelay (10000);
-//                GPIOPinWrite (GPIO_PORT_HEAD_BASE, GPIO_PIN_HEAD_ALL, 0x00);
-//                SysCtlDelay (10000);
-//        }
-
-        uint8_t line1[HEAD_BYTES_IN_LINE];
-        memset (line1, 0xaa, HEAD_BYTES_IN_LINE);
-//        memset (line1, 0xaa, 12);
         headCtrl (false);
-        SysCtlDelay (HEAD_DATA_CLOCK_SCD * 5);
-        headTransferLine1Bit (line1);
-        SysCtlDelay (HEAD_DATA_CLOCK_SCD * 5);
-        headLatch ();
-        SysCtlDelay (HEAD_DATA_CLOCK_SCD * 5);
+        int rows = franek_gray_len / HEAD_BYTES_IN_LINE;
 
+        for (int i = 0; i < rows; ++i) {
+                SysCtlDelay (HEAD_DATA_CLOCK_SCD * 5);
+                headTransferLine1Bit (franek_gray + i * HEAD_BYTES_IN_LINE);
+                SysCtlDelay (HEAD_DATA_CLOCK_SCD * 5);
+                headLatch ();
+                SysCtlDelay (HEAD_DATA_CLOCK_SCD * 5);
 
-
-        for (int i = 0; i < 40; ++i) {
-
-                for (int j = 0; j < 13; ++j) {
+                for (int j = HEAD_NUMBER_OF_PAGES - 1; j >= 0; --j) {
                         headTransferBdat (1 << j);
                         SysCtlDelay (HEAD_DATA_CLOCK_SCD);
-                        headHeatPulse ();
+                        headHeatPulse (30000);
                         SysCtlDelay (HEAD_DATA_CLOCK_SCD);
                 }
-
-//                headTransferBdat (0xffff);
-//                SysCtlDelay (HEAD_DATA_CLOCK_SCD);
-//                headHeatPulse ();
-//                SysCtlDelay (HEAD_DATA_CLOCK_SCD);
-
-//                headTransferBdat (0xffff);
-//                SysCtlDelay (HEAD_DATA_CLOCK_SCD);
-//                headHeatPulse ();
-//                SysCtlDelay (HEAD_DATA_CLOCK_SCD);
-//
-//                headTransferBdat (0xffff);
-//                SysCtlDelay (HEAD_DATA_CLOCK_SCD);
-//                headHeatPulse ();
-//                SysCtlDelay (HEAD_DATA_CLOCK_SCD);
-//
-//                headTransferBdat (0xffff);
-//                SysCtlDelay (HEAD_DATA_CLOCK_SCD);
-//                headHeatPulse ();
-//                SysCtlDelay (HEAD_DATA_CLOCK_SCD);
-//
-//                headTransferBdat (0xffff);
-//                SysCtlDelay (HEAD_DATA_CLOCK_SCD);
-//                headHeatPulse ();
-//                SysCtlDelay (HEAD_DATA_CLOCK_SCD);
 
                 motorRun (1);
         }
