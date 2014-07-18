@@ -142,19 +142,32 @@ int main (void)
 
         headCtrl (false);
         int rows = franek_gray_len / HEAD_BYTES_IN_LINE;
+        int MONOHROME_BYTES = HEAD_PIXELS_IN_LINE / 8;
+        uint8_t monohrome[MONOHROME_BYTES];
 
         for (int i = 0; i < rows; ++i) {
-                SysCtlDelay (HEAD_DATA_CLOCK_SCD * 5);
-                headTransferLine1Bit (franek_gray + i * HEAD_BYTES_IN_LINE);
-                SysCtlDelay (HEAD_DATA_CLOCK_SCD * 5);
-                headLatch ();
-                SysCtlDelay (HEAD_DATA_CLOCK_SCD * 5);
+                for (int k = 0; k < 3; ++k) {
 
-                for (int j = HEAD_NUMBER_OF_PAGES - 1; j >= 0; --j) {
-                        headTransferBdat (1 << j);
-                        SysCtlDelay (HEAD_DATA_CLOCK_SCD);
-                        headHeatPulse (30000);
-                        SysCtlDelay (HEAD_DATA_CLOCK_SCD);
+                        for (int l = 0; l < MONOHROME_BYTES; ++l) {
+                                uint8_t *start = franek_gray + i * HEAD_BYTES_IN_LINE;
+                                uint8_t b = start[l * 2]
+
+                                monohrome[l] =
+                        }
+
+
+                        SysCtlDelay (HEAD_DATA_CLOCK_SCD * 5);
+                        headTransferLine1Bit (monohrome);
+                        SysCtlDelay (HEAD_DATA_CLOCK_SCD * 5);
+                        headLatch ();
+                        SysCtlDelay (HEAD_DATA_CLOCK_SCD * 5);
+
+                        for (int j = HEAD_NUMBER_OF_PAGES - 1; j >= 0; --j) {
+                                headTransferBdat (1 << j);
+                                SysCtlDelay (HEAD_DATA_CLOCK_SCD);
+                                headHeatPulse (30000);
+                                SysCtlDelay (HEAD_DATA_CLOCK_SCD);
+                        }
                 }
 
                 motorRun (1);
