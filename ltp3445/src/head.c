@@ -75,13 +75,13 @@ void headTransferBdat (uint16_t pages)
 
 void headHeatPulse (uint32_t scdDelay)
 {
-        if (scdDelay > 100000) {
+        if (scdDelay <= 0 || scdDelay > 100000) {
                 GPIOPinWrite (GPIO_PORT_HEAD_BASE, GPIO_PIN_HEAD_DST, 0x00);
                 return;
         }
 
         GPIOPinWrite (GPIO_PORT_HEAD_BASE, GPIO_PIN_HEAD_DST, 0xff);
-        SysCtlDelay (30000);
+        SysCtlDelay (scdDelay);
         GPIOPinWrite (GPIO_PORT_HEAD_BASE, GPIO_PIN_HEAD_DST, 0x00);
 
 //        for (int i = 0; i < 20; ++i) {

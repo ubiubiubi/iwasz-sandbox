@@ -141,23 +141,40 @@ int main (void)
         SysCtlDelay (DELAY_COEFFICIENT_SCD / 10);
 
         headCtrl (false);
-        int rows = franek_gray_len / HEAD_BYTES_IN_LINE;
-        int MONOHROME_BYTES = HEAD_PIXELS_IN_LINE / 8;
-        uint8_t monohrome[MONOHROME_BYTES];
 
-        for (int i = 0; i < rows; ++i) {
-                for (int k = 0; k < 3; ++k) {
+        /****************************************************************************/
 
-                        for (int l = 0; l < MONOHROME_BYTES; ++l) {
-                                uint8_t *start = franek_gray + i * HEAD_BYTES_IN_LINE;
-                                uint8_t b = start[l * 2]
+        int bitsPerPixel = 2;
+        int widthPx = 832;
+        int pxPerPage = widthPx / HEAD_NUMBER_OF_PAGES;
+        int heightPx = franek_gray_len * 8 / (widthPx * bitsPerPixel);
 
-                                monohrome[l] =
+        uint16_t bitMask = 0;
+
+        for (int i = 15; i > 15 - bitsPerPixel; --i) {
+                bitMask |= (1 << i);
+        }
+
+        uint8_t monochrome[widthPx / 8];
+        uint8_t const *p = NULL;
+        uint8_t shadesNum = (1 << bitsPerPixel) - 1;
+        uint32_t intensityIncremental[] = { 30000, 25000, 20000 };
+
+        for (int j = 0; j < heightPx; ++j) { // Row
+                for (int k = 0; k < shadesNum; ++k) { // Shade of gray
+                        memset (monochrome, 0, sizeof (monochrome));
+
+                        for (int i = 0; i < widthPx; ++i) { // Column
+                                p = franek_gray + (j * widthPx * bitsPerPixel / 8) + (i * bitsPerPixel / 8);
+                                uint16_t color = ((int)p[0]) << 8 | ((int)p[1]);
+                                color <<= (i * bitsPerPixel) % 8;
+                                color &= bitMask;
+                                color >>= 15 - bitsPerPixel;
+                                monochrome[i / 8] |= ((color <= k) << (7 - (i % 8)));
                         }
 
-
                         SysCtlDelay (HEAD_DATA_CLOCK_SCD * 5);
-                        headTransferLine1Bit (monohrome);
+                        headTransferLine1Bit (monochrome);
                         SysCtlDelay (HEAD_DATA_CLOCK_SCD * 5);
                         headLatch ();
                         SysCtlDelay (HEAD_DATA_CLOCK_SCD * 5);
@@ -165,12 +182,12 @@ int main (void)
                         for (int j = HEAD_NUMBER_OF_PAGES - 1; j >= 0; --j) {
                                 headTransferBdat (1 << j);
                                 SysCtlDelay (HEAD_DATA_CLOCK_SCD);
-                                headHeatPulse (30000);
+                                headHeatPulse (intensityIncremental[k]);
                                 SysCtlDelay (HEAD_DATA_CLOCK_SCD);
                         }
+//                        printf ("\r\n");
                 }
-
-                motorRun (1);
+                motorRun (2);
         }
 
         /****************************************************************************/
