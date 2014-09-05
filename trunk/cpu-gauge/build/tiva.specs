@@ -1,0 +1,8 @@
+*link:
+-T tm4c12x.ld --entry ResetISR --gc-sections 
+
+*lib:
+-lm -lc
+
+#*startfile:
+
