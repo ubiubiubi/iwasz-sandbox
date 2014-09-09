@@ -1,6 +1,7 @@
 #include "usbd_vendor_class.h"
 #include "usbd_desc.h"
 #include "usbd_req.h"
+#include "stm32fxxx_it.h"
 #include <stdio.h>
 
 extern void setCountersToZero ();
@@ -15,7 +16,7 @@ static uint8_t vendorSOF (void *pdev);
 static uint8_t vendorIN_Incplt (void *pdev);
 static uint8_t vendorOUT_Incplt (void *pdev);
 
-extern int16_t angle[32];
+extern int16_t angle[SENSORS_NUMBER];
 
 /**
  *
@@ -243,7 +244,18 @@ uint8_t vendorSendReport (USB_OTG_CORE_HANDLE *pdev, uint8_t *report, uint16_t l
 {
         if (pdev->dev.device_status == USB_OTG_CONFIGURED) {
                 DCD_EP_Tx (pdev, IN_EP, report, len);
-//                printf (".\r\n");
+
+#if 0
+                static int i = 0;
+                if (i % 100 == 0) {
+//                        for (int j = 0; j < SENSORS_NUMBER; ++j) {
+//                                printf ("%d,", angle[j]);
+//                        }
+//                        printf ("\n");
+                        printf ("%d\r\n,", angle[17]);
+
+                }
+#endif
         }
 
         return USBD_OK;
