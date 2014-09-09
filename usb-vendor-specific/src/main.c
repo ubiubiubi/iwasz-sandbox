@@ -163,6 +163,7 @@ void initUsart (void)
 void initExti (void)
 {
         // Konfiguracja portu jak zwykle.
+        RCC_AHB1PeriphClockCmd (RCC_AHB1Periph_GPIOB, ENABLE);
         RCC_AHB1PeriphClockCmd (RCC_AHB1Periph_GPIOC, ENABLE);
         RCC_AHB1PeriphClockCmd (RCC_AHB1Periph_GPIOD, ENABLE);
         RCC_AHB1PeriphClockCmd (RCC_AHB1Periph_GPIOE, ENABLE);
@@ -173,6 +174,7 @@ void initExti (void)
         gpioInitStruct.GPIO_Mode = GPIO_Mode_IN;
         gpioInitStruct.GPIO_Speed = GPIO_Speed_100MHz;
         gpioInitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;
+        GPIO_Init (GPIOB, &gpioInitStruct);
         GPIO_Init (GPIOC, &gpioInitStruct);
         GPIO_Init (GPIOD, &gpioInitStruct);
         GPIO_Init (GPIOE, &gpioInitStruct);

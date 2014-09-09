@@ -1,6 +1,5 @@
 # GCC toolchain prefix
-#SET(TOOLCHAIN_PREFIX "/home/iwasz/x-tools/arm-unknown-eabi")
-SET(TOOLCHAIN_PREFIX "/home/iwasz/local/share/arm-unknown-eabi")
+SET(TOOLCHAIN_PREFIX "/home/iwasz/local/share/arm-unknown-eabi-cortex-m4")
 SET(TARGET_TRIPLET "arm-unknown-eabi")
 
 SET(TOOLCHAIN_BIN_DIR ${TOOLCHAIN_PREFIX}/bin)

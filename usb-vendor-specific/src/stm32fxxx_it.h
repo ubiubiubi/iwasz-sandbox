@@ -5,6 +5,8 @@
  extern "C" {
 #endif 
 
+ #define SENSORS_NUMBER 40
+
 /* Includes ------------------------------------------------------------------*/
 #include "usb_conf.h"
 
