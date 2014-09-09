@@ -35,12 +35,8 @@
 #include "driverlib/uart.h"
 #include "driverlib/pin_map.h"
 #include "driverlib/eeprom.h"
-
 #include "config.h"
 #include "motor.h"
-#include "head.h"
-#include "inputs.h"
-#include "franek.h"
 
 #ifdef DEBUG
 void __error__ (char *pcFilename, unsigned long ulLine)
@@ -50,7 +46,6 @@ void __error__ (char *pcFilename, unsigned long ulLine)
         }
 }
 #endif
-
 
 /**
  *
@@ -99,18 +94,15 @@ void configureUART (void)
         uartStdioConfig(0, 115200, 16000000);
 }
 
-/*##########################################################################*/
-
-
 
 /*##########################################################################*/
 
 int main (void)
 {
-        SysCtlClockSet (SYSCTL_SYSDIV_2_5 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN | SYSCTL_XTAL_16MHZ);
+        SysCtlClockSet (SYSCTL_SYSDIV_2_5 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN | SYSCTL_XTAL_25MHZ);
 
         configureUART ();
-        printf ("LTP4335 project.\r\n");
+        printf ("cpu-gauge.\r\n");
 
         // Enable the GPIO port that is used for the on-board LED.
         SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
@@ -127,70 +119,12 @@ int main (void)
         motorInit ();
         printf ("Motor initialized.\r\n");
 
-        headInit ();
-        printf ("Head initialized.\r\n");
-
-//        inputsInit ();
-//        printf ("Inputs initialized.\r\n");
-
         printf ("Test sequence : +40 steps.\r\n");
-//        motorRun (40);
+        motorRun (40);
         printf ("Test sequence : -40 steps.\r\n");
-//        motorRun (-40);
+        motorRun (-40);
         printf ("Test sequence : OK.\r\n");
         SysCtlDelay (DELAY_COEFFICIENT_SCD / 10);
-
-        headCtrl (false);
-
-        /****************************************************************************/
-
-        int bitsPerPixel = 2;
-        int widthPx = 832;
-        int pxPerPage = widthPx / HEAD_NUMBER_OF_PAGES;
-        int heightPx = franek_gray_len * 8 / (widthPx * bitsPerPixel);
-
-        uint16_t bitMask = 0;
-
-        for (int i = 15; i > 15 - bitsPerPixel; --i) {
-                bitMask |= (1 << i);
-        }
-
-        uint8_t monochrome[widthPx / 8];
-        uint8_t const *p = NULL;
-        uint8_t shadesNum = (1 << bitsPerPixel) - 1;
-        uint32_t intensityIncremental[] = { 30000, 25000, 20000 };
-
-        for (int j = 0; j < heightPx; ++j) { // Row
-                for (int k = 0; k < shadesNum; ++k) { // Shade of gray
-                        memset (monochrome, 0, sizeof (monochrome));
-
-                        for (int i = 0; i < widthPx; ++i) { // Column
-                                p = franek_gray + (j * widthPx * bitsPerPixel / 8) + (i * bitsPerPixel / 8);
-                                uint16_t color = ((int)p[0]) << 8 | ((int)p[1]);
-                                color <<= (i * bitsPerPixel) % 8;
-                                color &= bitMask;
-                                color >>= 15 - bitsPerPixel;
-                                monochrome[i / 8] |= ((color <= k) << (7 - (i % 8)));
-                        }
-
-                        SysCtlDelay (HEAD_DATA_CLOCK_SCD * 5);
-                        headTransferLine1Bit (monochrome);
-                        SysCtlDelay (HEAD_DATA_CLOCK_SCD * 5);
-                        headLatch ();
-                        SysCtlDelay (HEAD_DATA_CLOCK_SCD * 5);
-
-                        for (int j = HEAD_NUMBER_OF_PAGES - 1; j >= 0; --j) {
-                                headTransferBdat (1 << j);
-                                SysCtlDelay (HEAD_DATA_CLOCK_SCD);
-                                headHeatPulse (intensityIncremental[k]);
-                                SysCtlDelay (HEAD_DATA_CLOCK_SCD);
-                        }
-//                        printf ("\r\n");
-                }
-                motorRun (2);
-        }
-
-        /****************************************************************************/
 
         uint8_t ui8ButtonsChanged, ui8Buttons;
 
