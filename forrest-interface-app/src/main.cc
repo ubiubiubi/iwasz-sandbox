@@ -17,8 +17,8 @@
 #include <boost/lexical_cast.hpp>
 #include <pqxx/pqxx>
 
-const int ISO_PACKET_SIZE = 64;
-const int ENCODERS_NUMBER = 32;
+const int ISO_PACKET_SIZE = 80;
+const int ENCODERS_NUMBER = 40;
 bool doExit = false;
 
 // Pointer to adjustment.
@@ -45,7 +45,7 @@ std::mutex dbBufferMutex;
 std::atomic<bool> usbRunning (true);
 
 // tymczas, no nie
-pqxx::connection dbConnection ("dbname=forrestdkk user=iwasz");
+//pqxx::connection dbConnection ("dbname=forrestdkk user=iwasz");
 
 // Głowne okno;
 GObject *window = NULL;
@@ -225,16 +225,12 @@ void playThread ()
 gboolean guiThread (gpointer user_data)
 {
         {
-                std::lock_guard < std::mutex > guard(bufferMutex);
+                std::lock_guard < std::mutex > guard (bufferMutex);
 
                 for (int i = 0; i < ENCODERS_NUMBER; ++i) {
                         int bufPos = i * 2;
-                        int16_t val =
-                                        static_cast<int16_t>(outputBuf[bufPos]
-                                                        | (static_cast<uint16_t>(outputBuf[bufPos
-                                                                        + 1])
-                                                                        << 8));
-                        gtk_adjustment_set_value(adjustment[i], val);
+                        int16_t val = static_cast<int16_t> (outputBuf[bufPos] | (static_cast<uint16_t> (outputBuf[bufPos + 1]) << 8));
+                        gtk_adjustment_set_value (adjustment[i], val);
                 }
 
 //                        printf ("[");
@@ -386,12 +382,12 @@ void saveButtonClicked (GtkButton *button, gpointer user_data)
                 popupError ("Wyłącz USB najpierew!");
         }
 
-        pqxx::work tx (dbConnection);
+//        pqxx::work tx (dbConnection);
         std::lock_guard < std::mutex > guard(dbBufferMutex);
-        tx.exec ("INSERT INTO examination (data) VALUES ('" + tx.esc_raw(dbBuffer.data (), dbBuffer.size ()) + "')");
-        tx.commit ();
-
-        dbBuffer.clear ();
+//        tx.exec ("INSERT INTO examination (data) VALUES ('" + tx.esc_raw(dbBuffer.data (), dbBuffer.size ()) + "')");
+//        tx.commit ();
+//
+//        dbBuffer.clear ();
 }
 
 void playButtonClicked (GtkButton *button, gpointer user_data)
@@ -400,43 +396,43 @@ void playButtonClicked (GtkButton *button, gpointer user_data)
                 popupError ("Wyłącz USB najpierew!");
         }
 
-        pqxx::work tx (dbConnection);
-
-        pqxx::result r = tx.exec("SELECT max (id) from examination");
-
-        if (r.size () != 1) {
-                popupError ("Nie udało sie counta zrobić!");
-                return;
-        }
-
-        int examinationId;
-
-        try {
-                examinationId = r[0][0].as<int> ();
-        }
-        catch (pqxx::conversion_error const &) {
-                popupError ("Nie ma nic w bazie!!!!!");
-                return;
-        }
-
-        r = tx.exec("SELECT data from examination where id = " + tx.quote(examinationId));
-
-        if (r.size () != 1) {
-                popupError ("Nie udało sie pobrać danych!");
-                return;
-        }
-
-        pqxx::binarystring blob(r[0][0]);
-        uint8_t const *ptr = static_cast <uint8_t const *> (blob.data());
-        size_t len = blob.size();
-
-        std::cout << "Size od data retrieved " << len << std::endl;
-
-        dbBuffer.clear ();
-        std::copy (ptr, ptr + len, std::back_inserter (dbBuffer));
-
-        std::thread t(playThread);
-        t.detach();
+//        pqxx::work tx (dbConnection);
+//
+//        pqxx::result r = tx.exec("SELECT max (id) from examination");
+//
+//        if (r.size () != 1) {
+//                popupError ("Nie udało sie counta zrobić!");
+//                return;
+//        }
+//
+//        int examinationId;
+//
+//        try {
+//                examinationId = r[0][0].as<int> ();
+//        }
+//        catch (pqxx::conversion_error const &) {
+//                popupError ("Nie ma nic w bazie!!!!!");
+//                return;
+//        }
+//
+//        r = tx.exec("SELECT data from examination where id = " + tx.quote(examinationId));
+//
+//        if (r.size () != 1) {
+//                popupError ("Nie udało sie pobrać danych!");
+//                return;
+//        }
+//
+//        pqxx::binarystring blob(r[0][0]);
+//        uint8_t const *ptr = static_cast <uint8_t const *> (blob.data());
+//        size_t len = blob.size();
+//
+//        std::cout << "Size od data retrieved " << len << std::endl;
+//
+//        dbBuffer.clear ();
+//        std::copy (ptr, ptr + len, std::back_inserter (dbBuffer));
+//
+//        std::thread t(playThread);
+//        t.detach();
 }
 
 void usbButtonToggled (GtkToggleButton *button, gpointer user_data)
@@ -496,13 +492,13 @@ int main (int argc, char **argv)
 
         /* Construct a GtkBuilder instance and load our UI description */
         builder = gtk_builder_new();
-        gtk_builder_add_from_file(builder, "forrest.ui", NULL);
+        gtk_builder_add_from_file(builder, "forrest2.ui", NULL);
 
         /* Connect signal handlers to the constructed widgets. */
         window = gtk_builder_get_object(builder, "window");
         g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
 
-        guiLoadTheme ("../theme", "Flattastic-Orange", window);
+//        guiLoadTheme ("../theme", "Flattastic-Orange", window);
 
         quitButton = gtk_builder_get_object(builder, "quit");
         g_signal_connect(quitButton, "clicked", G_CALLBACK(gtk_main_quit), NULL);
