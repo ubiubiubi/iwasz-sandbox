@@ -1,5 +1,7 @@
 # GCC toolchain prefix
 SET(TOOLCHAIN_PREFIX "/home/iwasz/local/share/arm-unknown-eabi-cortex-m4")
+#SET(TOOLCHAIN_PREFIX "/home/iwasz/local/share/arm-unknown-eabi-tut/")
+
 SET(TARGET_TRIPLET "arm-unknown-eabi")
 
 #SET(TIVA_WARE_PATH "/home/iwasz/workspace/SW-TM4C-2.1.0.12573")
