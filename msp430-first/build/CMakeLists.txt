@@ -1,7 +1,7 @@
 CMAKE_MINIMUM_REQUIRED (VERSION 2.8)
 SET (CMAKE_VERBOSE_MAKEFILE of) 
 SET (DEVICE msp430f5529) 
-SET (DRIVERLIB "/home/iwasz/workspace/MSP430ware_1_90_00_30/driverlib/driverlib/MSP430F5xx_6xx")
+#SET (DRIVERLIB "/home/iwasz/Documents/workspace-CDT/MSP430ware_1_90_00_30/driverlib/driverlib/MSP430F5xx_6xx")
 
 PROJECT (msp430-first)
 include (msp430.cmake)
