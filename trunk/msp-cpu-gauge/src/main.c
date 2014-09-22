@@ -1,5 +1,31 @@
 #include <msp430.h>
-#include <gpio.h>
+//#include <gpio.h>
+#include <driverlib.h>
+
+#define PERIOD 0xff
+//#define TIMER_PERIOD 511
+//#define DUTY_CYCLE  350
+
+
+import numpy;
+import math;
+
+for i in numpy.arange (0, 2*math.pi, math.pi/5.0):
+        print 255 * math.sin (i);
+
+
+/**
+ * From 0 to 0xff (including).
+ */
+void setWinding1 (int power)
+{
+        TA0CCR1 = PERIOD - power;
+}
+
+void setWinding2 (int power)
+{
+        TA0CCR2 = PERIOD - power;
+}
 
 /**
  * Uwaga - mylące nazwy :
@@ -11,9 +37,39 @@
  *               Gdy są równe, generowane jest zdarzenie (zazwyczaj zmiana stanu jakiegoś wyjścia i/lub przerwanie). W ten sposób generujemy
  *               PWM.
  */
-int main(void) {
+int main (void)
+{
+#if 0
+        //Stop WDT
+        WDT_A_hold(WDT_A_BASE);
+
+        //P2.0 as PWM output
+        GPIO_setAsPeripheralModuleFunctionOutputPin(
+                GPIO_PORT_P2,
+                GPIO_PIN0
+                );
+
+        //Generate PWM - Timer runs in Up-Down mode
+        TIMER_A_generatePWM(TIMER_A1_BASE,
+                            TIMER_A_CLOCKSOURCE_SMCLK,
+                            TIMER_A_CLOCKSOURCE_DIVIDER_1,
+                            TIMER_PERIOD,
+                            TIMER_A_CAPTURECOMPARE_REGISTER_1,
+                            TIMER_A_OUTPUTMODE_RESET_SET,
+                            DUTY_CYCLE
+                            );
+
+        //Enter LPM0
+        __bis_SR_register(LPM0_bits);
+
+        //For debugger
+        __no_operation();
+#endif
+
+#if 1
         // Stop watchdog timer
         WDTCTL = WDTPW | WDTHOLD;
+        GPIO_setAsPeripheralModuleFunctionOutputPin (GPIO_PORT_P1, GPIO_PIN2 | GPIO_PIN3);
 
         /*
          * Konfiguracja pierwszego timera typu A. Wybór źródła sygnału zegarowego za pomocą :
@@ -49,7 +105,7 @@ int main(void) {
          * Timer mode control: 3 - Up/Down, cyzli od 0 do TAxCCR0 i potem do 0 i w kółko.
          *
          */
-        MC_1;
+        MC_3;
 
         /*
          * Dalszy podział sygnału zegarowego. Możliwe wartości:
@@ -62,7 +118,7 @@ int main(void) {
          * TAIDEX_6 : /7
          * TAIDEX_7 : /8
          */
-        TA0EX0 = TAIDEX_4;
+        TA0EX0 = TAIDEX_0;
 
         // Można ustawić aktualny stan timera, ale nie trzeba.
         TA0R = 0;
@@ -75,36 +131,50 @@ int main(void) {
 
 /*---------------------------------------------------------------------------*/
 
+        TA0CCR0 = PERIOD;
+
+        TA0CCR1 = (PERIOD / 2);
+        TA0CCTL1 |= OUTMOD_4; // Toggle
 
 
+        TA0CCR2 = (PERIOD / 2);
+        TA0CCTL2 |= OUTMOD_4; // Toggle
 
 
+        //Enter LPM0
+        __bis_SR_register(LPM0_bits);
 
+        //For debugger
+        __no_operation();
 
+//        GPIO_setAsOutputPin (GPIO_PORT_P1, GPIO_PIN0 | GPIO_PIN1 | GPIO_PIN2 | GPIO_PIN3);
 
-
-
-
-
-
-        P1DIR |= 0x01;                                  // Set P1.0 to output direction
-
-        GPIO_setAsOutputPin (GPIO_PORT_P6, GPIO_PIN0 | GPIO_PIN1 | GPIO_PIN2 | GPIO_PIN3);
-
-        for(;;) {
-                volatile unsigned int i;        // volatile to prevent optimization
-
-                P6OUT = GPIO_PIN0 | GPIO_PIN2 | GPIO_PIN3;
-                for (i = 0; i < 10000; ++i);
-                P6OUT = GPIO_PIN0 | GPIO_PIN1 | GPIO_PIN2 | GPIO_PIN3;
-                for (i = 0; i < 10000; ++i);
-                P6OUT = GPIO_PIN1 | GPIO_PIN2 | GPIO_PIN3;
-                for (i = 0; i < 10000; ++i);
-                P6OUT =  GPIO_PIN2 | GPIO_PIN3;
-                for (i = 0; i < 10000; ++i);
-        }
-
-        return 0;
+//
+//        while (1) {
+//
+//        }
+//
+//
+//
+////        P1DIR |= 0x01;                                  // Set P1.0 to output direction
+////
+////        GPIO_setAsOutputPin (GPIO_PORT_P6, GPIO_PIN0 | GPIO_PIN1 | GPIO_PIN2 | GPIO_PIN3);
+////
+////        for(;;) {
+////                volatile unsigned int i;        // volatile to prevent optimization
+////
+////                P6OUT = GPIO_PIN0 | GPIO_PIN2 | GPIO_PIN3;
+////                for (i = 0; i < 10000; ++i);
+////                P6OUT = GPIO_PIN0 | GPIO_PIN1 | GPIO_PIN2 | GPIO_PIN3;
+////                for (i = 0; i < 10000; ++i);
+////                P6OUT = GPIO_PIN1 | GPIO_PIN2 | GPIO_PIN3;
+////                for (i = 0; i < 10000; ++i);
+////                P6OUT =  GPIO_PIN2 | GPIO_PIN3;
+////                for (i = 0; i < 10000; ++i);
+////        }
+//
+//        return 0;
+#endif
 }
 
 
