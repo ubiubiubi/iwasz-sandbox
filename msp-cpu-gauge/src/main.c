@@ -5,7 +5,11 @@
  * Uwaga - mylące nazwy :
  * TAxCTL - główny rejestr kontrolny.
  * TAxCCTL[0-6] - Timer_Ax Capture/Compare Control 0-6
- * TAxCCR[0-6] - Timer_Ax Capture/Compare 0-6
+ * TAxCCR[0-6] - Timer_Ax Capture/Compare 0-6. Mają podwójną funkcję. Kiedy pracują jako 'capture', współpracują z jakimś wejściem. Gdy
+ *               na tym wejściu pojawi się zdarzenie, wartość z licznika TAxR jest kopiowana do rejestru.
+ *               W trybie compare jest odwrotnie. Do rejestrów TAxCCR zapisujemy jakąś wartość, która jest porównywana z licznikiem TAxR.
+ *               Gdy są równe, generowane jest zdarzenie (zazwyczaj zmiana stanu jakiegoś wyjścia i/lub przerwanie). W ten sposób generujemy
+ *               PWM.
  */
 int main(void) {
         // Stop watchdog timer
@@ -33,10 +37,12 @@ int main(void) {
         /*
          * Tryb działania
          * Timer mode control: 0 - Stop
+         *
          * Timer mode control: 1 - Up to TAxCCR0 i znów od 0. W tym przypadku używany jest tylko TAxCCR0 (Timer_Ax Capture/Compare 0).
          *                         Kiedy timer dojdzie do wartości TAxCCR0, to ustawiany jest bit CCIFG w rejestrze TAxCCTL0. Natomiast
          *                         zaraz potem, kiedy  tylko timer się wyzeruje µC ustawia bit TAIFG w rejestrze TAxCTL (Timer_Ax Control).
          *                         Czyli te zdarzenia następują zaraz po sobie.
+         *
          * Timer mode control: 2 - Continuous up, czyli liczy do 0xffff i znów od zera. Kiedy dojdzie do 0xffff, to ustawia TAIFG w TAxCTL
          *                         (Timer_Ax Control), tak samo jak w poprzednim wypadku.
          *
