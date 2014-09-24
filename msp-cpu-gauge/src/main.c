@@ -2,9 +2,11 @@
 //#include <gpio.h>
 #include <driverlib.h>
 #include <stdlib.h>
+#include <ucs.h>
 
 #define PERIOD 0xfff
 #define STEPS 512
+#define CLK_FREQ 10000000
 
 const int SINE[] = {
                 0,50,100,151,201,251,301,351,401,451,501,551,601,651,700,750,799,848,897,946,
@@ -32,6 +34,7 @@ const int SINE[] = {
                 -3165,-3133,-3101,-3068,-3034,-3000,-2966,-2931,-2896,-2860,-2824,-2787,-2750,-2713,-2675,-2636,-2598,-2559,-2519,-2480,
                 -2439,-2399,-2358,-2317,-2275,-2233,-2191,-2148,-2105,-2062,-2018,-1975,-1930,-1886,-1841,-1796,-1751,-1705,-1659,-1613,
                 -1567,-1521,-1474,-1427,-1380,-1332,-1285,-1237,-1189,-1141,-1092,-1044,-995,-946,-897,-848,-799,-750,-700,-651,
+                -601,-551,-501,-451,-401,-351,-301,-251,-201,-151,-100,-50
 };
 
 const int COSINE[] = {
@@ -60,7 +63,7 @@ const int COSINE[] = {
                 2598,2636,2675,2713,2750,2787,2824,2860,2896,2931,2966,3000,3034,3068,3101,3133,3165,3197,3228,3259,
                 3289,3319,3348,3377,3405,3433,3460,3486,3512,3538,3563,3588,3611,3635,3658,3680,3702,3723,3744,3764,
                 3783,3802,3821,3838,3856,3872,3888,3904,3919,3933,3947,3960,3972,3984,3996,4006,4016,4026,4035,4043,
-                4051,4058,4064,4070,4075,4080,4084,4087,4090,4092,4094,4095,
+                4051,4058,4064,4070,4075,4080,4084,4087,4090,4092,4094,4095
 };
 
 /**
@@ -69,25 +72,27 @@ const int COSINE[] = {
 void setWinding1 (int power)
 {
         TA0CCR1 = PERIOD - abs (power);
+//        TA0CCR1 = 0;
 
-//        if (power >= 0) {
-//                P6OUT &= ~GPIO_PIN2;
-//        }
-//        else {
+        if (power >= 0) {
+                P6OUT &= ~GPIO_PIN2;
+        }
+        else {
                 P6OUT |= GPIO_PIN2;
-//        }
+        }
 }
 
 void setWinding2 (int power)
 {
         TA0CCR2 = PERIOD - abs (power);
+//        TA0CCR2 = 0;
 
-//        if (power >= 0) {
-//                P6OUT &= ~GPIO_PIN3;
-//        }
-//        else {
+        if (power >= 0) {
+                P6OUT &= ~GPIO_PIN3;
+        }
+        else {
                 P6OUT |= GPIO_PIN3;
-//        }
+        }
 }
 
 /**
@@ -129,6 +134,62 @@ int main (void)
         __no_operation();
 #endif
 
+
+
+        //Stop watchdog timer
+        WDT_A_hold(WDT_A_BASE);
+
+//        //Set P1.0 to output direction
+//        GPIO_setAsOutputPin(
+//                GPIO_PORT_P1,
+//                GPIO_PIN0
+//                );
+
+        //Port select XT1
+//        GPIO_setAsPeripheralModuleFunctionInputPin (GPIO_PORT_P5, GPIO_PIN2 | GPIO_PIN3);
+//        GPIO_setAsPeripheralModuleFunctionInputPin (GPIO_PORT_P7, GPIO_PIN0 | GPIO_PIN1);
+
+        //Initializes the XT1 crystal oscillator with no timeout
+        //In case of failure, code hangs here.
+        //For time-out instead of code hang use UCS_LFXT1StartWithTimeout()
+//        UCS_LFXT1Start (UCS_XT1_DRIVE0, UCS_XCAP_3);
+
+        UCS_clockSignalInit(
+                 UCS_FLLREF,
+                 UCS_REFOCLK_SELECT,
+                 UCS_CLOCK_DIVIDER_1);
+
+         UCS_clockSignalInit(
+                 UCS_ACLK,
+                 UCS_REFOCLK_SELECT,
+                 UCS_CLOCK_DIVIDER_1);
+
+         UCS_clockSignalInit(
+                 UCS_SMCLK,
+                 UCS_REFOCLK_SELECT,
+                 UCS_CLOCK_DIVIDER_1);
+
+         UCS_initFLLSettle(
+                 CLK_FREQ / 1000,
+                 CLK_FREQ / 32768);
+
+        // Enable global oscillator fault flag
+//        SFR_clearInterrupt (SFR_OSCILLATOR_FAULT_INTERRUPT);
+//        SFR_enableInterrupt (SFR_OSCILLATOR_FAULT_INTERRUPT);
+
+        // Enable global interrupt
+//        __bis_SR_register (GIE);
+
+//        //Enter LPM3 w/ interrupts
+//        __bis_SR_register (LPM3_bits + GIE);
+//
+
+
+
+
+
+
+
 #if 1
         // Stop watchdog timer
         WDTCTL = WDTPW | WDTHOLD;
@@ -169,7 +230,7 @@ int main (void)
          * Timer mode control: 3 - Up/Down, cyzli od 0 do TAxCCR0 i potem do 0 i w kółko.
          *
          */
-        MC_3;
+        MC_1;
 
         /*
          * Dalszy podział sygnału zegarowego. Możliwe wartości:
@@ -198,11 +259,11 @@ int main (void)
         TA0CCR0 = PERIOD;
 
         TA0CCR1 = (PERIOD / 2);
-        TA0CCTL1 |= OUTMOD_4; // Toggle
+        TA0CCTL1 |= OUTMOD_3; // Toggle
 
 
         TA0CCR2 = (PERIOD / 2);
-        TA0CCTL2 |= OUTMOD_4; // Toggle
+        TA0CCTL2 |= OUTMOD_3; // Toggle
 
 
 //        //Enter LPM0
@@ -222,7 +283,7 @@ int main (void)
                         setWinding2 (SINE[j]);
 
                         // Delay
-                        for (int i = 0; i < 256; ++i)
+                        for (int i = 0; i < 128; ++i)
                                 ;
                 }
         }
