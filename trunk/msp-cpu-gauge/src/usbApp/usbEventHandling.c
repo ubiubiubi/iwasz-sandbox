@@ -67,9 +67,8 @@ extern volatile uint8_t bCDC_DataReceived_event;   //data received event
  */
 uint8_t USB_handleClockEvent ()
 {
-    //TO DO: You can place your code here
-
-    return (TRUE);                              //return TRUE to wake the main loop (in the case the CPU slept before interrupt)
+        //TO DO: You can place your code here
+        return (TRUE); //return TRUE to wake the main loop (in the case the CPU slept before interrupt)
 }
 
 /*
@@ -78,14 +77,15 @@ uint8_t USB_handleClockEvent ()
  */
 uint8_t USB_handleVbusOnEvent ()
 {
-    //TO DO: You can place your code here
+        //TO DO: You can place your code here
 
-    //We switch on USB and connect to the BUS
-    if (USB_enable() == kUSB_succeed){
-        USB_reset();
-        USB_connect();                          //generate rising edge on DP -> the host enumerates our device as full speed device
-    }
-    return (TRUE);                              //return TRUE to wake the main loop (in the case the CPU slept before interrupt)
+        //We switch on USB and connect to the BUS
+        if (USB_enable() == kUSB_succeed) {
+                USB_reset();
+                USB_connect(); //generate rising edge on DP -> the host enumerates our device as full speed device
+        }
+
+        return (TRUE); //return TRUE to wake the main loop (in the case the CPU slept before interrupt)
 }
 
 /*
@@ -94,16 +94,15 @@ uint8_t USB_handleVbusOnEvent ()
  */
 uint8_t USB_handleVbusOffEvent ()
 {
-    //TO DO: You can place your code here
+        //TO DO: You can place your code here
 #ifndef  DRIVERLIB_LEGACY_MODE
-    UCS_XT2Off();
+        UCS_XT2Off();
 
 #else
-    UCS_XT2Off(__MSP430_BASEADDRESS_UCS__);
+        UCS_XT2Off(__MSP430_BASEADDRESS_UCS__);
 #endif
 
-
-    return (TRUE);                              //return TRUE to wake the main loop (in the case the CPU slept before interrupt)
+        return (TRUE); //return TRUE to wake the main loop (in the case the CPU slept before interrupt)
 }
 
 /*
@@ -112,33 +111,28 @@ uint8_t USB_handleVbusOffEvent ()
  */
 uint8_t USB_handleResetEvent ()
 {
-    //TO DO: You can place your code here
-
-    return (TRUE);                              //return TRUE to wake the main loop (in the case the CPU slept before interrupt)
+        //TO DO: You can place your code here
+        return (TRUE); //return TRUE to wake the main loop (in the case the CPU slept before interrupt)
 }
 
 /*
  * If this function gets executed, it indicates that the USB host has chosen to suspend this device after a period of active
- * operation.
- * returns TRUE to keep CPU awake
+ * operation. returns TRUE to keep CPU awake
  */
 uint8_t USB_handleSuspendEvent ()
 {
-    //TO DO: You can place your code here
-
-    return (TRUE);                              //return TRUE to wake the main loop (in the case the CPU slept before interrupt)
+        //TO DO: You can place your code here
+        return (TRUE); //return TRUE to wake the main loop (in the case the CPU slept before interrupt)
 }
 
 /*
  * If this function gets executed, it indicates that the USB host has chosen to resume this device after a period of suspended
- * operation.
- * returns TRUE to keep CPU awake
+ * operation. Returns TRUE to keep CPU awake
  */
 uint8_t USB_handleResumeEvent ()
 {
-    //TO DO: You can place your code here
-
-    return (TRUE);                              //return TRUE to wake the main loop (in the case the CPU slept before interrupt)
+        //TO DO: You can place your code here
+        return (TRUE); //return TRUE to wake the main loop (in the case the CPU slept before interrupt)
 }
 
 /*
@@ -148,9 +142,8 @@ uint8_t USB_handleResumeEvent ()
  */
 uint8_t USB_handleEnumCompleteEvent ()
 {
-    //TO DO: You can place your code here
-
-    return (TRUE);                              //return TRUE to wake the main loop (in the case the CPU slept before interrupt)
+        //TO DO: You can place your code here
+        return (TRUE); //return TRUE to wake the main loop (in the case the CPU slept before interrupt)
 }
 
 /* This #define can be used to reduce latency times during crystal/PLL 
@@ -165,9 +158,8 @@ uint8_t USB_handleEnumCompleteEvent ()
  */
 void USB_handleCrystalStartedEvent(void)
 {
-    // Unlike other events, these don't have a return value to wake main()
+        // Unlike other events, these don't have a return value to wake main()
 }
-
 
 /*
  * Indicates a USB resume is in progress, the PLL has been turned on, and the 
@@ -176,7 +168,7 @@ void USB_handleCrystalStartedEvent(void)
  */
 void USB_handlePLLStartedEvent(void)
 {
-    // Unlike other events, these don't have a return value to wake main()
+        // Unlike other events, these don't have a return value to wake main()
 }
 #endif
 
@@ -188,12 +180,9 @@ void USB_handlePLLStartedEvent(void)
  */
 uint8_t USBCDC_handleDataReceived (uint8_t intfNum)
 {
-    //TO DO: You can place your code here
-
-    bCDC_DataReceived_event = TRUE;
-
-    return (TRUE);                              //return FALSE to go asleep after interrupt (in the case the CPU slept before
-                                                //interrupt)
+        //TO DO: You can place your code here
+        bCDC_DataReceived_event = TRUE;
+        return (TRUE); // return FALSE to go asleep after interrupt (in the case the CPU slept before interrupt)
 }
 
 /*
@@ -202,10 +191,8 @@ uint8_t USBCDC_handleDataReceived (uint8_t intfNum)
  */
 uint8_t USBCDC_handleSendCompleted (uint8_t intfNum)
 {
-    //TO DO: You can place your code here
-
-    return (FALSE);                             //return FALSE to go asleep after interrupt (in the case the CPU slept before
-                                                //interrupt)
+        //TO DO: You can place your code here
+        return (FALSE); //return FALSE to go asleep after interrupt (in the case the CPU slept before interrupt)
 }
 
 /*
@@ -213,10 +200,8 @@ uint8_t USBCDC_handleSendCompleted (uint8_t intfNum)
  */
 uint8_t USBCDC_handleReceiveCompleted (uint8_t intfNum)
 {
-    //TO DO: You can place your code here
-
-    return (FALSE);                             //return FALSE to go asleep after interrupt (in the case the CPU slept before
-                                                //interrupt)
+        //TO DO: You can place your code here
+       return (FALSE);  //return FALSE to go asleep after interrupt (in the case the CPU slept before interrupt)
 }
 
 /*
@@ -224,10 +209,8 @@ uint8_t USBCDC_handleReceiveCompleted (uint8_t intfNum)
  */
 uint8_t USBCDC_handleSetLineCoding (uint8_t intfNum, uint32_t lBaudrate)
 {
-    //TO DO: You can place your code here
-
-    return (FALSE);                             //return FALSE to go asleep after interrupt (in the case the CPU slept before
-                                                //interrupt)
+        //TO DO: You can place your code here
+        return (FALSE); // return FALSE to go asleep after interrupt (in the case the CPU slept before interrupt)
 }
 
 /*
@@ -235,7 +218,7 @@ uint8_t USBCDC_handleSetLineCoding (uint8_t intfNum, uint32_t lBaudrate)
  */
 uint8_t USBCDC_handleSetControlLineState (uint8_t intfNum, uint8_t lineState)
 {
-	return FALSE;
+        return FALSE;
 }
 
 #endif //_CDC_
@@ -247,12 +230,12 @@ uint8_t USBCDC_handleSetControlLineState (uint8_t intfNum, uint8_t lineState)
  */
 uint8_t USBHID_handleDataReceived (uint8_t intfNum)
 {
-    //TO DO: You can place your code here
+        //TO DO: You can place your code here
 
-    bHID_DataReceived_event = TRUE;             //data received event
+        bHID_DataReceived_event = TRUE;             //data received event
 
-    return (TRUE);                              //return FALSE to go asleep after interrupt (in the case the CPU slept before
-                                                //interrupt)
+        return (TRUE);                              //return FALSE to go asleep after interrupt (in the case the CPU slept before
+                                                    //interrupt)
 }
 
 /*
@@ -261,10 +244,10 @@ uint8_t USBHID_handleDataReceived (uint8_t intfNum)
  */
 uint8_t USBHID_handleSendCompleted (uint8_t intfNum)
 {
-    //TO DO: You can place your code here
+        //TO DO: You can place your code here
 
-    return (FALSE);                             //return FALSE to go asleep after interrupt (in the case the CPU slept before
-                                                //interrupt)
+        return (FALSE);                             //return FALSE to go asleep after interrupt (in the case the CPU slept before
+                                                    //interrupt)
 }
 
 /*
@@ -272,10 +255,10 @@ uint8_t USBHID_handleSendCompleted (uint8_t intfNum)
  */
 uint8_t USBHID_handleReceiveCompleted (uint8_t intfNum)
 {
-    //TO DO: You can place your code here
+        //TO DO: You can place your code here
 
-    return (FALSE);                             //return FALSE to go asleep after interrupt (in the case the CPU slept before
-                                                //interrupt)
+        return (FALSE);                             //return FALSE to go asleep after interrupt (in the case the CPU slept before
+                                                    //interrupt)
 }
 
 /*
@@ -284,7 +267,7 @@ uint8_t USBHID_handleReceiveCompleted (uint8_t intfNum)
  */
 uint8_t USBHID_handleBootProtocol (uint8_t protocol, uint8_t intfnum)
 {
-    return (FALSE);
+        return (FALSE);
 }
 
 /*
@@ -293,25 +276,23 @@ uint8_t USBHID_handleBootProtocol (uint8_t protocol, uint8_t intfnum)
  * as part of this request. This handler is passed the reportTypereportId(lower byte), the length of data
  * phase as well as the interface number.
  */
-uint8_t *USBHID_handleEP0SetReport (uint8_t reportType, uint8_t reportId,
-    uint16_t dataLength,
-    uint8_t intfnum)
+uint8_t *USBHID_handleEP0SetReport (uint8_t reportType, uint8_t reportId, uint16_t dataLength, uint8_t intfnum)
 {
-	switch (reportType) {
-		case USB_REQ_HID_INPUT:
-			//Return pointer to input Report Buffer
-			return (0);
-		case USB_REQ_HID_OUTPUT:
-			//Return pointer to output Report Buffer
-			return (0);
+        switch (reportType) {
+        case USB_REQ_HID_INPUT:
+                //Return pointer to input Report Buffer
+                return (0);
+        case USB_REQ_HID_OUTPUT:
+                //Return pointer to output Report Buffer
+                return (0);
 
-		case USB_REQ_HID_FEATURE:
-			//Return pointer to feature Report Buffer
-			return (0);
+        case USB_REQ_HID_FEATURE:
+                //Return pointer to feature Report Buffer
+                return (0);
 
-		default:
-			return (0);
-	}
+        default:
+                return (0);
+        }
 }
 
 /*
@@ -321,8 +302,8 @@ uint8_t *USBHID_handleEP0SetReport (uint8_t reportType, uint8_t reportId,
  */
 uint8_t USBHID_handleEP0SetReportDataAvailable (uint8_t intfnum)
 {
-	//Process received data based on currentReportType
-    return (TRUE);
+        //Process received data based on currentReportType
+        return (TRUE);
 }
 
 /*
@@ -331,79 +312,22 @@ uint8_t USBHID_handleEP0SetReportDataAvailable (uint8_t intfnum)
  * This handler is passed the reportType, reportId, the requested length as well
  * as the interface number.
  */
-uint8_t *USBHID_handleEP0GetReport (uint8_t reportType, uint8_t reportId,
-    uint16_t requestedLength,
-    uint8_t intfnum)
+uint8_t *USBHID_handleEP0GetReport (uint8_t reportType, uint8_t reportId, uint16_t requestedLength, uint8_t intfnum)
 {
-	//report data should be ready in buffers for Get Report.
-	switch (reportType) {
-		case USB_REQ_HID_INPUT:
-			//Return pointer to input Report Buffer
-			return (0);
-		case USB_REQ_HID_OUTPUT:
-			//Return pointer to OUTput Report Buffer
-			return (0);
-		case USB_REQ_HID_FEATURE:
-			//Return pointer to FEATURE Report Buffer
-			return (0);
-		default:
-			return (0);
-	}
+        //report data should be ready in buffers for Get Report.
+        switch (reportType) {
+        case USB_REQ_HID_INPUT:
+                //Return pointer to input Report Buffer
+                return (0);
+        case USB_REQ_HID_OUTPUT:
+                //Return pointer to OUTput Report Buffer
+                return (0);
+        case USB_REQ_HID_FEATURE:
+                //Return pointer to FEATURE Report Buffer
+                return (0);
+        default:
+                return (0);
+        }
 }
 
 #endif //_HID_
-
-#ifdef _MSC_
-uint8_t USBMSC_handleBufferEvent (void)
-{
-    return (FALSE);                             //return FALSE to go asleep after interrupt (in the case the CPU slept before
-                                                //interrupt)
-}
-
-#endif //_MSC_
-
-
-#ifdef _PHDC_
-
-/*
- * This event indicates that data has been received for interface intfNum, but no data receive operation is underway.
- * returns TRUE to keep CPU awake
- */
-uint8_t USBPHDC_handleDataReceived (uint8_t intfNum)
-{
-    //TO DO: You can place your code here
-
-    return (TRUE);                              //return FALSE to go asleep after interrupt (in the case the CPU slept before
-                                                //interrupt)
-}
-
-/*
- * This event indicates that a send operation on interface intfNum has just been completed.
- * returns TRUE to keep CPU awake
- */
-uint8_t USBPHDC_handleSendCompleted (uint8_t intfNum)
-{
-    //TO DO: You can place your code here
-
-    return (FALSE);                             //return FALSE to go asleep after interrupt (in the case the CPU slept before
-                                                //interrupt)
-}
-
-/*
- * This event indicates that a receive operation on interface intfNum has just been completed.
- */
-uint8_t USBPHDC_handleReceiveCompleted (uint8_t intfNum)
-{
-    //TO DO: You can place your code here
-
-    return (FALSE);                             //return FALSE to go asleep after interrupt (in the case the CPU slept before
-                                                //interrupt)
-}
-
-#endif //_PHDC_
-
-/*----------------------------------------------------------------------------+
- | End of source file                                                          |
- +----------------------------------------------------------------------------*/
-/*------------------------ Nothing Below This Line --------------------------*/
-//Released_Version_4_10_02
