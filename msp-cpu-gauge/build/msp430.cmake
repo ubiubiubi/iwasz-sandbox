@@ -15,8 +15,10 @@ SET(CMAKE_ASM_COMPILER ${TOOLCHAIN_BIN_DIR}/${TARGET_TRIPLET}-as)
 SET(CMAKE_OBJCOPY ${TOOLCHAIN_BIN_DIR}/${TARGET_TRIPLET}-objcopy)
 SET(CMAKE_OBJDUMP ${TOOLCHAIN_BIN_DIR}/${TARGET_TRIPLET}-objdump)
 
-SET(CMAKE_C_FLAGS "-std=gnu99 -Wall -pedantic" CACHE INTERNAL "c compiler flags")
-SET(CMAKE_CXX_FLAGS "-std=c++11 -Wall -fdata-sections -ffunction-sections -MD -Wall -pedantic" CACHE INTERNAL "cxx compiler flags")
+SET(CMAKE_C_FLAGS "-std=gnu99 -Wall" CACHE INTERNAL "c compiler flags")
+SET(CMAKE_CXX_FLAGS "-std=c++11 -Wall -fdata-sections -ffunction-sections -MD -Wall" CACHE INTERNAL "cxx compiler flags")
+
+SET(CMAKE_EXE_LINKER_FLAGS "-T ${TOOLCHAIN_PREFIX}/include/msp430f5529.ld -T ${USBLIB}/USB_API/msp430USB.ld -Wl,--gc-sections" CACHE INTERNAL "exe link flags")
 
 INCLUDE_DIRECTORIES(${SUPPORT_FILES})
 LINK_DIRECTORIES(${SUPPORT_FILES})
