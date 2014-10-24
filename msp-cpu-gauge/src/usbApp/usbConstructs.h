@@ -32,33 +32,16 @@
 /* 
  * ======== usbConstructs.h ========
  */
-uint8_t hidSendDataWaitTilDone (uint8_t* dataBuf,
-    uint16_t size,
-    uint8_t intfNum,
-    uint32_t ulTimeout);
-uint8_t hidSendDataInBackground (uint8_t* dataBuf,
-    uint16_t size,
-    uint8_t intfNum,
-    uint32_t ulTimeout);
-uint16_t hidReceiveDataInBuffer(uint8_t *,uint16_t,uint8_t);
+uint8_t hidSendDataWaitTilDone (uint8_t* dataBuf, uint16_t size, uint8_t intfNum, uint32_t ulTimeout);
+uint8_t hidSendDataInBackground (uint8_t* dataBuf, uint16_t size, uint8_t intfNum, uint32_t ulTimeout);
+uint16_t hidReceiveDataInBuffer (uint8_t *, uint16_t, uint8_t);
 
-uint8_t cdcSendDataWaitTilDone (uint8_t* dataBuf,
-    uint16_t size,
-    uint8_t intfNum,
-    uint32_t ulTimeout);
-uint8_t cdcSendDataInBackground (uint8_t* dataBuf,
-    uint16_t size,
-    uint8_t intfNum,
-    uint32_t ulTimeout);
-uint16_t cdcReceiveDataInBuffer(uint8_t *,uint16_t,uint8_t);
+uint8_t cdcSendDataWaitTilDone (uint8_t* dataBuf, uint16_t size, uint8_t intfNum, uint32_t ulTimeout);
+uint8_t cdcSendDataInBackground (uint8_t* dataBuf, uint16_t size, uint8_t intfNum, uint32_t ulTimeout);
+uint16_t cdcReceiveDataInBuffer (uint8_t *, uint16_t, uint8_t);
 
-uint8_t phdcSendDataWaitTilDone (uint8_t* dataBuf,
-    uint16_t size,
-    uint8_t intfNum,
-    uint32_t ulTimeout);
-uint8_t phdcSendDataInBackground (uint8_t* dataBuf,
-    uint16_t size,
-    uint8_t intfNum,
-    uint32_t ulTimeout);
-uint16_t phdcReceiveDataInBuffer(uint8_t *,uint16_t,uint8_t);
+uint8_t phdcSendDataWaitTilDone (uint8_t* dataBuf, uint16_t size, uint8_t intfNum, uint32_t ulTimeout);
+uint8_t phdcSendDataInBackground (uint8_t* dataBuf, uint16_t size, uint8_t intfNum, uint32_t ulTimeout);
+uint16_t phdcReceiveDataInBuffer (uint8_t *, uint16_t, uint8_t);
+
 //Released_Version_4_10_02
