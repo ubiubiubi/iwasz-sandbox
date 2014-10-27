@@ -168,16 +168,20 @@ void __attribute__ ((interrupt(USB_UBM_VECTOR))) iUsbInterruptHandler (void)
 
         case USBVECINT_STPOW_PACKET_RECEIVED:
                 break;
+
         case USBVECINT_INPUT_ENDPOINT1:
                 break;
+
         case USBVECINT_INPUT_ENDPOINT2:
                 //send saved bytes from buffer...
                 bWakeUp = CdcToHostFromBuffer(CDC0_INTFNUM);
                 break;
+
         case USBVECINT_INPUT_ENDPOINT3:
                 //send saved bytes from buffer...
                 bWakeUp = HidToHostFromBuffer(HID0_INTFNUM);
                 break;
+
         case USBVECINT_INPUT_ENDPOINT4:
                 break;
         case USBVECINT_INPUT_ENDPOINT5:
@@ -188,6 +192,7 @@ void __attribute__ ((interrupt(USB_UBM_VECTOR))) iUsbInterruptHandler (void)
                 break;
         case USBVECINT_OUTPUT_ENDPOINT1:
                 break;
+
         case USBVECINT_OUTPUT_ENDPOINT2:
                 //call callback function if no receive operation is underway
                 if (!CdcIsReceiveInProgress(CDC0_INTFNUM) && USBCDC_bytesInUSBBuffer(CDC0_INTFNUM)) {
@@ -199,6 +204,7 @@ void __attribute__ ((interrupt(USB_UBM_VECTOR))) iUsbInterruptHandler (void)
                         bWakeUp = CdcToBufferFromHost(CDC0_INTFNUM);
                 }
                 break;
+
         case USBVECINT_OUTPUT_ENDPOINT3:
                 //call callback function if no receive operation is underway
                 if (!HidIsReceiveInProgress(HID0_INTFNUM)) {
@@ -210,6 +216,7 @@ void __attribute__ ((interrupt(USB_UBM_VECTOR))) iUsbInterruptHandler (void)
                         bWakeUp = HidToBufferFromHost(HID0_INTFNUM);
                 }
                 break;
+
         case USBVECINT_OUTPUT_ENDPOINT4:
                 break;
         case USBVECINT_OUTPUT_ENDPOINT5:
