@@ -48,8 +48,9 @@ extern "C"
 //***********************************************************************************************
 // CDC or HID - Define both for composite support
 //***********************************************************************************************
+
 #define _CDC_          // Needed for CDC inteface
-#define _HID_          // Needed for HID interface
+
 //***********************************************************************************************
 // CONFIGURATION CONSTANTS
 //***********************************************************************************************
@@ -58,8 +59,9 @@ extern "C"
 
 // Configuration Constants that can change
 // #define that relates to Device Descriptor
-#define USB_VID               0x2047        // Vendor ID (VID)
-#define USB_PID               0x0302        // Product ID (PID)
+#define USB_VID               0x20A0        // Vendor ID (VID)
+#define USB_PID               0x41fe        // Product ID (PID) TODO change e to f
+
 /*----------------------------------------------------------------------------+
 | Firmware Version                                                            |
 | How to detect version number of the FW running on MSP430?                   |
@@ -84,9 +86,9 @@ extern "C"
 #define CDC0_OUTEP_ADDR                    0x02           // Output Endpoint Address of CDC0
 #define CDC0_INEP_ADDR                     0x82           // Input Endpoint Address of CDC0
 
-#define HID0_REPORT_INTERFACE              2              // Report interface number of HID0
-#define HID0_OUTEP_ADDR                    0x03           // Output Endpoint number of HID0
-#define HID0_INEP_ADDR                     0x83           // Input Endpoint number of HID0
+#define VENDOR_GAUGE_INTERFACE              2              // Report interface number of HID0
+#define VENDOR_GAUGE_OUTEP_ADDR             0x03           // Output Endpoint number of HID0
+//#define VENDOR_GAUGE_INEP_ADDR              0x83           // Input Endpoint number of HID0
 
 #define CDC_NUM_INTERFACES                   1           //  Total Number of CDCs implemented. should set to 0 if there are no CDCs implemented.
 #define HID_NUM_INTERFACES                   1           //  Total Number of HIDs implemented. should set to 0 if there are no HIDs implemented.
@@ -341,22 +343,12 @@ struct  abromConfigurationDescriptorGroup
 {
     /* Generic part of config descriptor */
     const struct abromConfigurationDescriptorGenric abromConfigurationDescriptorGenric;
-#ifdef _MSC_
-    /* MSC descriptor structure */
-    const struct abromConfigurationDescriptorMsc stMsc[MSC_NUM_INTERFACES];
-#endif
-#ifdef _CDC_ 
+
     /* CDC descriptor structure */
     const struct abromConfigurationDescriptorCdc stCdc[CDC_NUM_INTERFACES];
-#endif
-#ifdef _HID_
+
     /* HID descriptor structure */
     const struct abromConfigurationDescriptorHid stHid[HID_NUM_INTERFACES];
-#endif
-#ifdef _PHDC_
-/* PDC descriptor structure */
-    const struct abromConfigurationDescriptorPhdc stPhdc[PHDC_NUM_INTERFACES];
-#endif
 };
 
 extern const struct  abromConfigurationDescriptorGroup abromConfigurationDescriptorGroup;

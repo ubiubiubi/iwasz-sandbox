@@ -41,8 +41,6 @@
 
 #include <USB_API/USB_CDC_API/UsbCdc.h>
 
-#include <USB_API/USB_HID_API/UsbHid.h>
-#include <USB_API/USB_HID_API/UsbHidReq.h>
 /*----------------------------------------------------------------------------+
  | External Variables                                                          |
  +----------------------------------------------------------------------------*/
@@ -60,9 +58,12 @@ extern uint16_t wUsbEventMask;
 int16_t CdcToHostFromBuffer (uint8_t);
 int16_t CdcToBufferFromHost (uint8_t);
 int16_t CdcIsReceiveInProgress (uint8_t);
-int16_t HidToHostFromBuffer (uint8_t);
-int16_t HidToBufferFromHost (uint8_t);
-int16_t HidIsReceiveInProgress (uint8_t);
+
+// TODO takie zaimplementować dla mojego vendor speciffic
+//int16_t HidToHostFromBuffer (uint8_t);
+//int16_t HidToBufferFromHost (uint8_t);
+//int16_t HidIsReceiveInProgress (uint8_t);
+
 extern uint16_t wUsbHidEventMask;
 int16_t PHDCToHostFromBuffer (uint8_t);
 int16_t PHDCToBufferFromHost (uint8_t);
@@ -179,7 +180,8 @@ void __attribute__ ((interrupt(USB_UBM_VECTOR))) iUsbInterruptHandler (void)
 
         case USBVECINT_INPUT_ENDPOINT3:
                 //send saved bytes from buffer...
-                bWakeUp = HidToHostFromBuffer(HID0_INTFNUM);
+//TODO
+                //                bWakeUp = HidToHostFromBuffer(HID0_INTFNUM);
                 break;
 
         case USBVECINT_INPUT_ENDPOINT4:
@@ -206,15 +208,16 @@ void __attribute__ ((interrupt(USB_UBM_VECTOR))) iUsbInterruptHandler (void)
                 break;
 
         case USBVECINT_OUTPUT_ENDPOINT3:
+//                TODO
                 //call callback function if no receive operation is underway
-                if (!HidIsReceiveInProgress(HID0_INTFNUM)) {
-                        if (wUsbEventMask & kUSB_dataReceivedEvent) {
-                                bWakeUp = USBHID_handleDataReceived(HID0_INTFNUM);
-                        }
-                } else {
-                        //complete receive opereation - copy data to user buffer
-                        bWakeUp = HidToBufferFromHost(HID0_INTFNUM);
-                }
+//                if (!HidIsReceiveInProgress(HID0_INTFNUM)) {
+//                        if (wUsbEventMask & kUSB_dataReceivedEvent) {
+//                                bWakeUp = USBHID_handleDataReceived(HID0_INTFNUM);
+//                        }
+//                } else {
+//                        //complete receive opereation - copy data to user buffer
+//                        bWakeUp = HidToBufferFromHost(HID0_INTFNUM);
+//                }
                 break;
 
         case USBVECINT_OUTPUT_ENDPOINT4:
@@ -332,18 +335,23 @@ uint8_t OEP0InterruptHandler (void)
         uint8_t bWakeUp = FALSE;
         USBCTL |= FRSTE;                              // Function Reset Connection Enable
         tEndPoint0DescriptorBlock.bIEPBCNT = 0x00;
+
         if (bStatusAction == STATUS_ACTION_DATA_OUT) {
                 usbReceiveNextPacketOnOEP0();
+
                 if (bStatusAction == STATUS_ACTION_NOTHING) {
-#           ifdef _CDC_
+
+#ifdef _CDC_
                         if (tSetupPacket.bRequest == USB_CDC_SET_LINE_CODING) {
                                 bWakeUp = Handler_SetLineCoding();
                         }
-#          endif
+#endif
+
 #ifdef _HID_
-                        if (tSetupPacket.bRequest == USB_REQ_SET_REPORT) {
-                                bWakeUp = USBHID_handleEP0SetReportDataAvailable(tSetupPacket.wIndex);
-                        }
+//                        TODO
+//                        if (tSetupPacket.bRequest == USB_REQ_SET_REPORT) {
+//                                bWakeUp = USBHID_handleEP0SetReportDataAvailable(tSetupPacket.wIndex);
+//                        }
 #endif
                 }
         } else {

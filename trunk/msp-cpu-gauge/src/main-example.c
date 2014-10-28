@@ -49,7 +49,6 @@
 #include "usbConfig/descriptors.h"
 #include "USB_API/USB_Common/device.h"
 #include "USB_API/USB_Common/usb.h"                 // USB-specific functions#include "USB_API/USB_CDC_API/UsbCdc.h"
-#include "USB_API/USB_HID_API/UsbHid.h"
 #include "usbApp/usbConstructs.h"
 
 /*
@@ -110,21 +109,25 @@ int main (void)
                         // Exit LPM because of a data-receive event, and fetch the received data
 
                         if (bHID_DataReceived_event) {               // Message is received from HID application
-                                bHID_DataReceived_event = FALSE;        // Clear flag early -- just in case execution breaks below because of an
-                                                                        // error
-                                count = hidReceiveDataInBuffer((uint8_t*) dataBuffer,
-                                BUFFER_SIZE,
-                                HID0_INTFNUM);
-                                strncat(wholeString, " \r\nRx->", 7);
-                                strncat(wholeString, (char*) dataBuffer, count);
-                                strncat(wholeString, " \r\n ", 4);
 
-                                if (cdcSendDataInBackground((uint8_t*) wholeString, strlen(wholeString), CDC0_INTFNUM, 1)) {  // Send message to other CDC App
-                                        SendError = 0x01;
-                                        break;
-                                }
+                                // TODO!!!
 
-                                memset(wholeString, 0, MAX_STR_LENGTH);   // Clear wholeString
+
+//                                bHID_DataReceived_event = FALSE;        // Clear flag early -- just in case execution breaks below because of an
+//                                                                        // error
+//                                count = hidReceiveDataInBuffer((uint8_t*) dataBuffer,
+//                                BUFFER_SIZE,
+//                                HID0_INTFNUM);
+//                                strncat(wholeString, " \r\nRx->", 7);
+//                                strncat(wholeString, (char*) dataBuffer, count);
+//                                strncat(wholeString, " \r\n ", 4);
+//
+//                                if (cdcSendDataInBackground((uint8_t*) wholeString, strlen(wholeString), CDC0_INTFNUM, 1)) {  // Send message to other CDC App
+//                                        SendError = 0x01;
+//                                        break;
+//                                }
+//
+//                                memset(wholeString, 0, MAX_STR_LENGTH);   // Clear wholeString
                         }
 
                         if (bCDC_DataReceived_event) { // Message is received from CDC application

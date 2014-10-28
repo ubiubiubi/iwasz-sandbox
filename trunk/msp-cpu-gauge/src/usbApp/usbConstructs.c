@@ -33,19 +33,9 @@
  * ======== usbConstructs.c ========
  */
 #include "USB_API/USB_Common/device.h"
-
 #include "usbConfig/descriptors.h"
 #include "USB_API/USB_Common/usb.h"     //USB-specific functions
-#ifdef _CDC_
 #include "USB_API/USB_CDC_API/UsbCdc.h"
-#endif
-#ifdef _HID_
-#include "USB_API/USB_HID_API/UsbHid.h"
-#endif
-#ifdef _PHDC_
-#include "USB_API/USB_PHDC_API/UsbPHDC.h"
-#endif
-
 #include "usbConstructs.h"
 
 /**************************************************************************************************
@@ -82,106 +72,34 @@
  * functions, how they work, and how to use them.
  **************************************************************************************************/
 
-#ifdef _HID_
-/* This construct implements post-call polling to ensure the sending completes before the function
- * returns.  It provides the simplest coding, at the expense of wasted cycles and potentially
- * allowing MCU execution to become "locked" to the host, a disadvantage if the host (or bus) is
- * slow.  The function also checks all valid return codes, and returns non-zero if an error occurred.
- * It assumes no previous send operation is underway; also assumes size is non-zero.  */
-uint8_t hidSendDataWaitTilDone (uint8_t* dataBuf, uint16_t size, uint8_t intfNum, uint32_t ulTimeout)
-{
-        uint32_t sendCounter = 0;
-        uint16_t bytesSent, bytesReceived;
-
-        switch (USBHID_sendData(dataBuf, size, intfNum)) {
-        case kUSBHID_sendStarted:
-                break;
-        case kUSBHID_busNotAvailable:
-                return (2);
-        case kUSBHID_intfBusyError:
-                return (3);
-        case kUSBHID_generalError:
-                return (4);
-        default:
-                ;
-        }
-
-        /* If execution reaches this point, then the operation successfully started.  Now wait til it's finished. */
-        while (1) {
-                uint8_t ret = USBHID_intfStatus(intfNum, &bytesSent, &bytesReceived);
-                if (ret & kUSBHID_busNotAvailable) { /* This may happen at any time */
-                        return (2);
-                }
-                if (ret & kUSBHID_waitingForSend) {
-                        if (ulTimeout && (sendCounter++ >= ulTimeout)) { /* Incr counter & try again */
-                                return (1); /* Timed out */
-                        }
-                } else {
-                        return (0); /* If neither busNotAvailable nor waitingForSend, it succeeded */
-                }
-        }
-}
-
-/* This construct implements pre-call polling to ensure the sending completes before the function
- * returns.  It provides simple coding while also taking advantage of the efficiencies of background
- * processing.  If a previous send operation is underway, this function does waste cycles polling,
- * like xxxsendDataWaitTilDone(); however it's less likely to do so since much of the sending
- * presumably took place in the background since the last call to xxxsendDataInBackground().
- * The function also checks all valid return codes, and returns non-zero if an error occurred.
- * It assumes no previous send operation is underway; also assumes size is non-zero.
- * This call assumes a previous send operation might be underway; also assumes size is non-zero.
- * Returns zero if send completed; non-zero if it failed, with 1 = timeout and 2 = bus is gone. */
-uint8_t hidSendDataInBackground (uint8_t* dataBuf, uint16_t size, uint8_t intfNum, uint32_t ulTimeout)
-{
-        uint32_t sendCounter = 0;
-        uint16_t bytesSent, bytesReceived;
-
-        while (USBHID_intfStatus(intfNum, &bytesSent, &bytesReceived) & kUSBHID_waitingForSend) {
-                if (ulTimeout && ((sendCounter++) > ulTimeout)) { /* A send operation is underway; incr counter & try again */
-                        return (1); /* Timed out */
-                }
-        }
-
-        /* The interface is now clear.  Call sendData(). */
-        switch (USBHID_sendData(dataBuf, size, intfNum)) {
-        case kUSBHID_sendStarted:
-                return (0);
-        case kUSBHID_busNotAvailable:
-                return (2);
-        default:
-                return (4);
-        }
-}
-
 /* This call only retrieves data that is already waiting in the USB buffer -- that is, data that has
  * already been received by the MCU.  It assumes a previous, open receive operation (began by a direct
  * call to USBxxx_receiveData()) is NOT underway on this interface; and no receive operation remains
  * open after this call returns.  It doesn't check for kUSBxxx_busNotAvailable, because it doesn't
  * matter if it's not.  size is the maximum that is allowed to be received before exiting; i.e., it
  * is the size allotted to dataBuf.  Returns the number of bytes received. */
-uint16_t hidReceiveDataInBuffer (uint8_t* dataBuf, uint16_t size, uint8_t intfNum)
-{
-        uint16_t bytesInBuf;
-        uint16_t rxCount = 0;
-        uint8_t* currentPos = dataBuf;
-
-        while (bytesInBuf = USBHID_bytesInUSBBuffer(intfNum)) {
-                if ((uint16_t) (currentPos - dataBuf + bytesInBuf) <= size) {
-                        rxCount = bytesInBuf;
-                        USBHID_receiveData(currentPos, rxCount, intfNum);
-                        currentPos += rxCount;
-                } else {
-                        rxCount = size - (currentPos - dataBuf);
-                        USBHID_receiveData(currentPos, rxCount, intfNum);
-                        currentPos += rxCount;
-                        return (currentPos - dataBuf);
-                }
-        }
-
-        return (currentPos - dataBuf);
-}
-
-#endif
+// TODO zmodyfikować dla vendor-specific
+//uint16_t hidReceiveDataInBuffer (uint8_t* dataBuf, uint16_t size, uint8_t intfNum)
+//{
+//        uint16_t bytesInBuf;
+//        uint16_t rxCount = 0;
+//        uint8_t* currentPos = dataBuf;
+//
+//        while (bytesInBuf = USBHID_bytesInUSBBuffer(intfNum)) {
+//                if ((uint16_t) (currentPos - dataBuf + bytesInBuf) <= size) {
+//                        rxCount = bytesInBuf;
+//                        USBHID_receiveData(currentPos, rxCount, intfNum);
+//                        currentPos += rxCount;
+//                } else {
+//                        rxCount = size - (currentPos - dataBuf);
+//                        USBHID_receiveData(currentPos, rxCount, intfNum);
+//                        currentPos += rxCount;
+//                        return (currentPos - dataBuf);
+//                }
+//        }
+//
+//        return (currentPos - dataBuf);
+//}
 
 /*********************************************************************************************
  * Please see the MSP430 USB CDC API Programmer's Guide Sec. 9 for a full description of these
@@ -271,7 +189,7 @@ uint16_t cdcReceiveDataInBuffer (uint8_t* dataBuf, uint16_t size, uint8_t intfNu
         uint16_t rxCount = 0;
         uint8_t* currentPos = dataBuf;
 
-        while (bytesInBuf = USBCDC_bytesInUSBBuffer(intfNum)) {
+        while ((bytesInBuf = USBCDC_bytesInUSBBuffer(intfNum))) {
                 if ((uint16_t) (currentPos - dataBuf + bytesInBuf) <= size) {
                         rxCount = bytesInBuf;
                         USBCDC_receiveData(currentPos, rxCount, intfNum);
@@ -279,114 +197,6 @@ uint16_t cdcReceiveDataInBuffer (uint8_t* dataBuf, uint16_t size, uint8_t intfNu
                 } else {
                         rxCount = size - (currentPos - dataBuf);
                         USBCDC_receiveData(currentPos, rxCount, intfNum);
-                        currentPos += rxCount;
-                        return (currentPos - dataBuf);
-                }
-        }
-
-        return (currentPos - dataBuf);
-}
-
-#endif
-
-#ifdef _PHDC_
-/* This construct implements post-call polling to ensure the sending completes before the function
- * returns.  It provides the simplest coding, at the expense of wasted cycles and potentially
- * allowing MCU execution to become "locked" to the host, a disadvantage if the host (or bus) is
- * slow.  The function also checks all valid return codes, and returns non-zero if an error occurred.
- * It assumes no previous send operation is underway; also assumes size is non-zero.  */
-uint8_t phdcSendDataWaitTilDone (uint8_t* dataBuf,
-                uint16_t size,
-                uint8_t intfNum,
-                uint32_t ulTimeout)
-{
-        uint32_t sendCounter = 0;
-        uint16_t bytesSent, bytesReceived;
-
-        switch (USBPHDC_sendData(dataBuf,size,intfNum))
-        {
-                case kUSBPHDC_sendStarted:
-                break;
-                case kUSBPHDC_busNotAvailable:
-                return ( 2);
-                case kUSBPHDC_intfBusyError:
-                return ( 3);
-                case kUSBPHDC_generalError:
-                return ( 4);
-                default:;
-        }
-
-        /* If execution reaches this point, then the operation successfully started.  Now wait til it's finished. */
-        while (1) {
-                uint8_t ret = USBPHDC_intfStatus(intfNum,&bytesSent,&bytesReceived);
-                if (ret & kUSBPHDC_busNotAvailable) { /* This may happen at any time */
-                        return ( 2);
-                }
-                if (ret & kUSBPHDC_waitingForSend) {
-                        if (ulTimeout && (sendCounter++ >= ulTimeout)) { /* Incr counter & try again */
-                                return ( 1); /* Timed out */
-                        }
-                } else {
-                        return ( 0); /* If neither busNotAvailable nor waitingForSend, it succeeded */
-                }
-        }
-}
-
-/* This construct implements pre-call polling to ensure the sending completes before the function
- * returns.  It provides simple coding while also taking advantage of the efficiencies of background
- * processing.  If a previous send operation is underway, this function does waste cycles polling,
- * like xxxsendDataWaitTilDone(); however it's less likely to do so since much of the sending
- * presumably took place in the background since the last call to xxxsendDataInBackground().
- * The function also checks all valid return codes, and returns non-zero if an error occurred.
- * It assumes no previous send operation is underway; also assumes size is non-zero.
- * This call assumes a previous send operation might be underway; also assumes size is non-zero.
- * Returns zero if send completed; non-zero if it failed, with 1 = timeout and 2 = bus is gone. */
-uint8_t phdcSendDataInBackground (uint8_t* dataBuf,
-                uint16_t size,
-                uint8_t intfNum,
-                uint32_t ulTimeout)
-{
-        uint32_t sendCounter = 0;
-        uint16_t bytesSent, bytesReceived;
-
-        while (USBPHDC_intfStatus(intfNum,&bytesSent,
-                                        &bytesReceived) & kUSBPHDC_waitingForSend) {
-                if (ulTimeout && ((sendCounter++) > ulTimeout)) { /* A send operation is underway; incr counter & try again */
-                        return ( 1); /* Timed out                */
-                }
-        }
-
-        /* The interface is now clear.  Call sendData().   */
-        switch (USBPHDC_sendData(dataBuf,size,intfNum)) {
-                case kUSBPHDC_sendStarted:
-                return ( 0);
-                case kUSBPHDC_busNotAvailable:
-                return ( 2);
-                default:
-                return ( 4);
-        }
-}
-
-/* This call only retrieves data that is already waiting in the USB buffer -- that is, data that has
- * already been received by the MCU.  It assumes a previous, open receive operation (began by a direct
- * call to USBxxx_receiveData()) is NOT underway on this interface; and no receive operation remains
- * open after this call returns.  It doesn't check for kUSBxxx_busNotAvailable, because it doesn't
- * matter if it's not.  size is the maximum that is allowed to be received before exiting; i.e., it
- * is the size allotted to dataBuf.  Returns the number of bytes received. */
-uint16_t phdcReceiveDataInBuffer (uint8_t* dataBuf, uint16_t size, uint8_t intfNum)
-{
-        uint16_t bytesInBuf;
-        uint16_t rxCount = 0;
-        uint8_t* currentPos = dataBuf;
-
-        while (bytesInBuf = USBPHDC_bytesInUSBBuffer(intfNum)) {
-                if ((uint16_t)(currentPos - dataBuf + bytesInBuf) <= size) {
-                        rxCount = bytesInBuf;
-                        USBPHDC_receiveData(currentPos,rxCount,intfNum);
-                        currentPos += rxCount;
-                } else {
-                        rxCount = size - (currentPos - dataBuf);
-                        USBPHDC_receiveData(currentPos,rxCount,intfNum);
                         currentPos += rxCount;
                         return (currentPos - dataBuf);
                 }
