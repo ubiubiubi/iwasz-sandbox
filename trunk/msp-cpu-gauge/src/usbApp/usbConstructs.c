@@ -37,6 +37,7 @@
 #include "USB_API/USB_Common/usb.h"     //USB-specific functions
 #include "USB_API/USB_CDC_API/UsbCdc.h"
 #include "usbConstructs.h"
+#include "usbVendorClass/usbVendor.h"
 
 /**************************************************************************************************
  * These are example, user-editable construct functions for calling the API.
@@ -79,27 +80,28 @@
  * matter if it's not.  size is the maximum that is allowed to be received before exiting; i.e., it
  * is the size allotted to dataBuf.  Returns the number of bytes received. */
 // TODO zmodyfikować dla vendor-specific
-//uint16_t hidReceiveDataInBuffer (uint8_t* dataBuf, uint16_t size, uint8_t intfNum)
-//{
-//        uint16_t bytesInBuf;
-//        uint16_t rxCount = 0;
-//        uint8_t* currentPos = dataBuf;
-//
-//        while (bytesInBuf = USBHID_bytesInUSBBuffer(intfNum)) {
-//                if ((uint16_t) (currentPos - dataBuf + bytesInBuf) <= size) {
-//                        rxCount = bytesInBuf;
-//                        USBHID_receiveData(currentPos, rxCount, intfNum);
-//                        currentPos += rxCount;
-//                } else {
-//                        rxCount = size - (currentPos - dataBuf);
-//                        USBHID_receiveData(currentPos, rxCount, intfNum);
-//                        currentPos += rxCount;
-//                        return (currentPos - dataBuf);
-//                }
-//        }
-//
-//        return (currentPos - dataBuf);
-//}
+
+uint16_t hidReceiveDataInBuffer (uint8_t* dataBuf, uint16_t size, uint8_t intfNum)
+{
+        uint16_t bytesInBuf;
+        uint16_t rxCount = 0;
+        uint8_t* currentPos = dataBuf;
+
+        while ((bytesInBuf = USBHID_bytesInUSBBuffer(intfNum))) {
+                if ((uint16_t) (currentPos - dataBuf + bytesInBuf) <= size) {
+                        rxCount = bytesInBuf;
+                        USBHID_receiveData(currentPos, rxCount, intfNum);
+                        currentPos += rxCount;
+                } else {
+                        rxCount = size - (currentPos - dataBuf);
+                        USBHID_receiveData(currentPos, rxCount, intfNum);
+                        currentPos += rxCount;
+                        return (currentPos - dataBuf);
+                }
+        }
+
+        return (currentPos - dataBuf);
+}
 
 /*********************************************************************************************
  * Please see the MSP430 USB CDC API Programmer's Guide Sec. 9 for a full description of these

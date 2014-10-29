@@ -208,10 +208,10 @@ const struct abromConfigurationDescriptorGroup abromConfigurationDescriptorGroup
             // Endpoint
             SIZEOF_ENDPOINT_DESCRIPTOR,         // bLength
             DESC_TYPE_ENDPOINT,                 // bDescriptorType
-            VENDOR_GAUGE_OUTEP_ADDR,             // bEndpointAddress; bit7=1 for IN, bits 3-0=1 for ep1
+            VENDOR_GAUGE_OUTEP_ADDR,            // bEndpointAddress; bit7=1 for IN, bits 3-0=1 for ep1
             EP_DESC_ATTR_TYPE_INT,              // bmAttributes, interrupt transfers
-            64, 0x00,                         // wMaxPacketSize, 64 bytes
-            0xa,                                  // bInterval, ms
+            2, 0x00,                            // wMaxPacketSize, 2 bytes
+            0xa,                                // bInterval, ms
         }
 
     }

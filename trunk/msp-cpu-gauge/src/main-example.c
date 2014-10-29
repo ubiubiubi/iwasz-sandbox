@@ -109,24 +109,24 @@ int main (void)
                         // Exit LPM because of a data-receive event, and fetch the received data
 
                         if (bHID_DataReceived_event) {               // Message is received from HID application
+                                bHID_DataReceived_event = FALSE;        // Clear flag early -- just in case execution breaks below because of an error
+                                count = hidReceiveDataInBuffer((uint8_t*) dataBuffer, BUFFER_SIZE, HID0_INTFNUM);
 
-                                // TODO!!!
+                                uint16_t load16 = 0;
+
+                                if (count >= 2) {
+                                        load16 = (dataBuffer[0] << 8) | dataBuffer[1];
+                                }
 
 
-//                                bHID_DataReceived_event = FALSE;        // Clear flag early -- just in case execution breaks below because of an
-//                                                                        // error
-//                                count = hidReceiveDataInBuffer((uint8_t*) dataBuffer,
-//                                BUFFER_SIZE,
-//                                HID0_INTFNUM);
-//                                strncat(wholeString, " \r\nRx->", 7);
-//                                strncat(wholeString, (char*) dataBuffer, count);
-//                                strncat(wholeString, " \r\n ", 4);
+//                                memset(wholeString, 0, MAX_STR_LENGTH);   // Clear wholeString
+//                                strncat(wholeString, (char*) dataBuffer, 2);
+//                                strncat(wholeString, "\r\n", 2);
 //
 //                                if (cdcSendDataInBackground((uint8_t*) wholeString, strlen(wholeString), CDC0_INTFNUM, 1)) {  // Send message to other CDC App
 //                                        SendError = 0x01;
 //                                        break;
 //                                }
-//
 //                                memset(wholeString, 0, MAX_STR_LENGTH);   // Clear wholeString
                         }
 
@@ -201,14 +201,8 @@ void ASCII (char* string)
 /*  
  * ======== UNMI_ISR ========
  */
-#if defined(__TI_COMPILER_VERSION__) || (__IAR_SYSTEMS_ICC__)
-#pragma vector = UNMI_VECTOR
-__interrupt void UNMI_ISR (void)
-#elif defined(__GNUC__) && (__MSP430__)
+
 void __attribute__ ((interrupt(UNMI_VECTOR))) UNMI_ISR (void)
-#else
-#error Compiler not found!
-#endif
 {
         switch (__even_in_range(SYSUNIV, SYSUNIV_BUSIFG ))
         {
