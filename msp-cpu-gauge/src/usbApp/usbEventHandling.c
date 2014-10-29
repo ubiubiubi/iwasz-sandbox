@@ -223,7 +223,7 @@ uint8_t USBCDC_handleSetControlLineState (uint8_t intfNum, uint8_t lineState)
 
 #endif //_CDC_
 
-#ifdef _HID_
+//#ifdef _HID_
 /*
  * This event indicates that data has been received for interface intfNum, but no data receive operation is underway.
  * returns TRUE to keep CPU awake
@@ -330,4 +330,4 @@ uint8_t *USBHID_handleEP0GetReport (uint8_t reportType, uint8_t reportId, uint16
         }
 }
 
-#endif //_HID_
+//#endif //_HID_

@@ -74,7 +74,7 @@ extern "C"
 //of the dummy serial number string.  It will then be automatically handled by the API.
 // If no serial number is to be reported, set this to 0.
 #define USB_STR_INDEX_SERNUM  3             
- #define PHDC_ENDPOINTS_NUMBER               2  // bulk in, bulk out
+#define PHDC_ENDPOINTS_NUMBER               2  // bulk in, bulk out
 
 
 #define DESCRIPTOR_TOTAL_LENGTH             107    // wTotalLength, This is the sum of configuration descriptor length  + CDC descriptor length  + HID descriptor length
