@@ -638,8 +638,7 @@ uint8_t USBHID_receiveData (uint8_t* data, uint16_t size, uint8_t intfNum)
     //read rest of data from buffer, if any
     if (HidReadCtrl[INTFNUM_OFFSET(intfNum)].nBytesInEp > 0){
         //copy data from pEP-endpoint into User's buffer
-        HidCopyUsbToBuff(HidReadCtrl[INTFNUM_OFFSET(
-                                         intfNum)].pCurrentEpPos,
+        HidCopyUsbToBuff(HidReadCtrl[INTFNUM_OFFSET(intfNum)].pCurrentEpPos,
             HidReadCtrl[INTFNUM_OFFSET(intfNum)].pCT1,intfNum);
 
         if (HidReadCtrl[INTFNUM_OFFSET(intfNum)].nBytesToReceiveLeft == 0){ //the Receive opereation is completed
@@ -650,31 +649,27 @@ uint8_t USBHID_receiveData (uint8_t* data, uint16_t size, uint8_t intfNum)
         }
 
         //check other EP buffer for data - exchange pCT1 with pCT2
-        if (HidReadCtrl[INTFNUM_OFFSET(intfNum)].pCT1 ==
-            &tOutputEndPointDescriptorBlock[edbIndex].bEPBCTX){
-            HidReadCtrl[INTFNUM_OFFSET(intfNum)].pCT1 =
-                &tOutputEndPointDescriptorBlock[edbIndex].bEPBCTY;
-            HidReadCtrl[INTFNUM_OFFSET(intfNum)].pCurrentEpPos =
-                (uint8_t*)stUsbHandle[intfNum].oep_Y_Buffer;
+        if (HidReadCtrl[INTFNUM_OFFSET(intfNum)].pCT1 == &tOutputEndPointDescriptorBlock[edbIndex].bEPBCTX){
+            HidReadCtrl[INTFNUM_OFFSET(intfNum)].pCT1 = &tOutputEndPointDescriptorBlock[edbIndex].bEPBCTY;
+            HidReadCtrl[INTFNUM_OFFSET(intfNum)].pCurrentEpPos = (uint8_t*)stUsbHandle[intfNum].oep_Y_Buffer;
         } else {
-            HidReadCtrl[INTFNUM_OFFSET(intfNum)].pCT1 =
-                &tOutputEndPointDescriptorBlock[edbIndex].bEPBCTX;
-            HidReadCtrl[INTFNUM_OFFSET(intfNum)].pCurrentEpPos =
-                (uint8_t*)stUsbHandle[intfNum].oep_X_Buffer;
+            HidReadCtrl[INTFNUM_OFFSET(intfNum)].pCT1 = &tOutputEndPointDescriptorBlock[edbIndex].bEPBCTX;
+            HidReadCtrl[INTFNUM_OFFSET(intfNum)].pCurrentEpPos = (uint8_t*)stUsbHandle[intfNum].oep_X_Buffer;
         }
+
         nTmp1 = *HidReadCtrl[INTFNUM_OFFSET(intfNum)].pCT1;
+
         //try read data from second buffer
         if (nTmp1 & EPBCNT_NAK){                                            //if the second buffer has received data?
             nTmp1 = nTmp1 & 0x7f;                                           //clear NAK bit
-            HidReadCtrl[INTFNUM_OFFSET(intfNum)].nBytesInEp =
-                *(HidReadCtrl[INTFNUM_OFFSET(intfNum)].pCurrentEpPos + 1);  //holds how many valid bytes in the EP buffer
+            HidReadCtrl[INTFNUM_OFFSET(intfNum)].nBytesInEp = *(HidReadCtrl[INTFNUM_OFFSET(intfNum)].pCurrentEpPos + 1);  //holds how many valid bytes in the EP buffer
+
             if (HidReadCtrl[INTFNUM_OFFSET(intfNum)].nBytesInEp > nTmp1 - 2){
                 HidReadCtrl[INTFNUM_OFFSET(intfNum)].nBytesInEp = nTmp1 - 2;
             }
+
             HidReadCtrl[INTFNUM_OFFSET(intfNum)].pCurrentEpPos += 2;        //here starts user data
-            HidCopyUsbToBuff(HidReadCtrl[INTFNUM_OFFSET(
-                                             intfNum)].pCurrentEpPos,
-                HidReadCtrl[INTFNUM_OFFSET(intfNum)].pCT1,intfNum);
+            HidCopyUsbToBuff(HidReadCtrl[INTFNUM_OFFSET(intfNum)].pCurrentEpPos, HidReadCtrl[INTFNUM_OFFSET(intfNum)].pCT1,intfNum);
         }
 
         if (HidReadCtrl[INTFNUM_OFFSET(intfNum)].nBytesToReceiveLeft == 0){ //the Receive opereation is completed
@@ -782,87 +777,90 @@ uint8_t USBHID_receiveData (uint8_t* data, uint16_t size, uint8_t intfNum)
 //It fills user receiving buffer with received data
 int16_t vendorToBufferFromHost (uint8_t intfNum)
 {
-    uint8_t *pEP1;
-    uint8_t nTmp1;
-    uint8_t bWakeUp = FALSE;                                                   //per default we do not wake up after interrupt
-    uint8_t edbIndex;
+        uint8_t *pEP1;
+        uint8_t nTmp1;
+        uint8_t bWakeUp = FALSE;                                                   //per default we do not wake up after interrupt
+        uint8_t edbIndex;
 
-    edbIndex = stUsbHandle[intfNum].edb_Index;
+        edbIndex = stUsbHandle[intfNum].edb_Index;
 
-    if (HidReadCtrl[INTFNUM_OFFSET(intfNum)].nBytesToReceiveLeft == 0){     //do we have somtething to receive?
-        HidReadCtrl[INTFNUM_OFFSET(intfNum)].pUserBuffer = NULL;            //no more receiving pending
+        if (HidReadCtrl[INTFNUM_OFFSET(intfNum)].nBytesToReceiveLeft == 0) {     //do we have somtething to receive?
+                HidReadCtrl[INTFNUM_OFFSET(intfNum)].pUserBuffer = NULL;            //no more receiving pending
+                return (bWakeUp);
+        }
+
+        //No data to receive...
+        if (!((tOutputEndPointDescriptorBlock[edbIndex].bEPBCTX | tOutputEndPointDescriptorBlock[edbIndex].bEPBCTY) & 0x80)) {
+                return (bWakeUp);
+        }
+
+
+        if (HidReadCtrl[INTFNUM_OFFSET(intfNum)].bCurrentBufferXY == X_BUFFER){ //X is current buffer
+                //this is the active EP buffer
+                pEP1 = (uint8_t*)stUsbHandle[intfNum].oep_X_Buffer;
+                HidReadCtrl[INTFNUM_OFFSET(intfNum)].pCT1 = &tOutputEndPointDescriptorBlock[edbIndex].bEPBCTX;
+
+                //second EP buffer
+                HidReadCtrl[INTFNUM_OFFSET(intfNum)].pEP2 = (uint8_t*)stUsbHandle[intfNum].oep_Y_Buffer;
+                HidReadCtrl[INTFNUM_OFFSET(intfNum)].pCT2 = &tOutputEndPointDescriptorBlock[edbIndex].bEPBCTY;
+        } else {
+                //this is the active EP buffer
+                pEP1 = (uint8_t*)stUsbHandle[intfNum].oep_Y_Buffer;
+                HidReadCtrl[INTFNUM_OFFSET(intfNum)].pCT1 = &tOutputEndPointDescriptorBlock[edbIndex].bEPBCTY;
+
+                //second EP buffer
+                HidReadCtrl[INTFNUM_OFFSET(intfNum)].pEP2 = (uint8_t*)stUsbHandle[intfNum].oep_X_Buffer;
+                HidReadCtrl[INTFNUM_OFFSET(intfNum)].pCT2 = &tOutputEndPointDescriptorBlock[edbIndex].bEPBCTX;
+        }
+
+        // how many byte we can get from one endpoint buffer
+        // Max for interrupt is 64 bytes of payload.
+        nTmp1 = *HidReadCtrl[INTFNUM_OFFSET(intfNum)].pCT1;
+
+        if (nTmp1 & EPBCNT_NAK) {
+                nTmp1 = nTmp1 & 0x7f;                                                   //clear NAK bit
+                HidReadCtrl[INTFNUM_OFFSET(intfNum)].nBytesInEp = *(pEP1 + 1);          //holds how many valid bytes in the EP buffer
+
+                if (HidReadCtrl[INTFNUM_OFFSET(intfNum)].nBytesInEp > nTmp1 - 2) {
+                        HidReadCtrl[INTFNUM_OFFSET(intfNum)].nBytesInEp = nTmp1 - 2;
+                }
+
+                pEP1 += 2;                                                              //here starts user data
+                HidCopyUsbToBuff(pEP1, HidReadCtrl[INTFNUM_OFFSET(intfNum)].pCT1, intfNum);
+
+                nTmp1 = *HidReadCtrl[INTFNUM_OFFSET(intfNum)].pCT2;
+
+                //try read data from second buffer
+                if ((HidReadCtrl[INTFNUM_OFFSET(intfNum)].nBytesToReceiveLeft > 0) &&   //do we have more data to send?
+                                (nTmp1 & EPBCNT_NAK)) {                                              //if the second buffer has received data?
+
+                        nTmp1 = nTmp1 & 0x7f;                                               //clear NAK bit
+                        HidReadCtrl[INTFNUM_OFFSET(intfNum)].nBytesInEp = *(pEP1 + 1);      //holds how many valid bytes in the EP buffer
+                        if (HidReadCtrl[INTFNUM_OFFSET(intfNum)].nBytesInEp > nTmp1 - 2) {
+                                HidReadCtrl[INTFNUM_OFFSET(intfNum)].nBytesInEp = nTmp1 - 2;
+                        }
+
+                        HidReadCtrl[INTFNUM_OFFSET(intfNum)].pEP2 += 2;                     //here starts user data
+                        HidCopyUsbToBuff(HidReadCtrl[INTFNUM_OFFSET(intfNum)].pEP2, HidReadCtrl[INTFNUM_OFFSET(intfNum)].pCT2, intfNum);
+                        HidReadCtrl[INTFNUM_OFFSET(intfNum)].pCT1 = HidReadCtrl[INTFNUM_OFFSET(intfNum)].pCT2;
+                }
+        }
+
+        if (HidReadCtrl[INTFNUM_OFFSET(intfNum)].nBytesToReceiveLeft == 0) {         //the Receive opereation is completed
+                HidReadCtrl[INTFNUM_OFFSET(intfNum)].pUserBuffer = NULL;                //no more receiving pending
+
+                if (wUsbEventMask & kUSB_receiveCompletedEvent) {
+                        bWakeUp = USBHID_handleReceiveCompleted(intfNum);
+                }
+
+                if (HidReadCtrl[INTFNUM_OFFSET(intfNum)].nBytesInEp) {                   //Is not read data still available in the EP?
+                        if (wUsbEventMask & kUSB_dataReceivedEvent) {
+                                bWakeUp = USBHID_handleDataReceived(intfNum);
+                        }
+                }
+        }
+
         return (bWakeUp);
-    }
-
-    //No data to receive...
-    if (!((tOutputEndPointDescriptorBlock[edbIndex].bEPBCTX |
-           tOutputEndPointDescriptorBlock[edbIndex].bEPBCTY) & 0x80)){
-        return (bWakeUp);
-    }
-
-    if (HidReadCtrl[INTFNUM_OFFSET(intfNum)].bCurrentBufferXY == X_BUFFER){ //X is current buffer
-        //this is the active EP buffer
-        pEP1 = (uint8_t*)stUsbHandle[intfNum].oep_X_Buffer;
-        HidReadCtrl[INTFNUM_OFFSET(intfNum)].pCT1 = &tOutputEndPointDescriptorBlock[edbIndex].bEPBCTX;
-
-        //second EP buffer
-        HidReadCtrl[INTFNUM_OFFSET(intfNum)].pEP2 = (uint8_t*)stUsbHandle[intfNum].oep_Y_Buffer;
-        HidReadCtrl[INTFNUM_OFFSET(intfNum)].pCT2 = &tOutputEndPointDescriptorBlock[edbIndex].bEPBCTY;
-    } else {
-        //this is the active EP buffer
-        pEP1 = (uint8_t*)stUsbHandle[intfNum].oep_Y_Buffer;
-        HidReadCtrl[INTFNUM_OFFSET(intfNum)].pCT1 = &tOutputEndPointDescriptorBlock[edbIndex].bEPBCTY;
-
-        //second EP buffer
-        HidReadCtrl[INTFNUM_OFFSET(intfNum)].pEP2 = (uint8_t*)stUsbHandle[intfNum].oep_X_Buffer;
-        HidReadCtrl[INTFNUM_OFFSET(intfNum)].pCT2 = &tOutputEndPointDescriptorBlock[edbIndex].bEPBCTX;
-    }
-
-    //how many byte we can get from one endpoint buffer
-    nTmp1 = *HidReadCtrl[INTFNUM_OFFSET(intfNum)].pCT1;
-
-    if (nTmp1 & EPBCNT_NAK) {
-        nTmp1 = nTmp1 & 0x7f;                                                   //clear NAK bit
-        HidReadCtrl[INTFNUM_OFFSET(intfNum)].nBytesInEp = *(pEP1 + 1);          //holds how many valid bytes in the EP buffer
-        if (HidReadCtrl[INTFNUM_OFFSET(intfNum)].nBytesInEp > nTmp1 - 2) {
-            HidReadCtrl[INTFNUM_OFFSET(intfNum)].nBytesInEp = nTmp1 - 2;
-        }
-
-        pEP1 += 2;                                                              //here starts user data
-        HidCopyUsbToBuff(pEP1, HidReadCtrl[INTFNUM_OFFSET (intfNum)].pCT1,intfNum);
-
-        nTmp1 = *HidReadCtrl[INTFNUM_OFFSET(intfNum)].pCT2;
-
-        //try read data from second buffer
-        if ((HidReadCtrl[INTFNUM_OFFSET(intfNum)].nBytesToReceiveLeft > 0) &&   //do we have more data to send?
-            (nTmp1 & EPBCNT_NAK)){                                              //if the second buffer has received data?
-
-            nTmp1 = nTmp1 & 0x7f;                                               //clear NAK bit
-            HidReadCtrl[INTFNUM_OFFSET(intfNum)].nBytesInEp = *(pEP1 + 1);      //holds how many valid bytes in the EP buffer
-            if (HidReadCtrl[INTFNUM_OFFSET(intfNum)].nBytesInEp > nTmp1 - 2){
-                HidReadCtrl[INTFNUM_OFFSET(intfNum)].nBytesInEp = nTmp1 - 2;
-            }
-
-            HidReadCtrl[INTFNUM_OFFSET(intfNum)].pEP2 += 2;                     //here starts user data
-            HidCopyUsbToBuff(HidReadCtrl[INTFNUM_OFFSET( intfNum)].pEP2, HidReadCtrl[INTFNUM_OFFSET(intfNum)].pCT2,intfNum);
-            HidReadCtrl[INTFNUM_OFFSET(intfNum)].pCT1 = HidReadCtrl[INTFNUM_OFFSET(intfNum)].pCT2;
-        }
-    }
-
-    if (HidReadCtrl[INTFNUM_OFFSET(intfNum)].nBytesToReceiveLeft == 0){         //the Receive opereation is completed
-        HidReadCtrl[INTFNUM_OFFSET(intfNum)].pUserBuffer = NULL;                //no more receiving pending
-        if (wUsbEventMask & kUSB_receiveCompletedEvent){
-            bWakeUp = USBHID_handleReceiveCompleted(intfNum);
-        }
-
-        if (HidReadCtrl[INTFNUM_OFFSET(intfNum)].nBytesInEp){                   //Is not read data still available in the EP?
-            if (wUsbEventMask & kUSB_dataReceivedEvent){
-                bWakeUp = USBHID_handleDataReceived(intfNum);
-            }
-        }
-    }
-
-    return (bWakeUp);
 }
 
 //helper for USB interrupt handler
