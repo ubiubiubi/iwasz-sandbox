@@ -118,28 +118,31 @@ int main (void)
                                         load16 = (dataBuffer[0] << 8) | dataBuffer[1];
                                 }
 
+                                memset(wholeString, 0, MAX_STR_LENGTH);   // Clear wholeString
+                                strncat(wholeString, (char*) dataBuffer, 2);
+                                strncat(wholeString, ",\r\n", 3);
 
-//                                memset(wholeString, 0, MAX_STR_LENGTH);   // Clear wholeString
-//                                strncat(wholeString, (char*) dataBuffer, 2);
-//                                strncat(wholeString, "\r\n", 2);
-//
-//                                if (cdcSendDataInBackground((uint8_t*) wholeString, strlen(wholeString), CDC0_INTFNUM, 1)) {  // Send message to other CDC App
-//                                        SendError = 0x01;
-//                                        break;
-//                                }
-//                                memset(wholeString, 0, MAX_STR_LENGTH);   // Clear wholeString
+                                if (cdcSendDataInBackground((uint8_t*) wholeString, strlen(wholeString), CDC0_INTFNUM, 1)) {  // Send message to other CDC App
+                                        SendError = 0x01;
+                                        break;
+                                }
+                                memset(wholeString, 0, MAX_STR_LENGTH);   // Clear wholeString
                         }
 
                         if (bCDC_DataReceived_event) { // Message is received from CDC application
                                 bCDC_DataReceived_event = FALSE; // Clear flag early -- just in case execution breaks below because of an error
                                 cdcReceiveDataInBuffer((uint8_t*) wholeString, MAX_STR_LENGTH, CDC0_INTFNUM);
-                                strncat(wholeString, ".\r\n ", 3);
-//                                ASCII(wholeString);
 
-//                                if (hidSendDataInBackground((uint8_t*) wholeString, strlen(wholeString), HID0_INTFNUM, 1)) {  // Send message to HID App
-//                                        SendError = 0x01;                   // Something went wrong -- exit
-//                                        break;
-//                                }
+                                int16_t a = vendorIsReceiveInProgress (HID0_INTFNUM);
+
+                                if (a) {
+                                        strncat(wholeString, "1", 1);
+                                }
+                                else {
+                                        strncat(wholeString, "0", 1);
+                                }
+
+                                strncat(wholeString, ".\r\n ", 3);
 
                                 if (cdcSendDataInBackground((uint8_t*) wholeString, strlen(wholeString), CDC0_INTFNUM, 1)) {  // Send message to other CDC App
                                         SendError = 0x01;

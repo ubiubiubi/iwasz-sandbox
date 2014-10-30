@@ -203,9 +203,9 @@ void __attribute__ ((interrupt(USB_UBM_VECTOR))) iUsbInterruptHandler (void)
                 break;
 
         case USBVECINT_OUTPUT_ENDPOINT3:
-//                TODO
                 //call callback function if no receive operation is underway
                 if (!vendorIsReceiveInProgress (HID0_INTFNUM)) {
+
                         if (wUsbEventMask & kUSB_dataReceivedEvent) {
                                 bWakeUp = USBHID_handleDataReceived (HID0_INTFNUM);
                         }
@@ -227,6 +227,7 @@ void __attribute__ ((interrupt(USB_UBM_VECTOR))) iUsbInterruptHandler (void)
         default:
                 break;
         }
+
         if (bWakeUp) {
                 __bic_SR_register_on_exit(LPM3_bits);   // Exit LPM0-3
                 __no_operation();   // Required for debugger
