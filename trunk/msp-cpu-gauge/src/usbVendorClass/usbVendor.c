@@ -522,36 +522,31 @@ uint8_t USBHID_abortSend (uint16_t* size, uint8_t intfNum)
 //pEP - pointer to EP to copy from
 //pCT - pointer to pCT control reg
 //
-void HidCopyUsbToBuff (uint8_t* pEP, uint8_t* pCT,uint8_t intfNum)
+void HidCopyUsbToBuff (uint8_t* pEP, uint8_t* pCT, uint8_t intfNum)
 {
-    uint8_t nCount;
+        uint8_t nCount;
 
-    //how many byte we can get from one endpoint buffer
-    nCount =
-        (HidReadCtrl[INTFNUM_OFFSET(intfNum)].nBytesToReceiveLeft >
-         HidReadCtrl[INTFNUM_OFFSET(intfNum)].nBytesInEp) ? HidReadCtrl[
-            INTFNUM_OFFSET(intfNum)].nBytesInEp : HidReadCtrl[INTFNUM_OFFSET(
-                                                                  intfNum)].
-        nBytesToReceiveLeft;
+        //how many byte we can get from one endpoint buffer
+        nCount = (HidReadCtrl[INTFNUM_OFFSET(intfNum)].nBytesToReceiveLeft > HidReadCtrl[INTFNUM_OFFSET(intfNum)].nBytesInEp) ?
+                        HidReadCtrl[INTFNUM_OFFSET(intfNum)].nBytesInEp : HidReadCtrl[INTFNUM_OFFSET(intfNum)].nBytesToReceiveLeft;
 
-    USB_RX_memcpy(HidReadCtrl[INTFNUM_OFFSET(intfNum)].pUserBuffer, pEP, nCount);   //copy data from OEPx X or Y buffer
-    HidReadCtrl[INTFNUM_OFFSET(intfNum)].nBytesToReceiveLeft -= nCount;
-    HidReadCtrl[INTFNUM_OFFSET(intfNum)].pUserBuffer += nCount;                     //move buffer pointer
-    //to read rest of data next time from this place
 
-    if (nCount == HidReadCtrl[INTFNUM_OFFSET(intfNum)].nBytesInEp){                 //all bytes are copied from receive buffer?
-        //switch current buffer
-        HidReadCtrl[INTFNUM_OFFSET(intfNum)].bCurrentBufferXY =
-            (HidReadCtrl[INTFNUM_OFFSET(intfNum)].bCurrentBufferXY + 1) & 0x01;
+        USB_RX_memcpy(HidReadCtrl[INTFNUM_OFFSET(intfNum)].pUserBuffer, pEP, nCount);   //copy data from OEPx X or Y buffer
+        HidReadCtrl[INTFNUM_OFFSET(intfNum)].nBytesToReceiveLeft -= nCount;
+        HidReadCtrl[INTFNUM_OFFSET(intfNum)].pUserBuffer += nCount;                     //move buffer pointer
+        //to read rest of data next time from this place
 
-        HidReadCtrl[INTFNUM_OFFSET(intfNum)].nBytesInEp = 0;
+        if (nCount == HidReadCtrl[INTFNUM_OFFSET(intfNum)].nBytesInEp) {                 //all bytes are copied from receive buffer?
+                //switch current buffer
+                HidReadCtrl[INTFNUM_OFFSET(intfNum)].bCurrentBufferXY = (HidReadCtrl[INTFNUM_OFFSET(intfNum)].bCurrentBufferXY + 1) & 0x01;
+                HidReadCtrl[INTFNUM_OFFSET(intfNum)].nBytesInEp = 0;
 
-        //clear NAK, EP ready to receive data
-        *pCT = 0;
-    } else {
-        HidReadCtrl[INTFNUM_OFFSET(intfNum)].nBytesInEp -= nCount;
-        HidReadCtrl[INTFNUM_OFFSET(intfNum)].pCurrentEpPos = pEP + nCount;
-    }
+                //clear NAK, EP ready to receive data
+                *pCT = 0;
+        } else {
+                HidReadCtrl[INTFNUM_OFFSET(intfNum)].nBytesInEp -= nCount;
+                HidReadCtrl[INTFNUM_OFFSET(intfNum)].pCurrentEpPos = pEP + nCount;
+        }
 }
 
 //
@@ -778,7 +773,7 @@ uint8_t USBHID_receiveData (uint8_t* data, uint16_t size, uint8_t intfNum)
 int16_t vendorToBufferFromHost (uint8_t intfNum)
 {
         uint8_t *pEP1;
-        uint8_t nTmp1;
+        uint8_t nTmp1; // Temporary register value.
         uint8_t bWakeUp = FALSE;                                                   //per default we do not wake up after interrupt
         uint8_t edbIndex;
 
@@ -797,12 +792,11 @@ int16_t vendorToBufferFromHost (uint8_t intfNum)
 
         if (HidReadCtrl[INTFNUM_OFFSET(intfNum)].bCurrentBufferXY == X_BUFFER){ //X is current buffer
                 //this is the active EP buffer
-                pEP1 = (uint8_t*)stUsbHandle[intfNum].oep_X_Buffer;
-                HidReadCtrl[INTFNUM_OFFSET(intfNum)].pCT1 = &tOutputEndPointDescriptorBlock[edbIndex].bEPBCTX;
+                pEP1 = (uint8_t*)stUsbHandle[intfNum].oep_X_Buffer; // Buffer
+                HidReadCtrl[INTFNUM_OFFSET(intfNum)].pCT1 = &tOutputEndPointDescriptorBlock[edbIndex].bEPBCTX; // Its register
 
-                //second EP buffer
-                HidReadCtrl[INTFNUM_OFFSET(intfNum)].pEP2 = (uint8_t*)stUsbHandle[intfNum].oep_Y_Buffer;
-                HidReadCtrl[INTFNUM_OFFSET(intfNum)].pCT2 = &tOutputEndPointDescriptorBlock[edbIndex].bEPBCTY;
+                HidReadCtrl[INTFNUM_OFFSET(intfNum)].pEP2 = (uint8_t*)stUsbHandle[intfNum].oep_Y_Buffer; //second EP buffer
+                HidReadCtrl[INTFNUM_OFFSET(intfNum)].pCT2 = &tOutputEndPointDescriptorBlock[edbIndex].bEPBCTY; // and its register
         } else {
                 //this is the active EP buffer
                 pEP1 = (uint8_t*)stUsbHandle[intfNum].oep_Y_Buffer;
@@ -817,8 +811,8 @@ int16_t vendorToBufferFromHost (uint8_t intfNum)
         // Max for interrupt is 64 bytes of payload.
         nTmp1 = *HidReadCtrl[INTFNUM_OFFSET(intfNum)].pCT1;
 
-        if (nTmp1 & EPBCNT_NAK) {
-                nTmp1 = nTmp1 & 0x7f;                                                   //clear NAK bit
+        if (nTmp1 & EPBCNT_NAK) { // If true then :  1:Valid packet in buffer
+                nTmp1 = nTmp1 & 0x7f;                                                   //clear NAK bit (nTmp1 = nTmp1 & ~EPBCNT_NAK;)
                 HidReadCtrl[INTFNUM_OFFSET(intfNum)].nBytesInEp = *(pEP1 + 1);          //holds how many valid bytes in the EP buffer
 
                 if (HidReadCtrl[INTFNUM_OFFSET(intfNum)].nBytesInEp > nTmp1 - 2) {
