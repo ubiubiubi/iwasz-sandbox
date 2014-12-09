@@ -15,6 +15,7 @@ LIST (APPEND APP_SOURCES "${STM_DIR}/Libraries/STM32F4xx_StdPeriph_Driver/src/st
 LIST (APPEND APP_SOURCES "${STM_DIR}/Libraries/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_gpio.c")
 LIST (APPEND APP_SOURCES "${STM_DIR}/Libraries/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_spi.c")
 LIST (APPEND APP_SOURCES "${STM_DIR}/Libraries/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_tim.c")
+LIST (APPEND APP_SOURCES "${STM_DIR}/Libraries/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_i2c.c")
 
 ADD_EXECUTABLE(${CMAKE_PROJECT_NAME}.elf ${APP_SOURCES})
 
